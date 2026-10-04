@@ -11,30 +11,15 @@ import Icon from './Icon.astro';
 </button>
 
 <script>
-  const canvas = document.getElementById('sakura-canvas') as HTMLCanvasElement;
-  const ctx = canvas.getContext('2d')!;
-  const toggleBtn = document.getElementById('sakura-toggle') as HTMLButtonElement;
+  const canvas = document.getElementById('sakura-canvas');
+  const ctx = canvas.getContext('2d');
+  const toggleBtn = document.getElementById('sakura-toggle');
 
   let enabled = false;
   let animId = 0;
-  let petals: Petal[] = [];
-  let sparkles: Sparkle[] = [];
+  let petals = [];
+  let sparkles = [];
   let mouse = { x: -1000, y: -1000 };
-
-  interface Petal {
-    x: number; y: number;
-    size: number; speedY: number; speedX: number;
-    rotation: number; rotSpeed: number;
-    opacity: number; color: string;
-    swing: number; swingSpeed: number;
-  }
-
-  interface Sparkle {
-    x: number; y: number;
-    size: number; opacity: number;
-    speed: number; angle: number;
-    color: string; life: number; maxLife: number;
-  }
 
   const PETAL_COLORS = ['#ffb7c5', '#ffc0cb', '#ff9eb5', '#ffd1dc', '#f8c8dc', '#ffafaf'];
   const SPARKLE_COLORS = ['#fff', '#ffe4f0', '#ffd7ec', '#fff0f5', '#ffe0ec'];
@@ -44,7 +29,7 @@ import Icon from './Icon.astro';
     canvas.height = window.innerHeight;
   }
 
-  function createPetal(): Petal {
+  function createPetal() {
     return {
       x: Math.random() * canvas.width,
       y: -20 - Math.random() * 100,
@@ -60,7 +45,7 @@ import Icon from './Icon.astro';
     };
   }
 
-  function createSparkle(): Sparkle {
+  function createSparkle() {
     return {
       x: mouse.x + (Math.random() - 0.5) * 60,
       y: mouse.y + (Math.random() - 0.5) * 60,
@@ -74,7 +59,7 @@ import Icon from './Icon.astro';
     };
   }
 
-  function drawPetal(p: Petal) {
+  function drawPetal(p) {
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rotation);
@@ -98,7 +83,7 @@ import Icon from './Icon.astro';
     ctx.restore();
   }
 
-  function drawSparkle(s: Sparkle) {
+  function drawSparkle(s) {
     const fadeIn = Math.min(s.life / 10, 1);
     const fadeOut = Math.min((s.maxLife - s.life) / 15, 1);
     const alpha = s.opacity * fadeIn * fadeOut;
@@ -200,7 +185,7 @@ import Icon from './Icon.astro';
     sparkles = [];
   }
 
-  function setEnabled(on: boolean) {
+  function setEnabled(on) {
     enabled = on;
     toggleBtn.classList.toggle('active', on);
     if (on) start();
@@ -236,18 +221,20 @@ import Icon from './Icon.astro';
 
   .sakura-toggle {
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    bottom: 8.5rem;
+    right: 1.25rem;
     z-index: 30;
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
     border-radius: 50%;
     border: 1px solid var(--border);
     background: var(--surface);
-    font-size: 1.2rem;
+    color: var(--primary);
     cursor: pointer;
-    box-shadow: var(--shadow);
-    opacity: 0.6;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 14px oklch(0% 0 0 / 0.1);
+    opacity: 0.55;
     transition: opacity 0.15s ease, transform 0.15s ease;
   }
 
