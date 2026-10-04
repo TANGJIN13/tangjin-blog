@@ -65,10 +65,20 @@ jobs:
 
       - name: 同步到服务器
         run: |
+          # --chmod 强制目录 755 / 文件 644，否则 nginx 可能因权限返回 403
           rsync -avz --delete --human-readable \
+            --chmod=D755,F644 \
             --exclude '.well-known/' \
             -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
             dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+      - name: 校验服务器上的权限
+        run: |
+          ssh -i ~/.ssh/deploy_key \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=accept-new \
+              "$SSH_USER@$SSH_HOST" \
+              "ls -ld $DEPLOY_PATH && test -r $DEPLOY_PATH/index.html && echo '权限 OK'"
 
       - name: 验证线上可访问
         run: |
