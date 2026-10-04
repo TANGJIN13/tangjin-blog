@@ -9,7 +9,6 @@ param(
     [string]$Message = ""
 )
 
-$ErrorActionPreference = 'Stop'
 $Project = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $Project
 
@@ -17,14 +16,26 @@ Set-Location $Project
 $ProxyPort = 7897
 $ProxyUrl  = "http://127.0.0.1:$ProxyPort"
 
+# 关键：不能让 PowerShell 把 git 的 stderr 当作终止错误，
+# 否则直连失败时不会走到代理回退逻辑。
+function Invoke-Git {
+    param([string[]]$GitArgs)
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $output = & git @GitArgs 2>&1 | Out-String
+    $code = $LASTEXITCODE
+    $ErrorActionPreference = $prev
+    return @{ Output = $output; Code = $code }
+}
+
 Write-Host "==> 1/3 提交改动" -ForegroundColor Cyan
-$status = git status --porcelain
+$status = (& git status --porcelain 2>&1 | Out-String).Trim()
 if ($status) {
     if (-not $Message) {
         $Message = "post: 更新文章 $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
     }
-    git add -A
-    git commit -m $Message
+    & git add -A 2>&1 | Out-Null
+    & git commit -m $Message 2>&1 | Out-Null
     Write-Host "    已提交：$Message"
 } else {
     Write-Host "    没有需要提交的改动"
@@ -33,29 +44,28 @@ if ($status) {
 Write-Host "==> 2/3 推送" -ForegroundColor Cyan
 $env:GIT_TERMINAL_PROMPT = "0"
 
-# 先试直连
 Write-Host "    尝试直连..." -NoNewline
-$direct = git push 2>&1
-if ($LASTEXITCODE -eq 0) {
+$r = Invoke-Git @('push')
+if ($r.Code -eq 0) {
     Write-Host " 成功" -ForegroundColor Green
 } else {
-    Write-Host " 失败，改走代理" -ForegroundColor Yellow
+    Write-Host " 失败" -ForegroundColor Yellow
 
-    # 检测代理是否在监听
     $proxyAlive = Test-NetConnection -ComputerName 127.0.0.1 -Port $ProxyPort -InformationLevel Quiet -WarningAction SilentlyContinue
     if (-not $proxyAlive) {
         Write-Host "    代理 $ProxyUrl 未在监听。" -ForegroundColor Red
-        Write-Host "    请启动你的代理软件，或把 push.ps1 里的 `$ProxyPort 改成实际端口。" -ForegroundColor Red
+        Write-Host "    请启动代理软件，或把本脚本里的 ProxyPort 改成实际端口。" -ForegroundColor Red
         exit 1
     }
 
-    Write-Host "    经 $ProxyUrl 推送..."
-    git -c "http.proxy=$ProxyUrl" -c "https.proxy=$ProxyUrl" push 2>&1 | ForEach-Object { "    $_" }
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "    推送仍然失败，请检查网络或代理。" -ForegroundColor Red
+    Write-Host "    改走代理 $ProxyUrl ..."
+    $r2 = Invoke-Git @('-c', "http.proxy=$ProxyUrl", '-c', "https.proxy=$ProxyUrl", 'push')
+    if ($r2.Code -ne 0) {
+        Write-Host "    推送失败：" -ForegroundColor Red
+        Write-Host $r2.Output
         exit 1
     }
-    Write-Host " 成功" -ForegroundColor Green
+    Write-Host " 成功（经代理）" -ForegroundColor Green
 }
 
 Write-Host "==> 3/3 完成" -ForegroundColor Cyan
