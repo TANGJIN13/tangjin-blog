@@ -47,6 +47,8 @@
     .form-group label { display: block; font-size: 0.85rem; font-weight: 500; margin-bottom: 0.25rem; color: #6b7280; }
     .form-group input, .form-group textarea { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.9rem; font-family: inherit; }
     .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #6d5cff; box-shadow: 0 0 0 3px rgba(109,92,255,0.1); }
+.form-group select { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 0.9rem; font-family: inherit; background: #fff; }
+    .form-group select:focus { outline: none; border-color: #6d5cff; box-shadow: 0 0 0 3px rgba(109,92,255,0.1); }
 
     /* 编辑器 */
     .editor-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.75rem; overflow: hidden; }
@@ -280,6 +282,11 @@
           <input type="text" id="fm-title" placeholder="文章标题" style="font-weight:600" />
         </div>
         <div class="form-group" style="margin-bottom:0">
+          <select id="fm-category">
+            <option value="">-- 分类（可选）--</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
           <input type="text" id="fm-tags" placeholder="标签（逗号分隔）" />
         </div>
       </div>
@@ -440,6 +447,11 @@ $('btn-settings').addEventListener('click', () => {
         $('fm-title').value = titleMatch ? titleMatch[1] : '';
         $('fm-desc').value = descMatch ? descMatch[1] : '';
         $('fm-tags').value = tagsMatch ? tagsMatch[1] : '';
+        $('fm-category').value = '';
+        loadCategoryOptions();
+        // 如果文章已有分类，选中它
+        const catMatch = fm.match(/category:\s*(\S+)/);
+        if (catMatch) $('fm-category').value = catMatch[1];
         editor.value = body;
       } else {
         editor.value = content;
@@ -525,11 +537,30 @@ $('btn-settings').addEventListener('click', () => {
     $('fm-title').value = '';
     $('fm-desc').value = '';
     $('fm-tags').value = '';
+    $('fm-category').value = '';
+    loadCategoryOptions();
     editor.value = '';
     updatePreview();
     hideAllPanels();
     $('editor-panel').style.display = 'block';
   });
+  
+  // 加载分类选项到发布表单下拉框
+  async function loadCategoryOptions() {
+    const sel = $('fm-category');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- 分类（可选）--</option>';
+    try {
+      const { content: src } = await fetchFileContent('src/data/categories.ts');
+      const cats = parseCategories(src);
+      for (const c of cats) {
+        const opt = document.createElement('option');
+        opt.value = c.slug;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+      }
+    } catch { /* 忽略，保持默认空选项 */ }
+  }
 
   // 发布
   $('btn-publish').addEventListener('click', async () => {
@@ -537,6 +568,7 @@ $('btn-settings').addEventListener('click', () => {
     const title = $('fm-title').value.trim();
     const desc = $('fm-desc').value.trim();
     const tags = $('fm-tags').value.trim();
+      const category = $('fm-category').value;
     const body = editor.value.trim();
 
     if (!title || !body) { showToast('标题和正文不能为空', 'error'); return; }
@@ -553,6 +585,7 @@ $('btn-settings').addEventListener('click', () => {
 title: "${title}"
 description: "${desc}"
 published: ${date}
+category: ${category || ''}
 tags: [${tagList}]
 ---
 
