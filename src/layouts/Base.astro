@@ -43,9 +43,10 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <!-- 站点图标：文件名带版本号，换图标时改版本号可强制浏览器刷新缓存 -->
+    <link rel="icon" href="/icon-2.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icon-2-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icon-2-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
     <meta property="og:type" content="website" />
