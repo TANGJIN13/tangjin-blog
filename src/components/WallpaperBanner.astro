@@ -15,13 +15,19 @@ const {
     '/images/wallpapers/wallpaper-03.svg',
   ],
   height = 'clamp(440px, 78vh, 780px)',
+  /** 单图模式：不轮播（文章页用封面图时开启） */
+  single = false,
 } = Astro.props;
+
+// 有插槽内容时用它替代默认的「头像 + 座右铭」，文章页据此放自己的标题
+const hasSlot = Astro.slots.has('default');
+const slides = single ? images.slice(0, 1) : images;
 ---
 
 <div class="wallpaper-wrapper" style={`--wp-height: ${height}`} data-interval="7000">
   <!-- 轮播图片 -->
   <div class="wallpaper-images" id="wallpaper-images">
-    {images.map((src, i) => (
+    {slides.map((src, i) => (
       <div class:list={['wp-slide', { active: i === 0 }]} data-index={i}>
         <img src={src} alt={`壁纸 ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
       </div>
@@ -34,23 +40,29 @@ const {
   <!-- 文字覆盖层 -->
   <div class="wallpaper-content">
     <div class="container wp-inner">
-      <div class="wp-avatar-wrap">
-        <img class="wp-avatar" src={site.avatar} alt="头像" width="96" height="96" />
-      </div>
+      {hasSlot ? (
+        <slot />
+      ) : (
+        <>
+          <div class="wp-avatar-wrap">
+            <img class="wp-avatar" src={site.avatar} alt="头像" width="96" height="96" />
+          </div>
 
-      <!-- 座右铭 —— 慢慢浮现 -->
-      <h1 class="wp-title">
-        <span class="wp-title-text">{site.motto}</span>
-      </h1>
-      {site.mottoSub && <p class="wp-motto-sub">{site.mottoSub}</p>}
+          <!-- 座右铭 —— 慢慢浮现 -->
+          <h1 class="wp-title">
+            <span class="wp-title-text">{site.motto}</span>
+          </h1>
+          {site.mottoSub && <p class="wp-motto-sub">{site.mottoSub}</p>}
 
-      <p class="wp-desc">{site.description}</p>
+          <p class="wp-desc">{site.description}</p>
 
-      <div class="wp-links">
-        {site.links.map((l) => (
-          <a class="wp-link" href={l.href} target="_blank" rel="noopener">{l.label}</a>
-        ))}
-      </div>
+          <div class="wp-links">
+            {site.links.map((l) => (
+              <a class="wp-link" href={l.href} target="_blank" rel="noopener">{l.label}</a>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   </div>
 
