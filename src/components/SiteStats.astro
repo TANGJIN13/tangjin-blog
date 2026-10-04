@@ -1,0 +1,176 @@
+---
+// 站点统计 —— 参照 c1everf0x.cn 的 site-stats：
+// 文章/分类/标签/总字数 + 运行时长（实时）+ 本年/本月/本周剩余天数
+import { site } from '../site';
+import Icon from './Icon.astro';
+
+interface Props {
+  postsCount: number;
+  categoriesCount: number;
+  tagsCount: number;
+  totalWords?: number;
+}
+
+const {
+  postsCount,
+  categoriesCount,
+  tagsCount,
+  totalWords = 0,
+} = Astro.props;
+---
+
+<div class="site-stats">
+  <!-- 统计网格 -->
+  <div class="stats-grid">
+    <div class="stat-item">
+      <span class="stat-num">{postsCount}</span>
+      <span class="stat-label">文章</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">{categoriesCount}</span>
+      <span class="stat-label">分类</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">{tagsCount}</span>
+      <span class="stat-label">标签</span>
+    </div>
+    {totalWords > 0 && (
+      <div class="stat-item">
+        <span class="stat-num">{totalWords.toLocaleString('zh-CN')}</span>
+        <span class="stat-label">总字数</span>
+      </div>
+    )}
+  </div>
+
+  <!-- 运行时长 -->
+  <div class="stat-run">
+    <Icon name="clock" size="0.95rem" />
+    <span class="stat-label">运行时长</span>
+    <span class="stat-run-days" id="run-days">--</span>
+    <span class="stat-unit">天</span>
+  </div>
+
+  <!-- 剩余天数 -->
+  <div class="days-left">
+    <div class="dl-item">
+      <span class="dl-num" id="dl-year">--</span>
+      <span class="dl-label">本年还剩</span>
+      <span class="dl-unit">天</span>
+    </div>
+    <div class="dl-item">
+      <span class="dl-num" id="dl-month">--</span>
+      <span class="dl-label">本月还剩</span>
+      <span class="dl-unit">天</span>
+    </div>
+    <div class="dl-item">
+      <span class="dl-num" id="dl-week">--</span>
+      <span class="dl-label">本周还剩</span>
+      <span class="dl-unit">天</span>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ startDate: site.startDate }}>
+  const start = new Date(startDate + 'T00:00:00');
+
+  function calc() {
+    const now = new Date();
+    // 运行时长（天）
+    const diffMs = now - start;
+    const days = Math.max(0, Math.floor(diffMs / 86400000));
+    const runDays = document.getElementById('run-days');
+    if (runDays) runDays.textContent = String(days);
+
+    // 本年还剩（今天不算）
+    const isLeap = (now.getFullYear() % 4 === 0 && now.getFullYear() % 100 !== 0) || now.getFullYear() % 400 === 0;
+    const daysInYear = isLeap ? 366 : 365;
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const dayOfYear = Math.floor((now - startOfYear) / 86400000) + 1;
+    const dlYear = document.getElementById('dl-year');
+    if (dlYear) dlYear.textContent = String(Math.max(0, daysInYear - dayOfYear));
+
+    // 本月还剩（今天不算）
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const dlMonth = document.getElementById('dl-month');
+    if (dlMonth) dlMonth.textContent = String(Math.max(0, daysInMonth - now.getDate()));
+
+    // 本周还剩（到周日）
+    const dow = now.getDay(); // 0=周日
+    const daysToSunday = dow === 0 ? 0 : 7 - dow;
+    const dlWeek = document.getElementById('dl-week');
+    if (dlWeek) dlWeek.textContent = String(daysToSunday);
+  }
+
+  calc();
+  setInterval(calc, 60000); // 每分钟刷新一次
+</script>
+
+<style>
+  .site-stats { display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    text-align: center;
+  }
+  .stats-grid:has(.stat-item:nth-child(3):last-child) { grid-template-columns: repeat(3, 1fr); }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.5rem 0.2rem;
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+  }
+  .stat-num {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--primary-strong);
+    line-height: 1.2;
+  }
+  .stat-label { font-size: 0.72rem; color: var(--text-faint); }
+
+  /* 运行时长 */
+  .stat-run {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-soft);
+  }
+  .stat-run :global(.icon) { color: var(--primary); }
+  .stat-run .stat-label { font-size: 0.8rem; }
+  .stat-run-days {
+    margin-left: auto;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-unit { color: var(--text-faint); font-size: 0.75rem; }
+
+  /* 剩余天数 */
+  .days-left {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border);
+  }
+  .dl-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.05rem;
+  }
+  .dl-num {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+  .dl-label { font-size: 0.7rem; color: var(--text-faint); }
+  .dl-unit { font-size: 0.68rem; color: var(--text-faint); }
+</style>

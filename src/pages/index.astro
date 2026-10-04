@@ -4,12 +4,15 @@ import PostCard from '../components/PostCard.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import HeatmapWidget from '../components/HeatmapWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
+import SiteStats from '../components/SiteStats.astro';
 import Icon from '../components/Icon.astro';
 import { getPublishedPosts, getTags } from '../lib/posts';
+import { categories } from '../data/categories';
 import { site } from '../site';
 
 const posts = await getPublishedPosts();
 const tags = await getTags();
+const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
 ---
 
 <Base banner>
@@ -68,11 +71,12 @@ const tags = await getTags();
 
         <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
           <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
-          <div class="stats-grid">
-            <div class="stat-item"><span class="stat-num">{posts.length}</span><span class="stat-label">文章</span></div>
-            <div class="stat-item"><span class="stat-num">{tags.length}</span><span class="stat-label">标签</span></div>
-            <div class="stat-item"><span class="stat-num">{site.footer.since}</span><span class="stat-label">始于</span></div>
-          </div>
+          <SiteStats
+            postsCount={posts.length}
+            categoriesCount={categories.length}
+            tagsCount={tags.length}
+            totalWords={totalWords}
+          />
         </div>
 
         <HeatmapWidget />
@@ -177,10 +181,6 @@ const tags = await getTags();
   }
   .tag-link:hover { background: var(--primary-soft); color: var(--primary); }
   .tag-count { font-size: 0.65rem; color: var(--text-faint); }
-
-  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; text-align: center; }
-  .stat-num { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-  .stat-label { font-size: 0.68rem; color: var(--text-faint); }
 
   @media (max-width: 767px) {
     .ref-sidebar-left, .ref-sidebar-right { flex-direction: row; flex-wrap: wrap; }

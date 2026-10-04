@@ -23,6 +23,11 @@ export const site = {
   heroImage: '/images/hero.svg',
   avatar: '/images/avatar.png',
   icp: '',
+  /**
+   * 建站日期（YYYY-MM-DD）—— 首页「运行时长」从这一天开始算。
+   * 想改成实际的建站日，改这一行即可。
+   */
+  startDate: '2026-10-04',
   footer: {
     since: 2026,
   },

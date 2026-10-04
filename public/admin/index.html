@@ -307,7 +307,8 @@
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const content = atob(data.content.replace(/\n/g, ''));
+      // 正确解码 UTF-8：atob 得到字节串，再还原成 UTF-8 文本（与写入端对称）
+      const content = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
       // 解析 frontmatter
       const fmMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
       if (fmMatch) {
