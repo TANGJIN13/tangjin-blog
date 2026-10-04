@@ -1,9 +1,10 @@
-﻿# 推送脚本：先试直连，失败自动走本地代理重试
+﻿# 推送脚本：自动提交 -> 拉取远程 -> 推送（网络不通时自动走本地代理）
 # 用法：双击 push.cmd，或
 #       powershell -NoProfile -ExecutionPolicy Bypass -File push.ps1 "提交说明"
 #
-# 背景：国内直连 github.com 的 git 传输经常被重置。
-#       本脚本会自动检测并使用本地代理（默认 127.0.0.1:7897）。
+# 为什么要自动 pull：
+#   你在 /admin/ 后台发的文章会直接提交到 GitHub，
+#   本地如果不同步就推送会被拒绝（non-fast-forward）。
 
 param(
     [string]$Message = ""
@@ -16,8 +17,7 @@ Set-Location $Project
 $ProxyPort = 7897
 $ProxyUrl  = "http://127.0.0.1:$ProxyPort"
 
-# 关键：不能让 PowerShell 把 git 的 stderr 当作终止错误，
-# 否则直连失败时不会走到代理回退逻辑。
+# 关键：不能让 PowerShell 把 git 的 stderr 当终止错误，否则重试逻辑不会执行
 function Invoke-Git {
     param([string[]]$GitArgs)
     $prev = $ErrorActionPreference
@@ -28,7 +28,25 @@ function Invoke-Git {
     return @{ Output = $output; Code = $code }
 }
 
-Write-Host "==> 1/3 提交改动" -ForegroundColor Cyan
+# ---------- 1. 决定走不走代理 ----------
+Write-Host "==> 1/4 检测网络" -ForegroundColor Cyan
+$netArgs = @()
+$probe = Invoke-Git @('ls-remote', '--exit-code', 'origin', 'HEAD')
+if ($probe.Code -eq 0) {
+    Write-Host "    直连 GitHub 可用" -ForegroundColor Green
+} else {
+    $proxyAlive = Test-NetConnection -ComputerName 127.0.0.1 -Port $ProxyPort -InformationLevel Quiet -WarningAction SilentlyContinue
+    if (-not $proxyAlive) {
+        Write-Host "    直连失败，且本地代理 $ProxyUrl 未在监听" -ForegroundColor Red
+        Write-Host "    请启动代理软件，或修改本脚本里的 ProxyPort" -ForegroundColor Red
+        exit 1
+    }
+    $netArgs = @('-c', "http.proxy=$ProxyUrl", '-c', "https.proxy=$ProxyUrl")
+    Write-Host "    直连失败，改用代理 $ProxyUrl" -ForegroundColor Yellow
+}
+
+# ---------- 2. 提交本地改动 ----------
+Write-Host "==> 2/4 提交本地改动" -ForegroundColor Cyan
 $status = (& git status --porcelain 2>&1 | Out-String).Trim()
 if ($status) {
     if (-not $Message) {
@@ -41,34 +59,29 @@ if ($status) {
     Write-Host "    没有需要提交的改动"
 }
 
-Write-Host "==> 2/3 推送" -ForegroundColor Cyan
-$env:GIT_TERMINAL_PROMPT = "0"
-
-Write-Host "    尝试直连..." -NoNewline
-$r = Invoke-Git @('push')
-if ($r.Code -eq 0) {
-    Write-Host " 成功" -ForegroundColor Green
+# ---------- 3. 拉取远程 ----------
+Write-Host "==> 3/4 拉取远程改动" -ForegroundColor Cyan
+$pull = Invoke-Git ($netArgs + @('pull', '--rebase', '--autostash', 'origin', 'main'))
+if ($pull.Code -eq 0) {
+    Write-Host "    已同步"
 } else {
-    Write-Host " 失败" -ForegroundColor Yellow
-
-    $proxyAlive = Test-NetConnection -ComputerName 127.0.0.1 -Port $ProxyPort -InformationLevel Quiet -WarningAction SilentlyContinue
-    if (-not $proxyAlive) {
-        Write-Host "    代理 $ProxyUrl 未在监听。" -ForegroundColor Red
-        Write-Host "    请启动代理软件，或把本脚本里的 ProxyPort 改成实际端口。" -ForegroundColor Red
-        exit 1
-    }
-
-    Write-Host "    改走代理 $ProxyUrl ..."
-    $r2 = Invoke-Git @('-c', "http.proxy=$ProxyUrl", '-c', "https.proxy=$ProxyUrl", 'push')
-    if ($r2.Code -ne 0) {
-        Write-Host "    推送失败：" -ForegroundColor Red
-        Write-Host $r2.Output
-        exit 1
-    }
-    Write-Host " 成功（经代理）" -ForegroundColor Green
+    Write-Host "    拉取失败（可能有冲突），输出如下：" -ForegroundColor Yellow
+    Write-Host $pull.Output
+    Write-Host "    请手动处理后重试" -ForegroundColor Red
+    exit 1
 }
 
-Write-Host "==> 3/3 完成" -ForegroundColor Cyan
-Write-Host "    GitHub Actions 会自动构建部署，约 1-2 分钟后生效"
-Write-Host "    查看进度：https://github.com/TANGJIN13/tangjin-blog/actions"
-Write-Host "    线上站点：https://tangjin.xyz" -ForegroundColor Green
+# ---------- 4. 推送 ----------
+Write-Host "==> 4/4 推送到 GitHub" -ForegroundColor Cyan
+$push = Invoke-Git ($netArgs + @('push'))
+if ($push.Code -ne 0) {
+    Write-Host "    推送失败：" -ForegroundColor Red
+    Write-Host $push.Output
+    exit 1
+}
+Write-Host "    推送成功" -ForegroundColor Green
+
+Write-Host ""
+Write-Host "Actions 会自动构建部署，约 1-2 分钟后生效" -ForegroundColor Cyan
+Write-Host "  进度：https://github.com/TANGJIN13/tangjin-blog/actions"
+Write-Host "  站点：https://tangjin.xyz" -ForegroundColor Green
