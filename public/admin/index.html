@@ -626,8 +626,12 @@ ${body}
   const icoSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>';
   // 默认分类图标（SVG inline）
   async function fetchFileContent(path) {
-    const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}?ref=${cfg.branch}`, {
-      headers: { Authorization: `token ${cfg.token}`, Accept: 'application/vnd.github.v3+json' }
+    const token = localStorage.getItem('gh_token') || '';
+    const owner = localStorage.getItem('gh_owner') || 'TANGJIN13';
+    const repo = localStorage.getItem('gh_repo') || 'tangjin-blog';
+    const branch = localStorage.getItem('gh_branch') || 'main';
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`, {
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json' }
     });
     if (!res.ok) throw new Error(`读取失败 HTTP ${res.status}`);
     const data = await res.json();
@@ -636,9 +640,13 @@ ${body}
   }
 
   async function saveFileContent(path, content, message, sha) {
-    const res = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`, {
+    const token = localStorage.getItem('gh_token') || '';
+    const owner = localStorage.getItem('gh_owner') || 'TANGJIN13';
+    const repo = localStorage.getItem('gh_repo') || 'tangjin-blog';
+    const branch = localStorage.getItem('gh_branch') || 'main';
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${path}`, {
       method: 'PUT',
-      headers: { Authorization: `token ${cfg.token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      headers: { Authorization: `token ${token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message,
         content: btoa(unescape(encodeURIComponent(content))),
