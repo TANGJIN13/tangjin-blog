@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
@@ -521,7 +521,10 @@
     const date = new Date().toISOString().slice(0, 10);
     const filename = `src/content/posts/${date}-${slug}.md`;
 
-    const tagList = tags ? tags.split(/[,，]/).map(t => `"${t.trim()}"`).join(', ') : '"随笔"';
+    const tagList = tags ? tags.split(/[,，]/).map(t => {
+      const clean = t.trim().replace(/^["']+|["']+$/g, '');
+      return `"${clean}"`;
+    }).join(', ') : '"随笔"';
     const content = `---
 title: "${title}"
 description: "${desc}"
