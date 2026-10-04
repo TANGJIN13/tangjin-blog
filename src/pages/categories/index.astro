@@ -1,0 +1,102 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { getCollection } from 'astro:content';
+import { categories } from '../../data/categories';
+import { site } from '../../site';
+
+const posts = await getCollection('posts');
+
+// 按分类统计
+const categoryPosts = categories.map((cat) => ({
+  ...cat,
+  count: posts.filter((p) => p.data.category === cat.slug || p.data.tags.includes(cat.name)).length,
+})).filter((c) => c.count > 0);
+---
+
+<Base title="分类">
+  <div class="post-layout">
+    <article class="post-main">
+      <header class="post-head">
+        <div class="cover">
+          <div class="cover-placeholder">
+            <Icon name="folder" size="2.5rem" />
+          </div>
+        </div>
+        <h1 class="post-title">分类</h1>
+        <p class="post-desc">按分类浏览文章</p>
+      </header>
+
+      <div class="post-body custom-md">
+        <div class="categories-grid">
+          {categoryPosts.map((cat, i) => (
+            <a class="category-card glass onload-animation" href={`/categories/${cat.slug}/`} style={`animation-delay: ${i * 0.08}s`}>
+              <span class="category-icon"><Icon name={cat.icon || 'folder'} size="1.6rem" /></span>
+              <div class="category-info">
+                <h3 class="category-name">{cat.name}</h3>
+                <p class="category-desc">{cat.description || ''}</p>
+              </div>
+              <span class="category-count">{cat.count}</span>
+            </a>
+          ))}
+          {categoryPosts.length === 0 && (
+            <div class="card-base empty-state">
+              <div class="empty-icon"><Icon name="folder" size="2.5rem" /></div>
+              <p>还没有文章分类，编辑文章时添加 category frontmatter</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </article>
+
+    <aside class="post-toc">
+      <div class="card-base toc-card">
+        <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 分类</h3>
+        <nav class="toc-nav">
+          {categoryPosts.map((cat) => (
+            <a class="toc-item" href={`/categories/${cat.slug}/`}>
+              <Icon name={cat.icon || 'folder'} size="1rem" /> {cat.name} <span class="tag-count">{cat.count}</span>
+            </a>
+          ))}
+        </nav>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  .post-head { margin-bottom: 2rem; }
+  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
+  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
+  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; letter-spacing: -0.02em; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
+  .post-body { font-size: 1.02rem; }
+
+  .categories-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+  .category-card {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1rem 1.2rem; border-radius: var(--radius-lg);
+    text-decoration: none !important; background: none !important;
+    transition: all 0.25s ease;
+  }
+  .category-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .category-icon { font-size: 1.8rem; }
+  .category-info { flex: 1; min-width: 0; }
+  .category-name { margin: 0; font-size: 1rem; font-weight: 600; }
+  .category-desc { margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--text-faint); }
+  .category-count { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+
+  .empty-state { text-align: center; padding: 3rem; }
+  .empty-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .empty-state p { color: var(--text-faint); font-size: 0.9rem; }
+
+  .post-toc { position: sticky; top: 70px; align-self: start; }
+  .toc-card { padding: 1rem; }
+  .toc-nav { display: flex; flex-direction: column; gap: 0.15rem; }
+  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none !important; background: none !important; transition: all 0.15s ease; border-left: 2px solid transparent; display: flex; align-items: center; justify-content: space-between; }
+  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
+
+  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+</style>

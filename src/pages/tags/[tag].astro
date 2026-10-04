@@ -1,0 +1,74 @@
+---
+import Base from '../../layouts/Base.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPublishedPosts, getTags } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const tags = await getTags();
+  return tags.map((t) => ({
+    params: { tag: t.tag },
+    props: { tag: t.tag },
+  }));
+}
+
+const { tag } = Astro.props;
+const posts = (await getPublishedPosts()).filter((p) => p.data.tags.includes(tag));
+---
+
+<Base title={`标签：${tag}`}>
+  <div class="container">
+    <header class="page-head">
+      <h1>#{tag}</h1>
+      <p>{posts.length} 篇文章</p>
+    </header>
+
+    {
+      posts.length > 0 ? (
+        <div class="grid">
+          {posts.map((p) => <PostCard post={p} />)}
+        </div>
+      ) : (
+        <div class="empty"><p>这个标签下还没有文章。</p></div>
+      )
+    }
+
+    <p class="back">
+      <a href="/tags/">← 返回全部标签</a>
+    </p>
+  </div>
+</Base>
+
+<style>
+  .page-head {
+    padding: 2.5rem 0 1.5rem;
+    text-align: center;
+  }
+
+  .page-head h1 {
+    font-size: 2rem;
+    color: var(--primary-strong);
+  }
+
+  .page-head p {
+    color: var(--text-soft);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .empty {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-soft);
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-lg);
+  }
+
+  .back {
+    margin-top: 2rem;
+  }
+</style>

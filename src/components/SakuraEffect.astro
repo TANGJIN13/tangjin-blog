@@ -1,0 +1,263 @@
+---
+// 樱花飘落特效 —— canvas 实现，轻量可开关
+// 包含：樱花花瓣 + 闪光粒子 + 鼠标跟随光晕
+// 移动端默认关闭以省性能
+import Icon from './Icon.astro';
+---
+
+<canvas id="sakura-canvas" aria-hidden="true"></canvas>
+<button class="sakura-toggle" id="sakura-toggle" title="切换特效" aria-label="切换特效">
+  <Icon name="sparkle" size="1.05rem" />
+</button>
+
+<script>
+  const canvas = document.getElementById('sakura-canvas') as HTMLCanvasElement;
+  const ctx = canvas.getContext('2d')!;
+  const toggleBtn = document.getElementById('sakura-toggle') as HTMLButtonElement;
+
+  let enabled = false;
+  let animId = 0;
+  let petals: Petal[] = [];
+  let sparkles: Sparkle[] = [];
+  let mouse = { x: -1000, y: -1000 };
+
+  interface Petal {
+    x: number; y: number;
+    size: number; speedY: number; speedX: number;
+    rotation: number; rotSpeed: number;
+    opacity: number; color: string;
+    swing: number; swingSpeed: number;
+  }
+
+  interface Sparkle {
+    x: number; y: number;
+    size: number; opacity: number;
+    speed: number; angle: number;
+    color: string; life: number; maxLife: number;
+  }
+
+  const PETAL_COLORS = ['#ffb7c5', '#ffc0cb', '#ff9eb5', '#ffd1dc', '#f8c8dc', '#ffafaf'];
+  const SPARKLE_COLORS = ['#fff', '#ffe4f0', '#ffd7ec', '#fff0f5', '#ffe0ec'];
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+
+  function createPetal(): Petal {
+    return {
+      x: Math.random() * canvas.width,
+      y: -20 - Math.random() * 100,
+      size: 5 + Math.random() * 9,
+      speedY: 0.4 + Math.random() * 1.0,
+      speedX: -0.3 + Math.random() * 0.6,
+      rotation: Math.random() * Math.PI * 2,
+      rotSpeed: -0.02 + Math.random() * 0.04,
+      opacity: 0.3 + Math.random() * 0.5,
+      color: PETAL_COLORS[Math.floor(Math.random() * PETAL_COLORS.length)],
+      swing: 0,
+      swingSpeed: 0.01 + Math.random() * 0.02,
+    };
+  }
+
+  function createSparkle(): Sparkle {
+    return {
+      x: mouse.x + (Math.random() - 0.5) * 60,
+      y: mouse.y + (Math.random() - 0.5) * 60,
+      size: 1 + Math.random() * 3,
+      opacity: 0,
+      speed: 0.5 + Math.random() * 1.5,
+      angle: Math.random() * Math.PI * 2,
+      color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)],
+      life: 0,
+      maxLife: 30 + Math.random() * 40,
+    };
+  }
+
+  function drawPetal(p: Petal) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rotation);
+    ctx.globalAlpha = p.opacity;
+    ctx.fillStyle = p.color;
+
+    // 花瓣形状
+    ctx.beginPath();
+    ctx.moveTo(0, -p.size);
+    ctx.bezierCurveTo(p.size * 0.5, -p.size * 0.5, p.size * 0.5, p.size * 0.3, 0, p.size * 0.6);
+    ctx.bezierCurveTo(-p.size * 0.5, p.size * 0.3, -p.size * 0.5, -p.size * 0.5, 0, -p.size);
+    ctx.fill();
+
+    // 花瓣渐变高光
+    ctx.globalAlpha = p.opacity * 0.4;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(-p.size * 0.15, -p.size * 0.2, p.size * 0.15, p.size * 0.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function drawSparkle(s: Sparkle) {
+    const fadeIn = Math.min(s.life / 10, 1);
+    const fadeOut = Math.min((s.maxLife - s.life) / 15, 1);
+    const alpha = s.opacity * fadeIn * fadeOut;
+    if (alpha <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = s.color;
+    ctx.shadowColor = s.color;
+    ctx.shadowBlur = 6;
+
+    // 十字星形状
+    ctx.translate(s.x, s.y);
+    ctx.beginPath();
+    ctx.moveTo(0, -s.size);
+    ctx.lineTo(s.size * 0.2, -s.size * 0.2);
+    ctx.lineTo(s.size, 0);
+    ctx.lineTo(s.size * 0.2, s.size * 0.2);
+    ctx.lineTo(0, s.size);
+    ctx.lineTo(-s.size * 0.2, s.size * 0.2);
+    ctx.lineTo(-s.size, 0);
+    ctx.lineTo(-s.size * 0.2, -s.size * 0.2);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  // 获取 CSS 变量 --hue 的实际值
+  function getHue() {
+    return getComputedStyle(document.documentElement).getPropertyValue('--hue').trim() || '250';
+  }
+
+  // 鼠标跟随光晕
+  function drawMouseGlow() {
+    if (mouse.x < 0) return;
+    const hue = getHue();
+    ctx.save();
+    const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 120);
+    grad.addColorStop(0, `hsl(${hue} 80% 70% / 0.08)`);
+    grad.addColorStop(0.5, `hsl(${hue} 80% 70% / 0.03)`);
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(mouse.x - 120, mouse.y - 120, 240, 240);
+    ctx.restore();
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 鼠标跟随光晕
+    drawMouseGlow();
+
+    // 樱花花瓣
+    for (const p of petals) {
+      p.y += p.speedY;
+      p.x += p.speedX + Math.sin(p.swing) * 0.5;
+      p.swing += p.swingSpeed;
+      p.rotation += p.rotSpeed;
+      if (p.y > canvas.height + 20) {
+        Object.assign(p, createPetal());
+      }
+      drawPetal(p);
+    }
+
+    // 闪光粒子
+    if (enabled && mouse.x > 0) {
+      // 偶尔在鼠标周围生成新闪光
+      if (Math.random() < 0.3) {
+        sparkles.push(createSparkle());
+      }
+    }
+    for (let i = sparkles.length - 1; i >= 0; i--) {
+      const s = sparkles[i];
+      s.life++;
+      s.x += Math.cos(s.angle) * s.speed;
+      s.y += Math.sin(s.angle) * s.speed - 0.3;
+      s.opacity = 1;
+      drawSparkle(s);
+      if (s.life >= s.maxLife) {
+        sparkles.splice(i, 1);
+      }
+    }
+
+    animId = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    resize();
+    petals = Array.from({ length: 35 }, createPetal);
+    sparkles = [];
+    tick();
+  }
+
+  function stop() {
+    cancelAnimationFrame(animId);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    petals = [];
+    sparkles = [];
+  }
+
+  function setEnabled(on: boolean) {
+    enabled = on;
+    toggleBtn.classList.toggle('active', on);
+    if (on) start();
+    else stop();
+  }
+
+  toggleBtn.addEventListener('click', () => setEnabled(!enabled));
+  window.addEventListener('mousemove', (e) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+  window.addEventListener('mouseleave', () => {
+    mouse.x = -1000;
+    mouse.y = -1000;
+  });
+  window.addEventListener('resize', () => enabled && resize());
+
+  // 桌面端默认开启，移动端默认关闭
+  if (window.innerWidth < 768) {
+    setEnabled(false);
+  } else {
+    setEnabled(true);
+  }
+</script>
+
+<style>
+  #sakura-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .sakura-toggle {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 30;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    opacity: 0.6;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+
+  .sakura-toggle:hover,
+  .sakura-toggle.active {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+
+  .sakura-toggle.active {
+    box-shadow: var(--shadow-glow);
+  }
+</style>

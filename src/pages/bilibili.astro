@@ -1,0 +1,97 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+
+interface BiliItem {
+  title: string;
+  cover: string;
+  url: string;
+  duration?: string;
+}
+
+// 在这里添加你的 B 站视频/收藏
+const biliItems: BiliItem[] = [
+  // { title: '视频标题', cover: '/images/bili/xxx.jpg', url: 'https://www.bilibili.com/video/BVxxxxx', duration: '10:30' },
+];
+---
+
+<Base title="B站">
+  <div class="post-layout">
+    <article class="post-main">
+      <header class="post-head">
+        <div class="cover">
+          <div class="cover-placeholder">
+            <Icon name="play_circle" size="2.5rem" />
+          </div>
+        </div>
+        <h1 class="post-title">B站</h1>
+        <p class="post-desc">我的 B 站视频与收藏</p>
+      </header>
+
+      <div class="post-body custom-md">
+        {biliItems.length > 0 ? (
+          <div class="bili-grid">
+            {biliItems.map((item, i) => (
+              <a class="bili-card glass onload-animation" href={item.url} target="_blank" rel="noopener" style={`animation-delay: ${i * 0.06}s`}>
+                <div class="bili-cover">
+                  <img src={item.cover} alt={item.title} loading="lazy" />
+                  {item.duration && <span class="bili-duration">{item.duration}</span>}
+                </div>
+                <h3 class="bili-title">{item.title}</h3>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="card-base empty-state">
+            <div class="empty-icon"><Icon name="play_circle" size="2.5rem" /></div>
+            <p>还没有添加 B 站内容，去编辑 src/pages/bilibili.astro 添加吧</p>
+          </div>
+        )}
+      </div>
+    </article>
+
+    <aside class="post-toc">
+      <div class="card-base toc-card">
+        <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 信息</h3>
+        <div class="toc-nav">
+          <span class="toc-item"><Icon name="play_circle" size="1rem" /> {biliItems.length} 个视频</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  .post-head { margin-bottom: 2rem; }
+  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
+  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
+  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; letter-spacing: -0.02em; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
+  .post-body { font-size: 1.02rem; }
+
+  .bili-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+  .bili-card {
+    border-radius: var(--radius-lg); overflow: hidden;
+    text-decoration: none !important; background: none !important;
+    transition: all 0.25s ease;
+  }
+  .bili-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+  .bili-cover { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+  .bili-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+  .bili-card:hover .bili-cover img { transform: scale(1.05); }
+  .bili-duration { position: absolute; bottom: 0.4rem; right: 0.4rem; background: rgba(0,0,0,0.75); color: #fff; font-size: 0.7rem; padding: 0.15rem 0.4rem; border-radius: 0.25rem; }
+  .bili-title { margin: 0.6rem 0.8rem 0.8rem; font-size: 0.9rem; font-weight: 600; color: var(--text); }
+
+  .empty-state { text-align: center; padding: 3rem; }
+  .empty-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  .empty-state p { color: var(--text-faint); font-size: 0.9rem; }
+
+  .post-toc { position: sticky; top: 70px; align-self: start; }
+  .toc-card { padding: 1rem; }
+  .toc-nav { display: flex; flex-direction: column; gap: 0.2rem; }
+  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); border-left: 2px solid transparent; }
+
+  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+</style>

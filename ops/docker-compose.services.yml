@@ -1,0 +1,31 @@
+services:
+  waline:
+    image: lizheming/waline:latest
+    container_name: waline
+    restart: always
+    ports:
+      - "8365:8360"
+    environment:
+      - MYSQL_HOST=host.docker.internal
+      - MYSQL_PORT=3306
+      - MYSQL_DB=waline
+      - MYSQL_USER=waline
+      - MYSQL_PASSWORD=waline_pass_2026
+      - SITE_URL=https://tangjin.xyz
+      - SECURE=false
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  umami:
+    image: ghcr.io/umami-software/umami:mysql-latest
+    container_name: umami
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - DATABASE_URL=mysql://umami:umami_pass_2026@host.docker.internal:3306/umami
+      - DATABASE_TYPE=mysql
+      - HASH_SALT=tangjin_blog_salt_2026
+    command: ["npm", "run", "start-server"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

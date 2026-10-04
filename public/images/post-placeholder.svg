@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400" role="img" aria-label="文章封面占位">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eae8ff"/>
+      <stop offset="1" stop-color="#e2f2ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#g)"/>
+  <g fill="none" stroke="#9d92ff" stroke-opacity="0.4" stroke-width="2">
+    <circle cx="400" cy="200" r="70"/>
+    <circle cx="400" cy="200" r="110"/>
+  </g>
+  <path d="M400 130 L440 190 L400 270 L360 190 Z" fill="#8f84ff" fill-opacity="0.5"/>
+</svg>

@@ -1,0 +1,88 @@
+---
+// 主题切换组件 —— 亮色 / 暗色 / 跟随系统
+import Icon from './Icon.astro';
+---
+
+<div class="theme-toggle" id="theme-toggle">
+  <button class="theme-btn" data-theme="light" title="亮色" aria-label="亮色模式">
+    <Icon name="sun" size="1.05rem" />
+  </button>
+  <button class="theme-btn" data-theme="dark" title="暗色" aria-label="暗色模式">
+    <Icon name="moon" size="1.05rem" />
+  </button>
+  <button class="theme-btn" data-theme="system" title="跟随系统" aria-label="跟随系统">
+    <Icon name="monitor" size="1.05rem" />
+  </button>
+</div>
+
+<script>
+  const root = document.documentElement;
+  const toggle = document.getElementById('theme-toggle')!;
+  const buttons = toggle.querySelectorAll<HTMLButtonElement>('.theme-btn');
+  const STORAGE_KEY = 'theme-preference';
+
+  function getSystemTheme(): 'light' | 'dark' {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+
+  function applyTheme(pref: 'light' | 'dark' | 'system') {
+    const effective = pref === 'system' ? getSystemTheme() : pref;
+    root.setAttribute('data-theme', effective);
+    buttons.forEach((b) => b.classList.toggle('active', b.dataset.theme === pref));
+    try {
+      localStorage.setItem(STORAGE_KEY, pref);
+    } catch {}
+  }
+
+  function getStored(): 'light' | 'dark' | 'system' {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v === 'light' || v === 'dark' || v === 'system') return v;
+    } catch {}
+    return 'system';
+  }
+
+  buttons.forEach((b) => {
+    b.addEventListener('click', () => applyTheme(b.dataset.theme as 'light' | 'dark' | 'system'));
+  });
+
+  // 跟随系统时，系统主题变化要实时响应
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    if (getStored() === 'system') applyTheme('system');
+  });
+
+  applyTheme(getStored());
+</script>
+
+<style>
+  .theme-toggle {
+    display: flex;
+    gap: 0.3rem;
+    padding: 0.25rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  .theme-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.15s ease;
+  }
+
+  .theme-btn:hover {
+    background: var(--surface);
+  }
+
+  .theme-btn.active {
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+  }
+</style>

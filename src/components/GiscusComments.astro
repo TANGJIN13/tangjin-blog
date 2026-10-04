@@ -1,0 +1,48 @@
+---
+// Giscus 评论组件 —— GitHub Discussions 驱动的评论系统
+// 支持 GitHub 登录评论 + 匿名（通过 GitHub 账号）
+interface Props {
+  repo?: string;
+  repoId?: string;
+  category?: string;
+  categoryId?: string;
+}
+
+const {
+  repo = 'TANGJIN13/tangjin-blog-comments',
+  repoId = 'R_kgDOU7LPDA',
+  category = 'Comments',
+  categoryId = 'DIC_kwDOU7LPDM4DHAgr',
+} = Astro.props;
+---
+
+<div id="comments" class="giscus-container"></div>
+
+<script is:inline src="https://giscus.app/client.js"
+  data-repo={repo}
+  data-repo-id={repoId}
+  data-category={category}
+  data-category-id={categoryId}
+  data-mapping="pathname"
+  data-strict="0"
+  data-reactions-enabled="1"
+  data-emit-metadata="0"
+  data-input-position="bottom"
+  data-theme="preferred_color_scheme"
+  data-lang="zh-CN"
+  data-loading="lazy"
+  crossorigin="anonymous"
+  async>
+</script>
+
+<style>
+  .giscus-container {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+  /* Giscus iframe 宽度自适应 */
+  .giscus-container :global(iframe) {
+    width: 100% !important;
+  }
+</style>

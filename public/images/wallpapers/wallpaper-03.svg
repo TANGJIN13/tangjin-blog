@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#a8c8f0"/>
+      <stop offset="35%" stop-color="#cfe0f7"/>
+      <stop offset="65%" stop-color="#f6dfe9"/>
+      <stop offset="100%" stop-color="#fce8ef"/>
+    </linearGradient>
+    <radialGradient id="sun3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="30%" stop-color="#fff4e0" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ffe0c0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mtn3a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9db8dd"/>
+      <stop offset="100%" stop-color="#7d9bc9"/>
+    </linearGradient>
+    <linearGradient id="mtn3b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8fa9cf"/>
+      <stop offset="100%" stop-color="#6484b5"/>
+    </linearGradient>
+    <linearGradient id="mtn3c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7b96c0"/>
+      <stop offset="100%" stop-color="#4d6a9c"/>
+    </linearGradient>
+    <linearGradient id="snow3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.15"/>
+    </linearGradient>
+    <radialGradient id="petal3" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffd9e6"/>
+      <stop offset="100%" stop-color="#ffb3ce"/>
+    </radialGradient>
+    <filter id="soft3"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+
+  <rect width="1920" height="800" fill="url(#sky3)"/>
+
+  <!-- 太阳 -->
+  <circle cx="1450" cy="180" r="300" fill="url(#sun3)"/>
+  <circle cx="1450" cy="180" r="70" fill="#fffdf8"/>
+
+  <!-- 云 -->
+  <g filter="url(#soft3)" opacity="0.75" fill="#ffffff">
+    <ellipse cx="420" cy="180" rx="320" ry="40"/>
+    <ellipse cx="700" cy="230" rx="240" ry="30"/>
+    <ellipse cx="1300" cy="330" rx="300" ry="34"/>
+    <ellipse cx="300" cy="380" rx="260" ry="28"/>
+  </g>
+
+  <!-- 远山（带雪顶） -->
+  <path d="M0 500 L190 350 L330 450 L500 300 L660 440 L830 340 L1000 470 L1170 360 L1340 480 L1520 380 L1700 500 L1860 420 L1920 470 L1920 800 L0 800 Z"
+        fill="url(#mtn3a)"/>
+  <path d="M500 300 L560 355 L520 370 L500 340 L470 372 L440 355 Z" fill="url(#snow3)"/>
+  <path d="M190 350 L240 400 L205 410 L190 385 L170 410 L145 400 Z" fill="url(#snow3)"/>
+  <path d="M830 340 L885 392 L848 400 L830 375 L808 400 L788 390 Z" fill="url(#snow3)"/>
+  <path d="M1520 380 L1570 425 L1535 435 L1520 412 L1500 435 L1480 425 Z" fill="url(#snow3)"/>
+
+  <!-- 中景山 -->
+  <path d="M0 610 L230 500 L440 590 L660 490 L880 600 L1100 505 L1320 605 L1540 515 L1760 610 L1920 545 L1920 800 L0 800 Z"
+        fill="url(#mtn3b)"/>
+
+  <!-- 近景山 -->
+  <path d="M0 700 L260 625 L520 700 L780 630 L1040 705 L1300 640 L1560 710 L1820 650 L1920 685 L1920 800 L0 800 Z"
+        fill="url(#mtn3c)"/>
+
+  <!-- 樱花枝（左上） -->
+  <g stroke="#6b4a5a" stroke-width="7" fill="none" stroke-linecap="round" opacity="0.9">
+    <path d="M0 60 Q140 90 250 60 Q340 38 400 70"/>
+    <path d="M160 76 Q210 130 200 190"/>
+    <path d="M290 58 Q330 110 320 155"/>
+  </g>
+  <g fill="url(#petal3)" opacity="0.92">
+    <circle cx="120" cy="72" r="15"/><circle cx="152" cy="86" r="13"/><circle cx="86" cy="80" r="12"/>
+    <circle cx="200" cy="140" r="14"/><circle cx="196" cy="180" r="12"/><circle cx="230" cy="120" r="13"/>
+    <circle cx="318" cy="110" r="13"/><circle cx="318" cy="146" r="11"/><circle cx="352" cy="80" r="12"/>
+    <circle cx="250" cy="58" r="14"/><circle cx="380" cy="66" r="13"/>
+  </g>
+
+  <!-- 樱花枝（右上） -->
+  <g stroke="#6b4a5a" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M1920 90 Q1800 120 1700 90 Q1620 66 1560 96"/>
+    <path d="M1780 106 Q1740 150 1748 200"/>
+  </g>
+  <g fill="url(#petal3)" opacity="0.88">
+    <circle cx="1830" cy="100" r="13"/><circle cx="1760" cy="118" r="12"/><circle cx="1700" cy="88" r="14"/>
+    <circle cx="1750" cy="170" r="12"/><circle cx="1620" cy="92" r="12"/><circle cx="1580" cy="100" r="11"/>
+  </g>
+
+  <!-- 飘落花瓣 -->
+  <g fill="#ffc4d8" opacity="0.8">
+    <ellipse cx="380" cy="240" rx="9" ry="6" transform="rotate(-25 380 240)"/>
+    <ellipse cx="620" cy="320" rx="8" ry="5" transform="rotate(15 620 320)"/>
+    <ellipse cx="900" cy="200" rx="10" ry="6" transform="rotate(-40 900 200)"/>
+    <ellipse cx="1120" cy="330" rx="8" ry="5" transform="rotate(30 1120 330)"/>
+    <ellipse cx="1380" cy="420" rx="9" ry="6" transform="rotate(-15 1380 420)"/>
+    <ellipse cx="1600" cy="300" rx="8" ry="5" transform="rotate(45 1600 300)"/>
+    <ellipse cx="760" cy="440" rx="9" ry="6" transform="rotate(-30 760 440)"/>
+    <ellipse cx="480" cy="470" rx="8" ry="5" transform="rotate(20 480 470)"/>
+    <ellipse cx="1720" cy="460" rx="9" ry="6" transform="rotate(-50 1720 460)"/>
+    <ellipse cx="1040" cy="480" rx="8" ry="5" transform="rotate(10 1040 480)"/>
+  </g>
+
+  <!-- 飘落花瓣（浅色远景） -->
+  <g fill="#ffe2ec" opacity="0.55">
+    <ellipse cx="260" cy="360" rx="7" ry="4" transform="rotate(-20 260 360)"/>
+    <ellipse cx="840" cy="290" rx="7" ry="4" transform="rotate(35 840 290)"/>
+    <ellipse cx="1260" cy="230" rx="7" ry="4" transform="rotate(-45 1260 230)"/>
+    <ellipse cx="1480" cy="500" rx="7" ry="4" transform="rotate(25 1480 500)"/>
+    <ellipse cx="660" cy="530" rx="7" ry="4" transform="rotate(-10 660 530)"/>
+  </g>
+</svg>

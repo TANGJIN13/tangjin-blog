@@ -1,0 +1,111 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('posts');
+const postData = posts.map((p) => ({
+  id: p.id,
+  title: p.data.title,
+  description: p.data.description,
+  tags: p.data.tags,
+  published: p.data.published,
+})).sort((a, b) => b.published.valueOf() - a.published.valueOf());
+---
+
+<Base title="搜索">
+  <div class="post-layout">
+    <article class="post-main">
+      <header class="post-head">
+        <div class="cover">
+          <div class="cover-placeholder">
+            <Icon name="search" size="2.5rem" />
+          </div>
+        </div>
+        <h1 class="post-title">搜索</h1>
+        <p class="post-desc">搜索文章标题、描述、标签</p>
+      </header>
+
+      <div class="post-body custom-md">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="输入关键词搜索..." class="search-input" />
+          <span class="search-count" id="search-count">{postData.length} 篇文章</span>
+        </div>
+
+        <div class="search-results" id="search-results">
+          {postData.map((p, i) => (
+            <a class="search-result-item glass onload-animation" href={`/posts/${p.id}/`} style={`animation-delay: ${i * 0.04}s`} data-search={`${p.title} ${p.description} ${p.tags.join(' ')}`}>
+              <h3 class="result-title">{p.title}</h3>
+              <p class="result-desc">{p.description}</p>
+              <div class="result-meta">
+                <time>{p.published.toISOString().slice(0, 10)}</time>
+                {p.tags.length > 0 && <span class="result-tags">{p.tags.map(t => `#${t}`).join(' ')}</span>}
+              </div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </article>
+
+    <aside class="post-toc">
+      <div class="card-base toc-card">
+        <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 统计</h3>
+        <div class="toc-nav">
+          <span class="toc-item"><Icon name="text" size="1rem" /> {postData.length} 篇文章</span>
+        </div>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<script>
+  const input = document.getElementById('search-input');
+  const count = document.getElementById('search-count');
+  const results = document.querySelectorAll('.search-result-item');
+  input.addEventListener('input', () => {
+    const q = input.value.toLowerCase().trim();
+    let visible = 0;
+    results.forEach((el) => {
+      const text = el.dataset.search.toLowerCase();
+      const match = !q || text.includes(q);
+      el.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    count.textContent = `${visible} 篇匹配`;
+  });
+</script>
+
+<style>
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  .post-head { margin-bottom: 2rem; }
+  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
+  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
+  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; letter-spacing: -0.02em; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
+  .post-body { font-size: 1.02rem; }
+
+  .search-box { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+  .search-input { flex: 1; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem; background: var(--surface); color: var(--text); transition: border-color 0.15s ease; }
+  .search-input:focus { outline: none; border-color: var(--primary); }
+  .search-count { font-size: 0.85rem; color: var(--text-faint); white-space: nowrap; }
+
+  .search-results { display: flex; flex-direction: column; gap: 0.6rem; }
+  .search-result-item {
+    padding: 1rem 1.2rem; border-radius: var(--radius-lg);
+    text-decoration: none !important; background: none !important;
+    transition: all 0.2s ease;
+  }
+  .search-result-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .result-title { margin: 0 0 0.3rem; font-size: 1.05rem; font-weight: 600; color: var(--text); }
+  .result-desc { margin: 0 0 0.4rem; font-size: 0.88rem; color: var(--text-soft); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .result-meta { display: flex; gap: 0.6rem; font-size: 0.78rem; color: var(--text-faint); }
+  .result-tags { color: var(--primary-strong); }
+
+  .post-toc { position: sticky; top: 70px; align-self: start; }
+  .toc-card { padding: 1rem; }
+  .toc-nav { display: flex; flex-direction: column; gap: 0.15rem; }
+  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); border-left: 2px solid transparent; }
+
+  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+</style>

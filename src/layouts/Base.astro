@@ -1,0 +1,340 @@
+---
+import '../styles/global.css';
+import { site } from '../site';
+import Icon from '../components/Icon.astro';
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  narrow?: boolean;
+  /** 页面顶部是否有壁纸横幅（有则内容下沉，导航悬浮其上） */
+  banner?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  image = `${site.url}/images/wallpapers/wallpaper-01.svg`,
+  narrow = false,
+  banner = false,
+} = Astro.props;
+
+const navItems = [
+  { label: '首页', href: '/', icon: 'home' },
+  { label: '归档', href: '/archive/', icon: 'archive' },
+  { label: '分类', href: '/categories/', icon: 'folder' },
+  { label: '标签', href: '/tags/', icon: 'tag' },
+  { label: '友链', href: '/friends/', icon: 'link' },
+  { label: 'B站', href: '/bilibili/', icon: 'play_circle' },
+  { label: '关于', href: '/about/', icon: 'person' },
+];
+
+const fullTitle = title ? `${title}${site.titleSuffix}` : `${site.title}${site.titleSuffix}`;
+const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.pathname, site.url).href;
+---
+
+<!doctype html>
+<html lang={site.lang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.title} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={image} />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+  </head>
+  <body class:list={[{ 'has-banner': banner }]}>
+    <!-- 阅读进度条 -->
+    <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
+
+    <!-- 导航栏 —— 悬浮在壁纸之上 -->
+    <header class="top-row" id="top-row">
+      <div class="nav-grid container-fluid">
+        <a class="brand" href="/">
+          <img class="brand-avatar" src={site.avatar} alt="" width="28" height="28" />
+          <span class="brand-name">{site.title}</span>
+        </a>
+        <nav class="nav" aria-label="主导航">
+          {navItems.map((it) => (
+            <a class="nav-item" href={it.href} aria-current={Astro.url.pathname === it.href ? 'page' : undefined}>
+              <Icon name={it.icon} size="1.1rem" />
+              <span>{it.label}</span>
+            </a>
+          ))}
+        </nav>
+        <div class="nav-actions">
+          <a class="nav-btn" href="/search/" title="搜索" aria-label="搜索">
+            <Icon name="search" size="1.15rem" />
+          </a>
+          <button class="nav-btn" id="nav-theme" title="切换主题" aria-label="切换主题">
+            <Icon name="palette" size="1.15rem" />
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容 -->
+    <main class="main-layout">
+      <slot />
+    </main>
+
+    <!-- 浮动控制 -->
+    <div class="floating-controls" id="floating-controls">
+      <button class="floating-btn" id="btn-top" title="回到顶部" aria-label="回到顶部">
+        <Icon name="arrow_up" size="1.05rem" />
+      </button>
+      <button class="floating-btn" id="btn-reading" title="沉浸阅读" aria-label="沉浸阅读">
+        <Icon name="book" size="1.05rem" />
+      </button>
+      <button class="floating-btn" id="btn-wallpaper" title="切换壁纸" aria-label="切换壁纸">
+        <Icon name="image" size="1.05rem" />
+      </button>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p>© {site.footer.since}–{new Date().getFullYear()} {site.author}</p>
+        {site.icp && <p><a href="https://beian.miit.gov.cn/" rel="nofollow" target="_blank">{site.icp}</a></p>}
+        <p class="footer-note">由 Astro 构建 · 静态托管 · 关注安全</p>
+      </div>
+    </footer>
+
+    <script>
+      // 阅读进度
+      const bar = document.getElementById('reading-progress');
+      if (bar) {
+        window.addEventListener('scroll', () => {
+          const h = document.documentElement;
+          const st = h.scrollTop || document.body.scrollTop;
+          const sh = h.scrollHeight - h.clientHeight;
+          bar.style.width = (sh > 0 ? (st / sh) * 100 : 0) + '%';
+        }, { passive: true });
+      }
+
+      // 导航栏滚动变玻璃
+      const topRow = document.getElementById('top-row');
+      const onScroll = () => {
+        topRow?.classList.toggle('scrolled', window.scrollY > 40);
+        const show = window.scrollY > 300;
+        document.querySelectorAll('.floating-btn').forEach(b => b.classList.toggle('visible', show));
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+
+      // 回到顶部
+      document.getElementById('btn-top')?.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // 沉浸阅读
+      const readingBtn = document.getElementById('btn-reading');
+      if (readingBtn) {
+        readingBtn.addEventListener('click', () => {
+          document.body.classList.toggle('immersive-reading');
+          readingBtn.classList.toggle('active');
+          try {
+            localStorage.setItem('immersive-reading',
+              document.body.classList.contains('immersive-reading') ? '1' : '0');
+          } catch {}
+        });
+        if (localStorage.getItem('immersive-reading') === '1') {
+          document.body.classList.add('immersive-reading');
+          readingBtn.classList.add('active');
+        }
+      }
+
+      // 壁纸切换
+      const wpBtn = document.getElementById('btn-wallpaper');
+      wpBtn?.addEventListener('click', () => {
+        const slides = document.querySelectorAll('.wp-slide');
+        if (!slides.length) return;
+        const active = [...slides].findIndex(s => s.classList.contains('active'));
+        slides[active].classList.remove('active');
+        slides[(active + 1) % slides.length].classList.add('active');
+      });
+
+      // 主题切换
+      const root = document.documentElement;
+      const themeBtn = document.getElementById('nav-theme');
+      const apply = (t) => {
+        const eff = t === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : t;
+        root.setAttribute('data-theme', eff);
+        try { localStorage.setItem('theme', t); } catch {}
+      };
+      // 首屏恢复
+      (() => {
+        const saved = localStorage.getItem('theme') || 'system';
+        apply(saved);
+      })();
+      themeBtn?.addEventListener('click', () => {
+        const order = ['light', 'dark', 'system'];
+        const cur = localStorage.getItem('theme') || 'system';
+        apply(order[(order.indexOf(cur) + 1) % order.length]);
+      });
+    </script>
+  </body>
+</html>
+
+<style>
+  /* ============ 顶部导航 ============ */
+  .top-row {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--navbar-height);
+    z-index: 80;
+    transition: background-color 0.35s ease, backdrop-filter 0.35s ease, border-color 0.35s ease;
+    border-bottom: 1px solid transparent;
+  }
+
+  /* 滚动后变玻璃 */
+  .top-row.scrolled {
+    background: oklch(100% 0 0 / 0.72);
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border-bottom-color: var(--border);
+  }
+  [data-theme='dark'] .top-row.scrolled {
+    background: oklch(14% 0.015 250 / 0.75);
+  }
+
+  .container-fluid {
+    width: 92%;
+    max-width: var(--page-width);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  .nav-grid {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    height: var(--navbar-height);
+    gap: 1rem;
+  }
+
+  /* 品牌 —— 头像 + 站名（贴最左） */
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-decoration: none !important;
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+  }
+  .brand-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface);
+  }
+  .brand-name {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  /* 壁纸页面上方文字为白色 */
+  body.has-banner .top-row:not(.scrolled) .brand-name { color: #fff; }
+  body.has-banner .top-row:not(.scrolled) .brand { text-shadow: 0 1px 10px oklch(0% 0 0 / 0.4); }
+  body.has-banner .top-row:not(.scrolled) .brand:hover { background: oklch(100% 0 0 / 0.14); }
+
+  /* 居中导航 */
+  .nav {
+    display: flex;
+    gap: 0.15rem;
+    justify-content: center;
+  }
+  .nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none !important;
+    white-space: nowrap;
+    transition: color 0.18s ease, background-color 0.18s ease;
+  }
+  .nav-item :global(.icon) { opacity: 0.85; }
+  .nav-item:hover { color: var(--text); background: oklch(0% 0 0 / 0.05); }
+  .nav-item:hover :global(.icon) { transform: translateY(-1px); }
+  .nav-item[aria-current='page'] { color: var(--primary); background: var(--primary-soft); }
+
+  /* 壁纸页面上方导航为白色 */
+  body.has-banner .top-row:not(.scrolled) .nav-item { color: oklch(100% 0 0 / 0.88); }
+  body.has-banner .top-row:not(.scrolled) .nav-item:hover {
+    color: #fff;
+    background: oklch(100% 0 0 / 0.16);
+  }
+  body.has-banner .top-row:not(.scrolled) .nav-item[aria-current='page'] {
+    color: #fff;
+    background: oklch(100% 0 0 / 0.22);
+  }
+
+  .nav-actions { display: flex; justify-content: flex-end; gap: 0.25rem; }
+  .nav-btn {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-soft);
+    font-size: 1rem;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+  }
+  .nav-btn:hover { background: oklch(0% 0 0 / 0.05); border-color: var(--border); color: var(--primary); }
+  body.has-banner .top-row:not(.scrolled) .nav-btn { color: #fff; }
+  body.has-banner .top-row:not(.scrolled) .nav-btn:hover { background: oklch(100% 0 0 / 0.16); }
+
+  /* ============ 主内容 ============ */
+  /* 导航栏固定，无壁纸时内容需下沉让出导航高度 */
+  .main-layout { padding-block: 1.5rem; padding-top: calc(var(--navbar-height) + 1.5rem); }
+  body.has-banner .main-layout { padding-top: 0; }
+
+  /* ============ 页脚 ============ */
+  .site-footer {
+    margin-top: 3rem;
+    padding-block: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--text-soft);
+  }
+  .footer-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    text-align: center;
+    font-size: 0.88rem;
+  }
+  .footer-inner p { margin: 0; }
+  .footer-note { color: var(--text-faint); font-size: 0.78rem; }
+
+  @media (max-width: 1023px) {
+    .nav { display: none; }
+    .nav-grid { grid-template-columns: auto 1fr; }
+  }
+</style>

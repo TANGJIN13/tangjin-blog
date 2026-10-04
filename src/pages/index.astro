@@ -1,0 +1,195 @@
+---
+import Base from '../layouts/Base.astro';
+import PostCard from '../components/PostCard.astro';
+import MusicPlayer from '../components/MusicPlayer.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import HeatmapWidget from '../components/HeatmapWidget.astro';
+import WallpaperBanner from '../components/WallpaperBanner.astro';
+import Icon from '../components/Icon.astro';
+import { getPublishedPosts, getTags } from '../lib/posts';
+import { site } from '../site';
+
+const posts = await getPublishedPosts();
+const tags = await getTags();
+---
+
+<Base banner>
+  <!-- 顶部全宽壁纸 -->
+  <WallpaperBanner />
+
+  <!-- 三栏内容 -->
+  <div class="container">
+    <div class="ref-layout">
+      <!-- 左侧栏 -->
+      <aside class="ref-sidebar-left">
+        <div class="card-base profile-card onload-animation">
+          <img class="profile-avatar" src={site.avatar} alt="头像" width="72" height="72" />
+          <h3 class="profile-name">{site.title}</h3>
+          <p class="profile-bio">Web 安全 / CTF / 漏洞复现</p>
+          <nav class="profile-nav">
+            <a href="/" class="nav-item active"><Icon name="home" size="1rem" /> 首页</a>
+            <a href="/archive/" class="nav-item"><Icon name="archive" size="1rem" /> 归档</a>
+            <a href="/about/" class="nav-item"><Icon name="person" size="1rem" /> 关于</a>
+          </nav>
+        </div>
+
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+          <h3 class="widget-title"><Icon name="music" size="1.05rem" /> 音乐</h3>
+          <MusicPlayer />
+        </div>
+
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
+          <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
+          <ThemeToggle />
+        </div>
+      </aside>
+
+      <!-- 主内容 -->
+      <main class="ref-main" aria-label="文章列表">
+        <div class="section-head">
+          <h2 class="section-title"><Icon name="article" size="1.1rem" /> 最新文章</h2>
+          <span class="post-count">{posts.length} 篇</span>
+        </div>
+        <div class="post-list">
+          {posts.map((p, i) => (
+            <PostCard post={p} style={`animation-delay: ${i * 0.06}s`} />
+          ))}
+        </div>
+      </main>
+
+      <!-- 右侧栏 -->
+      <aside class="ref-sidebar-right">
+        {tags.length > 0 && (
+          <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+            <h3 class="widget-title"><Icon name="tag" size="1.05rem" /> 标签</h3>
+            <div class="tag-cloud">
+              {tags.map((t) => (
+                <a class="tag-link" href={`/tags/${t.tag}/`}>
+                  #{t.tag}<span class="tag-count">{t.count}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
+          <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
+          <div class="stats-grid">
+            <div class="stat-item"><span class="stat-num">{posts.length}</span><span class="stat-label">文章</span></div>
+            <div class="stat-item"><span class="stat-num">{tags.length}</span><span class="stat-label">标签</span></div>
+            <div class="stat-item"><span class="stat-num">{site.footer.since}</span><span class="stat-label">始于</span></div>
+          </div>
+        </div>
+
+        <HeatmapWidget />
+      </aside>
+    </div>
+  </div>
+</Base>
+
+<style>
+  /* 三栏布局 —— 严格按照参照站：280 / 1fr / 280，gap 16 */
+  .ref-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .ref-layout { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+    .ref-sidebar-right { display: none; }
+  }
+
+  @media (min-width: 1280px) {
+    .ref-layout { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--sidebar-width); }
+    .ref-sidebar-right { display: flex; }
+  }
+
+  .ref-sidebar-left, .ref-sidebar-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* 资料卡 */
+  .profile-card { text-align: center; padding: 1.25rem 1rem; }
+  .profile-avatar {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--surface);
+    box-shadow: var(--shadow-sm);
+    margin: 0 auto 0.75rem;
+  }
+  .profile-name { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.25rem; }
+  .profile-bio { font-size: 0.78rem; color: var(--text-faint); margin: 0 0 0.9rem; }
+  .profile-nav { display: flex; flex-direction: column; gap: 0.1rem; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+  }
+  .nav-item :global(.icon) { opacity: 0.8; }
+  .nav-item:hover { background: oklch(0% 0 0 / 0.04); color: var(--text); }
+  .nav-item.active { background: var(--primary-soft); color: var(--primary); }
+  .nav-item.active :global(.icon) { opacity: 1; }
+
+  /* widget 标题带图标 */
+  :global(.widget-title) {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  :global(.widget-title .icon) { color: var(--primary); }
+
+  /* 主内容 */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  .section-title :global(.icon) { color: var(--primary); }
+  .post-count { font-size: 0.8rem; color: var(--text-faint); }
+  .post-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  /* 标签 */
+  .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .tag-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.75rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    background: oklch(0% 0 0 / 0.05);
+    color: var(--text-soft);
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+  }
+  .tag-link:hover { background: var(--primary-soft); color: var(--primary); }
+  .tag-count { font-size: 0.65rem; color: var(--text-faint); }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.3rem; text-align: center; }
+  .stat-num { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+  .stat-label { font-size: 0.68rem; color: var(--text-faint); }
+
+  @media (max-width: 767px) {
+    .ref-sidebar-left, .ref-sidebar-right { flex-direction: row; flex-wrap: wrap; }
+    .ref-sidebar-left > *, .ref-sidebar-right > * { flex: 1; min-width: 200px; }
+  }
+</style>

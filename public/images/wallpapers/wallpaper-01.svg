@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f1030"/>
+      <stop offset="35%" stop-color="#1e1b4b"/>
+      <stop offset="65%" stop-color="#3b2f63"/>
+      <stop offset="85%" stop-color="#6b4c7e"/>
+      <stop offset="100%" stop-color="#a56b8a"/>
+    </linearGradient>
+    <radialGradient id="moon1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffdf0" stop-opacity="1"/>
+      <stop offset="35%" stop-color="#fff6d5" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#fff6d5" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mtn1a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3a3163"/>
+      <stop offset="100%" stop-color="#241f45"/>
+    </linearGradient>
+    <linearGradient id="mtn1b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a2450"/>
+      <stop offset="100%" stop-color="#171432"/>
+    </linearGradient>
+    <linearGradient id="mtn1c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1735"/>
+      <stop offset="100%" stop-color="#0d0b1e"/>
+    </linearGradient>
+    <linearGradient id="water1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2a2450"/>
+      <stop offset="100%" stop-color="#0d0b1e"/>
+    </linearGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+
+  <rect width="1920" height="800" fill="url(#sky1)"/>
+
+  <!-- 星空 -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="80" r="1.6" opacity="0.9"/>
+    <circle cx="260" cy="150" r="1.2" opacity="0.6"/>
+    <circle cx="380" cy="60" r="2" opacity="0.85"/>
+    <circle cx="520" cy="190" r="1.4" opacity="0.5"/>
+    <circle cx="640" cy="100" r="1.8" opacity="0.75"/>
+    <circle cx="790" cy="170" r="1.1" opacity="0.55"/>
+    <circle cx="900" cy="70" r="2.2" opacity="0.9"/>
+    <circle cx="1040" cy="140" r="1.3" opacity="0.6"/>
+    <circle cx="1180" cy="60" r="1.7" opacity="0.8"/>
+    <circle cx="1320" cy="180" r="1.2" opacity="0.5"/>
+    <circle cx="1440" cy="90" r="2" opacity="0.85"/>
+    <circle cx="1580" cy="160" r="1.4" opacity="0.6"/>
+    <circle cx="1700" cy="70" r="1.6" opacity="0.75"/>
+    <circle cx="1820" cy="150" r="1.2" opacity="0.5"/>
+    <circle cx="200" cy="240" r="1.3" opacity="0.45"/>
+    <circle cx="700" cy="260" r="1" opacity="0.4"/>
+    <circle cx="1100" cy="230" r="1.5" opacity="0.5"/>
+    <circle cx="1500" cy="250" r="1.1" opacity="0.4"/>
+    <circle cx="1750" cy="230" r="1.4" opacity="0.5"/>
+  </g>
+
+  <!-- 月亮 -->
+  <circle cx="1480" cy="200" r="220" fill="url(#moon1)"/>
+  <circle cx="1480" cy="200" r="62" fill="#fffdf2"/>
+  <circle cx="1462" cy="185" r="10" fill="#f2edd8" opacity="0.6"/>
+  <circle cx="1500" cy="215" r="7" fill="#f2edd8" opacity="0.5"/>
+  <circle cx="1478" cy="222" r="5" fill="#f2edd8" opacity="0.4"/>
+
+  <!-- 云带 -->
+  <g opacity="0.18" fill="#c9b8e0" filter="url(#blur1)">
+    <ellipse cx="500" cy="330" rx="380" ry="34"/>
+    <ellipse cx="1300" cy="380" rx="440" ry="30"/>
+    <ellipse cx="900" cy="300" rx="300" ry="24"/>
+  </g>
+
+  <!-- 远山 -->
+  <path d="M0 470 L180 380 L300 430 L470 340 L620 420 L780 360 L950 440 L1120 370 L1290 450 L1460 390 L1640 460 L1800 400 L1920 450 L1920 800 L0 800 Z"
+        fill="url(#mtn1a)" opacity="0.9"/>
+  <!-- 中山 -->
+  <path d="M0 560 L160 470 L340 545 L520 455 L700 550 L880 480 L1060 565 L1240 490 L1420 570 L1600 500 L1780 575 L1920 520 L1920 800 L0 800 Z"
+        fill="url(#mtn1b)"/>
+  <!-- 近山 -->
+  <path d="M0 650 L200 570 L400 640 L600 555 L800 645 L1000 575 L1200 655 L1400 585 L1600 660 L1800 600 L1920 645 L1920 800 L0 800 Z"
+        fill="url(#mtn1c)"/>
+
+  <!-- 水面倒影 -->
+  <rect x="0" y="700" width="1920" height="100" fill="url(#water1)" opacity="0.85"/>
+  <ellipse cx="1480" cy="720" rx="150" ry="14" fill="#fff8e1" opacity="0.12"/>
+
+  <!-- 前景树 -->
+  <g fill="#0a0918">
+    <path d="M120 800 L120 690 L100 700 L130 660 L110 670 L140 630 L165 665 L150 660 L175 700 L155 692 L155 800 Z"/>
+    <path d="M1800 800 L1800 700 L1785 708 L1808 672 L1792 680 L1818 645 L1840 678 L1826 672 L1848 706 L1832 700 L1832 800 Z"/>
+  </g>
+</svg>

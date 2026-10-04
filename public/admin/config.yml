@@ -1,0 +1,32 @@
+backend:
+  name: github
+  repo: tangjin/tangjin-blog
+  branch: main
+
+media_folder: "public/images"
+public_folder: "/images"
+
+collections:
+  - name: "posts"
+    label: "文章"
+    folder: "src/content/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "描述", name: "description", widget: "string" }
+      - { label: "发布日期", name: "published", widget: "datetime" }
+      - { label: "更新日期", name: "updated", widget: "datetime", required: false }
+      - { label: "标签", name: "tags", widget: "list", default: ["随笔"] }
+      - { label: "草稿", name: "draft", widget: "boolean", default: false }
+      - { label: "封面图", name: "cover", widget: "image", required: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+  - name: "pages"
+    label: "页面"
+    files:
+      - file: "src/content/about.md"
+        label: "关于我"
+        fields:
+          - { label: "标题", name: "title", widget: "string", default: "关于我" }
+          - { label: "正文", name: "body", widget: "markdown" }

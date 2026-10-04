@@ -1,0 +1,272 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import GiscusComments from '../../components/GiscusComments.astro';
+import Icon from '../../components/Icon.astro';
+import { getPublishedPosts, formatDate, readingTime } from '../../lib/posts';
+import { site } from '../../site';
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  return Promise.all(
+    posts.map(async (post) => {
+      const { Content } = await render(post);
+      return {
+        params: { slug: post.id },
+        props: { post, Content },
+      };
+    }),
+  );
+}
+
+const { post, Content } = Astro.props;
+const { title, description, published, updated, tags, cover } = post.data;
+const minutes = readingTime(post.body);
+const coverSrc = cover ?? '/images/post-placeholder.svg';
+---
+
+<Base title={title} description={description} image={coverSrc.startsWith('http') ? coverSrc : `${site.url}${coverSrc}`} narrow>
+  <div class="post-layout">
+    <!-- 主内容 -->
+    <article class="post-main">
+      <header class="post-head">
+        <div class="cover">
+          {cover ? (
+            <img src={coverSrc} alt="" width="1200" height="600" />
+          ) : (
+            <div class="cover-placeholder">
+              <Icon name="text" size="2.5rem" />
+            </div>
+          )}
+        </div>
+        <h1 class="post-title">{title}</h1>
+        {description && <p class="post-desc">{description}</p>}
+        <div class="post-meta">
+          <span class="meta-item">
+            <Icon name="calendar" size="1rem" />
+            <time datetime={published.toISOString()}>{formatDate(published)}</time>
+          </span>
+          {updated && updated > published && (
+            <span class="meta-item">
+              <Icon name="repeat" size="1rem" />
+              更新于 {formatDate(updated)}
+            </span>
+          )}
+          <span class="meta-item">
+            <Icon name="clock" size="1rem" />
+            约 {minutes} 分钟
+          </span>
+          {post.body && (
+            <span class="meta-item">
+              <Icon name="text" size="1rem" />
+              {post.body.replace(/\s/g, '').length} 字
+            </span>
+          )}
+        </div>
+        {tags.length > 0 && (
+          <div class="post-tags">
+            {tags.map((t) => (
+              <a class="tag" href={`/tags/${t}/`}>
+                <Icon name="tag" size="0.85rem" />{t}
+              </a>
+            ))}
+          </div>
+        )}
+      </header>
+
+      <div class="post-body custom-md">
+        <Content />
+      </div>
+
+      <!-- Giscus 评论 -->
+      <GiscusComments />
+    </article>
+
+    <!-- 右侧 TOC -->
+    <aside class="post-toc">
+      <div class="card-base toc-card" id="toc-card">
+        <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
+        <nav class="toc-nav" id="toc-nav"></nav>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<script>
+  // 自动生成目录
+  const content = document.querySelector('.custom-md');
+  const tocNav = document.getElementById('toc-nav');
+  if (content && tocNav) {
+    const headings = content.querySelectorAll('h2, h3');
+    headings.forEach((h, i) => {
+      h.id = h.id || `heading-${i}`;
+      const a = document.createElement('a');
+      a.className = 'toc-item toc-level-' + h.tagName[1];
+      a.href = `#${h.id}`;
+      a.textContent = h.textContent;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      tocNav.appendChild(a);
+    });
+
+    // 滚动高亮
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocNav.querySelectorAll('.toc-item').forEach(a => a.classList.remove('active'));
+          tocNav.querySelector(`a[href="#${entry.target.id}"]`)?.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-80px 0px -70% 0px' });
+    headings.forEach(h => observer.observe(h));
+  }
+</script>
+
+<style>
+  .post-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.5rem;
+  }
+
+  .post-head { margin-bottom: 2rem; }
+
+  .cover img, .cover-placeholder {
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+  }
+  .cover-placeholder {
+    display: grid;
+    place-items: center;
+    background: var(--gradient-primary);
+  }
+  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
+  .cover-placeholder :global(.icon) { color: oklch(100% 0 0 / 0.9); }
+
+  .post-title {
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+    margin: 1rem 0 0.5rem;
+    letter-spacing: -0.02em;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .post-desc { color: var(--text-soft); font-size: 1.05rem; margin-bottom: 0.8rem; }
+
+  .post-meta {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1rem;
+    color: var(--text-faint); font-size: 0.85rem;
+  }
+  .meta-item { display: inline-flex; align-items: center; gap: 0.3rem; }
+  .meta-item :global(.icon) { opacity: 0.7; }
+  .updated { color: var(--text-soft); }
+
+  .post-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.8rem; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    font-size: 0.78rem; padding: 0.15rem 0.6rem;
+    border-radius: 999px; background: var(--primary-soft); color: var(--primary-strong);
+    text-decoration: none !important;
+  }
+  .tag:hover { transform: translateY(-1px); }
+
+  /* 正文 */
+  .post-body { font-size: 1.02rem; }
+
+  .custom-md :global(h2) {
+    font-size: 1.45rem; margin-top: 2rem; padding-bottom: 0.4rem;
+    border-bottom: 2px solid; border-image: var(--gradient-primary) 1;
+    color: var(--text);
+  }
+  .custom-md :global(h3) { font-size: 1.2rem; margin-top: 1.5rem; }
+  .custom-md :global(p) { margin-bottom: 1em; }
+
+  /* 链接样式 */
+  .custom-md :global(a) {
+    color: var(--primary-strong);
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    padding: 0 1px;
+  }
+  .custom-md :global(a:hover) {
+    background: var(--primary-soft);
+    text-decoration: none;
+  }
+
+  /* 代码块 */
+  .custom-md :global(pre) {
+    background: #f6f6fa;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.86rem;
+    line-height: 1.6;
+    margin: 1.2em 0;
+    box-shadow: var(--shadow-sm);
+  }
+  [data-theme='dark'] .custom-md :global(pre) { background: #1e1e2e; }
+  .custom-md :global(pre code) { background: none; padding: 0; }
+
+  .custom-md :global(:not(pre) > code) {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 0.3rem;
+    padding: 0.08em 0.35em;
+    font-size: 0.86em;
+    color: var(--primary-strong);
+  }
+
+  /* 引用 */
+  .custom-md :global(blockquote) {
+    margin: 1.2em 0; padding: 0.7em 1.2em;
+    border-left: 3px solid; border-image: var(--gradient-primary) 1;
+    background: var(--primary-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--text-soft);
+  }
+  .custom-md :global(blockquote p) { margin: 0; }
+
+  /* 表格 */
+  .custom-md :global(table) {
+    width: 100%; border-collapse: collapse; margin: 1.2em 0;
+    font-size: 0.92rem; border-radius: var(--radius); overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .custom-md :global(th), .custom-md :global(td) {
+    border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left;
+  }
+  .custom-md :global(th) { background: var(--surface-2); font-weight: 600; }
+
+  /* 图片 */
+  .custom-md :global(img) {
+    border-radius: var(--radius-lg); margin: 1.2rem auto; box-shadow: var(--shadow);
+  }
+
+  /* TOC */
+  .post-toc { position: sticky; top: 70px; align-self: start; }
+  .toc-card { padding: 1rem; position: relative; }
+  .toc-nav { display: flex; flex-direction: column; gap: 0.25rem; }
+  .toc-item {
+    font-size: 0.82rem; color: var(--text-soft);
+    padding: 0.3rem 0.5rem; border-radius: var(--radius-sm);
+    text-decoration: none !important; background: none !important;
+    transition: all 0.15s ease; border-left: 2px solid transparent;
+  }
+  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
+  .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
+  .toc-level-3 { padding-left: 1.2rem; font-size: 0.78rem; }
+
+  @media (max-width: 860px) {
+    .post-layout { grid-template-columns: 1fr; }
+    .post-toc { display: none; }
+  }
+</style>

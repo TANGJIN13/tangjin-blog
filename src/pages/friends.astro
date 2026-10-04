@@ -1,0 +1,108 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../site';
+
+interface Friend {
+  name: string;
+  url: string;
+  avatar: string;
+  description: string;
+}
+
+const friends: Friend[] = [
+  { name: 'C1everF0x', url: 'https://c1everf0x.cn/', avatar: 'https://q1.qlogo.cn/g?b=qq&nk=1160118161&s=640', description: 'Web 安全 / CTF 选手，参照站的作者' },
+  // 在这里添加更多友链
+];
+---
+
+<Base title="友链">
+  <div class="post-layout">
+    <article class="post-main">
+      <header class="post-head">
+        <div class="cover">
+          <div class="cover-placeholder">
+            <Icon name="link" size="2.5rem" />
+          </div>
+        </div>
+        <h1 class="post-title">友链</h1>
+        <p class="post-desc">交换友链，互相学习</p>
+      </header>
+
+      <div class="post-body custom-md">
+        <div class="friends-grid">
+          {friends.map((f, i) => (
+            <a class="friend-card glass onload-animation" href={f.url} target="_blank" rel="noopener" style={`animation-delay: ${i * 0.08}s`}>
+              <img class="friend-avatar" src={f.avatar} alt={f.name} width="56" height="56" />
+              <div class="friend-info">
+                <h3 class="friend-name">{f.name}</h3>
+                <p class="friend-desc">{f.description}</p>
+              </div>
+              <span class="friend-arrow"><Icon name="external" size="1rem" /></span>
+            </a>
+          ))}
+        </div>
+
+        <div class="card-base friend-apply onload-animation" style="animation-delay: 0.3s">
+          <h3 class="widget-title"><Icon name="send" size="1.05rem" /> 申请友链</h3>
+          <p>如果你想交换友链，请确保：</p>
+          <ul>
+            <li>网站可以正常访问</li>
+            <li>内容原创，非采集站</li>
+            <li>已经添加了我的友链</li>
+          </ul>
+          <p>联系邮箱：<a href="mailto:2020556277@qq.com">2020556277@qq.com</a></p>
+        </div>
+      </div>
+    </article>
+
+    <aside class="post-toc">
+      <div class="card-base toc-card">
+        <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
+        <nav class="toc-nav">
+          <a class="toc-item toc-level-2" href="#friends-list">友链列表</a>
+          <a class="toc-item toc-level-2" href="#apply">申请友链</a>
+        </nav>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  .post-head { margin-bottom: 2rem; }
+  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
+  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
+  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
+  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; letter-spacing: -0.02em; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
+  .post-body { font-size: 1.02rem; }
+
+  .friends-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
+  .friend-card {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1rem 1.2rem; border-radius: var(--radius-lg);
+    text-decoration: none !important; background: none !important;
+    transition: all 0.25s ease;
+  }
+  .friend-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .friend-avatar { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+  .friend-info { flex: 1; min-width: 0; }
+  .friend-name { margin: 0; font-size: 1rem; font-weight: 600; }
+  .friend-desc { margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--text-faint); }
+  .friend-arrow { font-size: 1.2rem; color: var(--text-faint); transition: transform 0.2s ease; }
+  .friend-card:hover .friend-arrow { transform: translateX(4px); color: var(--primary); }
+
+  .friend-apply { padding: 1.2rem; }
+  .friend-apply ul { margin: 0.5rem 0; padding-left: 1.2rem; }
+  .friend-apply li { margin-bottom: 0.3rem; font-size: 0.9rem; }
+
+  .post-toc { position: sticky; top: 70px; align-self: start; }
+  .toc-card { padding: 1rem; }
+  .toc-nav { display: flex; flex-direction: column; gap: 0.2rem; }
+  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none !important; background: none !important; transition: all 0.15s ease; border-left: 2px solid transparent; }
+  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
+  .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
+
+  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+</style>

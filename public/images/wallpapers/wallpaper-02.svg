@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2b1a4e"/>
+      <stop offset="25%" stop-color="#7b3f6b"/>
+      <stop offset="50%" stop-color="#d4635f"/>
+      <stop offset="72%" stop-color="#f2a65a"/>
+      <stop offset="88%" stop-color="#fcd9a0"/>
+      <stop offset="100%" stop-color="#ffe9c4"/>
+    </linearGradient>
+    <radialGradient id="sun2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffbe8" stop-opacity="1"/>
+      <stop offset="20%" stop-color="#ffe9a8" stop-opacity="0.8"/>
+      <stop offset="55%" stop-color="#ffb765" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ff9a4d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="cloud2a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8e4a72" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#5c2f57" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="cloud2b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd9a8" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#f7a86b" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="mtn2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#4a2a52"/>
+      <stop offset="100%" stop-color="#251634"/>
+    </linearGradient>
+    <linearGradient id="mtn2b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2e1a3c"/>
+      <stop offset="100%" stop-color="#160d20"/>
+    </linearGradient>
+    <filter id="soft2"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="soft2b"><feGaussianBlur stdDeviation="14"/></filter>
+  </defs>
+
+  <rect width="1920" height="800" fill="url(#sky2)"/>
+
+  <!-- 太阳光晕 -->
+  <circle cx="960" cy="520" r="420" fill="url(#sun2)"/>
+  <circle cx="960" cy="520" r="88" fill="#fffdf0" opacity="0.95"/>
+
+  <!-- 高层云 -->
+  <g filter="url(#soft2b)" opacity="0.5">
+    <ellipse cx="420" cy="200" rx="430" ry="30" fill="#b4638a"/>
+    <ellipse cx="1350" cy="160" rx="480" ry="26" fill="#a85a83"/>
+    <ellipse cx="900" cy="120" rx="380" ry="20" fill="#8f4d76"/>
+  </g>
+
+  <!-- 中层云（被夕阳染色） -->
+  <g filter="url(#soft2)" opacity="0.75">
+    <ellipse cx="300" cy="360" rx="340" ry="26" fill="url(#cloud2b)"/>
+    <ellipse cx="1500" cy="330" rx="380" ry="24" fill="url(#cloud2b)"/>
+    <ellipse cx="800" cy="400" rx="300" ry="20" fill="url(#cloud2b)"/>
+  </g>
+
+  <!-- 低层云带 -->
+  <g filter="url(#soft2)" opacity="0.85">
+    <ellipse cx="600" cy="470" rx="460" ry="22" fill="url(#cloud2a)"/>
+    <ellipse cx="1450" cy="500" rx="420" ry="20" fill="url(#cloud2a)"/>
+  </g>
+
+  <!-- 远山剪影 -->
+  <path d="M0 580 L200 500 L380 555 L560 480 L740 560 L920 495 L1100 570 L1280 505 L1460 575 L1640 515 L1820 580 L1920 545 L1920 800 L0 800 Z"
+        fill="url(#mtn2)" opacity="0.92"/>
+  <!-- 近山 -->
+  <path d="M0 680 L240 605 L480 675 L720 600 L960 680 L1200 610 L1440 685 L1680 615 L1920 675 L1920 800 L0 800 Z"
+        fill="url(#mtn2b)"/>
+
+  <!-- 云海前景 -->
+  <g filter="url(#soft2b)" opacity="0.45">
+    <ellipse cx="500" cy="740" rx="600" ry="34" fill="#ffd0a0"/>
+    <ellipse cx="1500" cy="760" rx="560" ry="28" fill="#ffc38f"/>
+  </g>
+
+  <!-- 飞鸟 -->
+  <g stroke="#3a1f33" stroke-width="2.5" fill="none" opacity="0.55" stroke-linecap="round">
+    <path d="M1120 240 q14 -10 26 0 q12 -10 26 0"/>
+    <path d="M1210 200 q11 -8 20 0 q9 -8 20 0"/>
+    <path d="M1060 190 q9 -7 17 0 q8 -7 17 0"/>
+  </g>
+</svg>

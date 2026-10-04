@@ -1,0 +1,89 @@
+---
+import Base from '../layouts/Base.astro';
+import PostListItem from '../components/PostListItem.astro';
+import { getPublishedPosts } from '../lib/posts';
+
+const posts = await getPublishedPosts();
+
+// 按年份分组
+const byYear = new Map<number, typeof posts>();
+for (const p of posts) {
+  const y = p.data.published.getFullYear();
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(p);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+---
+
+<Base title="归档">
+  <div class="container">
+    <header class="page-head">
+      <h1>归档</h1>
+      <p>共 {posts.length} 篇文章，按年份倒序排列。</p>
+    </header>
+
+    {
+      years.map((y) => (
+        <section class="year">
+          <h2 class="year-title">{y}</h2>
+          <ul class="year-list">
+            {byYear.get(y)!.map((p) => <PostListItem post={p} />)}
+          </ul>
+        </section>
+      ))
+    }
+
+    {
+      posts.length === 0 && (
+        <div class="empty">
+          <p>还没有文章。</p>
+        </div>
+      )
+    }
+  </div>
+</Base>
+
+<style>
+  .page-head {
+    padding: 2.5rem 0 1.5rem;
+    text-align: center;
+  }
+
+  .page-head h1 {
+    font-size: 2rem;
+    letter-spacing: -0.02em;
+  }
+
+  .page-head p {
+    color: var(--text-soft);
+  }
+
+  .year {
+    margin-bottom: 2rem;
+  }
+
+  .year-title {
+    font-size: 1.15rem;
+    color: var(--text-soft);
+    padding-left: 0.75rem;
+    border-left: 3px solid var(--primary);
+    margin-bottom: 0.75rem;
+  }
+
+  .year-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  .empty {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-soft);
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--radius-lg);
+  }
+</style>

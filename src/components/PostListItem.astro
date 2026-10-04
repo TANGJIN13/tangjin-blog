@@ -1,0 +1,71 @@
+---
+import { formatDate, type Post } from '../lib/posts';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { title, description, published, tags } = post.data;
+---
+
+<li class="item">
+  <div class="item-main">
+    <a class="item-title" href={`/posts/${post.id}/`}>{title}</a>
+    {description && <p class="item-desc">{description}</p>}
+    <div class="item-meta">
+      <time datetime={published.toISOString()}>{formatDate(published)}</time>
+      {
+        tags.length > 0 && (
+          <span class="item-tags">{tags.map((t) => `#${t}`).join(' ')}</span>
+        )
+      }
+    </div>
+  </div>
+</li>
+
+<style>
+  .item {
+    list-style: none;
+  }
+
+  .item-main {
+    padding: 1rem 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .item-main:hover {
+    border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+    box-shadow: var(--shadow);
+  }
+
+  .item-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .item-desc {
+    margin: 0.3rem 0 0.4rem;
+    color: var(--text-soft);
+    font-size: 0.9rem;
+  }
+
+  .item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    font-size: 0.8rem;
+    color: var(--text-faint);
+  }
+
+  .item-tags {
+    color: var(--primary-strong);
+  }
+</style>

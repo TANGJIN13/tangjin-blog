@@ -1,0 +1,245 @@
+---
+// 顶部壁纸横幅 —— 参照 c1everf0x.cn 的 #wallpaper-wrapper
+// 全宽 720px、多图轮播、底部波浪 + 渐变淡出
+import { site } from '../site';
+
+interface Props {
+  images?: string[];
+  height?: string;
+}
+
+const {
+  images = [
+    '/images/wallpapers/wallpaper-01.svg',
+    '/images/wallpapers/wallpaper-02.svg',
+    '/images/wallpapers/wallpaper-03.svg',
+  ],
+  height = 'clamp(440px, 78vh, 780px)',
+} = Astro.props;
+---
+
+<div class="wallpaper-wrapper" style={`--wp-height: ${height}`} data-interval="7000">
+  <!-- 轮播图片 -->
+  <div class="wallpaper-images" id="wallpaper-images">
+    {images.map((src, i) => (
+      <div class:list={['wp-slide', { active: i === 0 }]} data-index={i}>
+        <img src={src} alt={`壁纸 ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
+      </div>
+    ))}
+  </div>
+
+  <!-- 暗角遮罩 -->
+  <div class="wallpaper-dim" aria-hidden="true"></div>
+
+  <!-- 文字覆盖层 -->
+  <div class="wallpaper-content">
+    <div class="container wp-inner">
+      <div class="wp-avatar-wrap">
+        <img class="wp-avatar" src={site.avatar} alt="头像" width="96" height="96" />
+      </div>
+
+      <!-- 座右铭 —— 慢慢浮现 -->
+      <h1 class="wp-title">
+        <span class="wp-title-text">{site.motto}</span>
+      </h1>
+      {site.mottoSub && <p class="wp-motto-sub">{site.mottoSub}</p>}
+
+      <p class="wp-desc">{site.description}</p>
+
+      <div class="wp-links">
+        {site.links.map((l) => (
+          <a class="wp-link" href={l.href} target="_blank" rel="noopener">{l.label}</a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部波浪 -->
+  <div class="header-waves" aria-hidden="true">
+    <svg viewBox="0 0 1440 135" preserveAspectRatio="none">
+      <path d="M0,75 C240,135 480,15 720,55 C960,95 1200,25 1440,65 L1440,135 L0,135 Z"
+            fill="var(--bg)" opacity="0.45"/>
+      <path d="M0,95 C280,40 560,140 840,90 C1120,40 1300,120 1440,95 L1440,135 L0,135 Z"
+            fill="var(--bg)" opacity="0.75"/>
+      <path d="M0,115 C360,80 720,140 1080,110 C1260,95 1360,120 1440,115 L1440,135 L0,135 Z"
+            fill="var(--bg)"/>
+    </svg>
+  </div>
+
+  <!-- 渐变淡出 -->
+  <div class="wallpaper-gradient" aria-hidden="true"></div>
+</div>
+
+<script>
+  // 壁纸轮播
+  const wrap = document.querySelector('.wallpaper-wrapper');
+  const slides = document.querySelectorAll('.wp-slide');
+  if (wrap && slides.length > 1) {
+    const interval = parseInt(wrap.dataset.interval || '7000', 10);
+    let idx = 0;
+    setInterval(() => {
+      slides[idx].classList.remove('active');
+      idx = (idx + 1) % slides.length;
+      slides[idx].classList.add('active');
+    }, interval);
+  }
+</script>
+
+<style>
+  .wallpaper-wrapper {
+    position: relative;
+    width: 100%;
+    height: var(--wp-height);
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  /* 图片层 */
+  .wallpaper-images { position: absolute; inset: 0; background: #1a1735; }
+  .wp-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transform: scale(1.06);
+    transition: opacity 1.4s ease, transform 8s ease-out;
+  }
+  .wp-slide.active { opacity: 1; transform: scale(1); }
+  .wp-slide img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* 暗角遮罩 —— 让白色文字可读 */
+  .wallpaper-dim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg,
+        oklch(0% 0 0 / 0.30) 0%,
+        oklch(0% 0 0 / 0.18) 35%,
+        oklch(0% 0 0 / 0.28) 70%,
+        oklch(0% 0 0 / 0.10) 100%);
+    z-index: 1;
+  }
+
+  /* 文字内容 */
+  .wallpaper-content {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wp-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  /* ===== 慢慢浮现：模糊 → 清晰 + 上移，逐层延迟 ===== */
+  @keyframes wp-reveal {
+    from {
+      opacity: 0;
+      transform: translateY(28px) scale(0.985);
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+    }
+  }
+
+  .wp-avatar-wrap { position: relative; animation: wp-reveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+  .wp-title       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both; }
+  .wp-motto-sub   { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both; }
+  .wp-desc        { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.05s both; }
+  .wp-links       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.35s both; }
+
+  /* 座右铭每字再错开一点，像逐个浮现 */
+  .wp-title-text { display: inline-block; }
+
+  .wp-avatar {
+    width: 96px; height: 96px;
+    border-radius: 50%;
+    border: 3px solid oklch(100% 0 0 / 0.85);
+    box-shadow: 0 8px 32px oklch(0% 0 0 / 0.35);
+    object-fit: cover;
+    background: var(--surface);
+  }
+
+  .wp-title {
+    font-size: clamp(1.8rem, 4.4vw, 3.1rem);
+    font-weight: 800;
+    margin: 0;
+    color: #fff;
+    letter-spacing: 0.02em;
+    line-height: 1.35;
+    text-shadow: 0 2px 30px oklch(0% 0 0 / 0.55);
+  }
+
+  .wp-motto-sub {
+    margin: -0.3rem 0 0;
+    font-size: clamp(0.78rem, 1.3vw, 0.95rem);
+    color: oklch(100% 0 0 / 0.72);
+    letter-spacing: 0.22em;
+    text-shadow: 0 1px 14px oklch(0% 0 0 / 0.5);
+  }
+
+  .wp-desc {
+    margin: 0;
+    max-width: 34rem;
+    font-size: clamp(0.85rem, 1.4vw, 1rem);
+    color: oklch(100% 0 0 / 0.88);
+    text-shadow: 0 1px 12px oklch(0% 0 0 / 0.55);
+  }
+
+  .wp-links { display: flex; gap: 0.5rem; margin-top: 0.2rem; }
+  .wp-link {
+    padding: 0.45rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: #fff;
+    background: oklch(100% 0 0 / 0.16);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid oklch(100% 0 0 / 0.28);
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+  }
+  .wp-link:hover {
+    background: oklch(100% 0 0 / 0.28);
+    transform: translateY(-2px);
+    color: #fff;
+  }
+
+  /* 波浪 */
+  .header-waves {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 135px;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .header-waves svg { width: 100%; height: 100%; display: block; }
+
+  /* 渐变淡出 */
+  .wallpaper-gradient {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 72px;
+    z-index: 4;
+    background: linear-gradient(oklch(0% 0 0 / 0), var(--bg));
+    pointer-events: none;
+  }
+
+  @media (max-width: 767px) {
+    .wp-avatar { width: 72px; height: 72px; }
+    .header-waves { height: 90px; }
+  }
+</style>
