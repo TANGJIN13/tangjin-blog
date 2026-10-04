@@ -23,6 +23,23 @@
     .btn-danger { border-color: #ef4444; color: #ef4444; }
     .btn-danger:hover { background: #fef2f2; }
 
+    /* 提示条 */
+    .hint-bar {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.7rem 1rem; margin-bottom: 1rem;
+      background: linear-gradient(135deg, #f5f3ff, #eef2ff);
+      border: 1px solid #ddd6fe; border-radius: 0.75rem;
+      font-size: 0.85rem; color: #4c1d95;
+    }
+    .hint-text { flex: 1; line-height: 1.6; }
+    .hint-close {
+      border: none; background: transparent; cursor: pointer;
+      font-size: 1.25rem; line-height: 1; color: #7c3aed;
+      padding: 0 0.25rem; border-radius: 0.25rem;
+    }
+    .hint-close:hover { background: #ede9fe; }
+    .hint-bar.hidden { display: none; }
+
     /* 设置面板 */
     .settings-panel { background: #fff; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 1.25rem; margin-bottom: 1rem; display: none; }
     .settings-panel.open { display: block; }
@@ -88,12 +105,21 @@
     <div class="header-actions">
       <button class="btn" id="btn-settings">⚙️ 设置</button>
       <button class="btn" id="btn-posts">📁 文章列表</button>
+      <a class="btn" id="link-actions" href="https://github.com/TANGJIN13/tangjin-blog/actions" target="_blank" rel="noopener">🚀 部署状态</a>
       <button class="btn btn-primary" id="btn-new">+ 新建文章</button>
     </div>
   </div>
 </div>
 
 <div class="max-width">
+  <!-- 使用提示 -->
+  <div class="hint-bar" id="hint-bar">
+    <div class="hint-text">
+      <strong>发布流程</strong>：写好文章 → 点「🚀 发布」→ 自动提交到 GitHub → 自动构建部署 → 约 1-2 分钟后线上生效
+    </div>
+    <button class="hint-close" id="hint-close" aria-label="关闭提示">×</button>
+  </div>
+
   <!-- 设置面板 -->
   <div class="settings-panel" id="settings-panel">
     <h3 style="margin-top:0">GitHub 配置</h3>
@@ -181,6 +207,15 @@
   const editor = $('editor');
   const preview = $('preview');
   const toast = $('toast');
+
+  // 提示条关闭（记住选择）
+  const hintBar = document.getElementById('hint-bar');
+  const hintClose = document.getElementById('hint-close');
+  if (localStorage.getItem('admin_hint_closed') === '1') hintBar.classList.add('hidden');
+  hintClose.addEventListener('click', () => {
+    hintBar.classList.add('hidden');
+    localStorage.setItem('admin_hint_closed', '1');
+  });
 
   // Toast
   function showToast(msg, type = 'info') {
@@ -414,7 +449,12 @@ ${body}
         const err = await res.json();
         throw new Error(err.message || `HTTP ${res.status}`);
       }
-      showToast('发布成功！等待部署...', 'success');
+      showToast('已提交！约 1-2 分钟后自动上线', 'success');
+      setTimeout(() => {
+        if (confirm('文章已推送到 GitHub。\n\n是否现在打开部署状态页面查看构建进度？')) {
+          window.open('https://github.com/TANGJIN13/tangjin-blog/actions', '_blank');
+        }
+      }, 800);
     } catch (e) {
       showToast('发布失败: ' + e.message, 'error');
     }

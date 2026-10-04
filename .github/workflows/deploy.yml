@@ -1,0 +1,92 @@
+name: 构建并部署到服务器
+
+# 触发条件：推送到 main 分支，或在 Actions 页面手动触发
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 同一时间只跑一个部署，避免并发写坏站点目录
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  # 服务器地址与部署用户（非机密，直接写在这里，方便修改）
+  SSH_HOST: 49.232.251.198
+  SSH_USER: ubuntu
+  # 服务器上的站点根目录
+  DEPLOY_PATH: /var/www/blog
+
+jobs:
+  build-and-deploy:
+    name: 构建 + 部署
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 构建站点
+        run: pnpm build
+
+      - name: 检查构建产物
+        run: |
+          echo "构建产物大小：$(du -sh dist | cut -f1)"
+          echo "页面数量：$(find dist -name '*.html' | wc -l)"
+          test -f dist/index.html || { echo "::error::dist/index.html 不存在，构建失败"; exit 1; }
+
+      - name: 配置 SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 700 ~/.ssh
+          chmod 600 ~/.ssh/deploy_key
+          # 首次连接自动接受主机指纹（避免 known_hosts 为空导致失败）
+          ssh -i ~/.ssh/deploy_key \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=accept-new \
+              -o ConnectTimeout=15 \
+              "$SSH_USER@$SSH_HOST" "echo SSH_OK && whoami"
+
+      - name: 同步到服务器
+        run: |
+          rsync -avz --delete --human-readable \
+            --exclude '.well-known/' \
+            -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
+            dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
+
+      - name: 验证线上可访问
+        run: |
+          sleep 3
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' -L https://tangjin.xyz/ --max-time 20 || echo 000)
+          echo "线上首页 HTTP $CODE"
+          if [ "$CODE" != "200" ]; then
+            echo "::warning::线上返回 $CODE，请检查"
+          fi
+
+      - name: 部署结果摘要
+        if: always()
+        run: |
+          {
+            echo "### 部署结果"
+            echo ""
+            echo "- 提交：\`${{ github.sha }}\`"
+            echo "- 触发：${{ github.event_name }}"
+            echo "- 站点：https://tangjin.xyz"
+            echo "- 时间：$(date '+%Y-%m-%d %H:%M:%S %Z')"
+          } >> "$GITHUB_STEP_SUMMARY"
