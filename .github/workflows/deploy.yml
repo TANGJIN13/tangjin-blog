@@ -50,35 +50,31 @@ jobs:
           echo "页面数量：$(find dist -name '*.html' | wc -l)"
           test -f dist/index.html || { echo "::error::dist/index.html 不存在，构建失败"; exit 1; }
 
-      - name: 配置 SSH
+      - name: 准备部署密钥
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
           chmod 700 ~/.ssh
           chmod 600 ~/.ssh/deploy_key
-          # 首次连接自动接受主机指纹（避免 known_hosts 为空导致失败）
-          ssh -i ~/.ssh/deploy_key \
-              -o IdentitiesOnly=yes \
-              -o StrictHostKeyChecking=accept-new \
-              -o ConnectTimeout=15 \
-              "$SSH_USER@$SSH_HOST" "echo SSH_OK && whoami"
+          # 说明：这把密钥在服务器端被限制为 rrsync 只写模式（command="rrsync -wo ..."），
+          # 因此这里不能再用 ssh 执行任何命令（whoami / ls 都会被拒），
+          # 只能通过 rsync 传输。这是刻意的安全设计。
 
       - name: 同步到服务器
         run: |
-          # --chmod 强制目录 755 / 文件 644，否则 nginx 可能因权限返回 403
+          # 目标写 :/  而不是 :$DEPLOY_PATH/
+          # 原因：服务器端这把密钥被限制为 rrsync -wo /var/www/blog，
+          #       rrsync 会把客户端路径当作「受限目录下的相对路径」。
+          #       写 :/         → 落在 /var/www/blog/        ✅
+          #       写 :/var/www/blog/ → 会建成 /var/www/blog/var/www/blog/  ❌
+          #
+          # --delete 会清理目标目录里多余的旧文件（安全，因为目标就是站点根）
+          # --chmod 强制目录 755 / 文件 644，否则 nginx 会因权限返回 403
           rsync -avz --delete --human-readable \
             --chmod=D755,F644 \
             --exclude '.well-known/' \
             -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-            dist/ "$SSH_USER@$SSH_HOST:$DEPLOY_PATH/"
-
-      - name: 校验服务器上的权限
-        run: |
-          ssh -i ~/.ssh/deploy_key \
-              -o IdentitiesOnly=yes \
-              -o StrictHostKeyChecking=accept-new \
-              "$SSH_USER@$SSH_HOST" \
-              "ls -ld $DEPLOY_PATH && test -r $DEPLOY_PATH/index.html && echo '权限 OK'"
+            dist/ "$SSH_USER@$SSH_HOST:/"
 
       - name: 验证线上可访问
         run: |
@@ -86,7 +82,8 @@ jobs:
           CODE=$(curl -s -o /dev/null -w '%{http_code}' -L https://tangjin.xyz/ --max-time 20 || echo 000)
           echo "线上首页 HTTP $CODE"
           if [ "$CODE" != "200" ]; then
-            echo "::warning::线上返回 $CODE，请检查"
+            echo "::error::线上返回 $CODE，部署可能有问题"
+            exit 1
           fi
 
       - name: 部署结果摘要
