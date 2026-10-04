@@ -197,8 +197,61 @@ const firstTrack = tracks[0];
     if (audio.duration) audio.currentTime = ratio * audio.duration;
   });
 
-  loadTrack(0);
-  audio.volume = parseFloat(volumeEl.value);
+  // ===== localStorage 续播：每 2 秒保存状态，切页/刷新后自动恢复 =====
+  const MUSIC_STATE_KEY = 'tj-music-state';
+  function saveState() {
+    try {
+      localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify({
+        idx: currentIndex,
+        time: audio.currentTime,
+        playing: !audio.paused,
+        mode: playMode,
+        vol: audio.volume,
+      }));
+    } catch {}
+  }
+  function restoreState() {
+    try {
+      const raw = localStorage.getItem(MUSIC_STATE_KEY);
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (typeof s.idx === 'number' && s.idx < tracks.length) {
+        loadTrack(s.idx);
+      } else { return false; }
+      audio.volume = (typeof s.vol === 'number') ? s.vol : parseFloat(volumeEl.value);
+      volumeEl.value = String(audio.volume);
+      if (s.mode) { playMode = s.mode; modeBtn.dataset.mode = playMode; }
+
+      // 进度要等元数据加载完才能设置（否则 audio.duration 是 NaN）
+      const pendingTime = (typeof s.time === 'number' && s.time > 1) ? s.time : 0;
+      if (pendingTime > 0) {
+        audio.addEventListener('loadedmetadata', () => {
+          if (audio.duration && pendingTime < audio.duration - 1) {
+            audio.currentTime = pendingTime;
+          }
+        }, { once: true });
+      }
+
+      if (s.playing) {
+        // 尝试自动续播：部分浏览器（Chrome 桌面端有媒体互动记录）会放行，
+        // 否则会被静默拦截，此时保持暂停但进度已就位，用户点一下播放即可。
+        const p = audio.play();
+        if (p && p.catch) {
+          p.catch(() => {
+            playBtn.classList.remove('playing');
+            player.classList.remove('playing');
+          });
+        }
+      }
+      return true;
+    } catch { return false; }
+  }
+  // 每 2 秒 + 切页前保存
+  setInterval(saveState, 2000);
+  window.addEventListener('pagehide', saveState);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
+
+  restoreState();
 </script>
 
 <style>

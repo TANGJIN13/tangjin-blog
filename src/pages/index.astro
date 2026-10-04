@@ -1,7 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
 import PostCard from '../components/PostCard.astro';
-import MusicPlayer from '../components/MusicPlayer.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import HeatmapWidget from '../components/HeatmapWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
@@ -34,11 +33,6 @@ const tags = await getTags();
         </div>
 
         <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
-          <h3 class="widget-title"><Icon name="music" size="1.05rem" /> 音乐</h3>
-          <MusicPlayer />
-        </div>
-
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
           <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
           <ThemeToggle />
         </div>
