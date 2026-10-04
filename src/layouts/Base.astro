@@ -30,7 +30,7 @@ const navItems = [
   { label: '关于', href: '/about/', icon: 'person' },
 ];
 
-const fullTitle = title ? `${title}${site.titleSuffix}` : `${site.title}${site.titleSuffix}`;
+const fullTitle = title ? `${title} - ${site.tabTitle}` : site.tabTitle;
 const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.pathname, site.url).href;
 ---
 
@@ -43,7 +43,10 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={site.title} />

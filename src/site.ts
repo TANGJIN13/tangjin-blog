@@ -4,8 +4,10 @@
  */
 export const site = {
   url: 'https://tangjin.xyz',
+  /** 导航栏左上角显示的名字 */
   title: 'tj',
-  titleSuffix: ' · 安全笔记',
+  /** 浏览器标签页标题（首页显示这个；内页显示「页面名 - 这个」） */
+  tabTitle: "tj's Blog",
   description: 'Web 安全与 CTF 方向的个人博客，记录复现、踩坑与思考。',
   author: 'tj',
   lang: 'zh-CN',
