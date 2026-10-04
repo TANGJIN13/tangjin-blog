@@ -109,6 +109,9 @@
     /* frontmatter 编辑 */
     .frontmatter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
     .nav-ico { width: 1rem; height: 1rem; vertical-align: -0.15rem; display: inline-block; }
+    .token-status { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.75rem 1rem; margin-bottom: 1rem; background: #fffbeb; border: 1px solid #fcd34d; border-radius: 0.75rem; font-size: 0.85rem; color: #92400e; }
+    .token-status-text { display: flex; align-items: center; gap: 0.5rem; }
+    .token-status svg { flex-shrink: 0; }
 
     @media (max-width: 768px) {
       .editor-split { grid-template-columns: 1fr; }
@@ -130,11 +133,19 @@
       <a class="btn" id="link-actions" href="https://github.com/TANGJIN13/tangjin-blog/actions" target="_blank" rel="noopener"><svg class="nav-ico" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>状态</a>
       <button class="btn btn-primary" id="btn-new">+ 新建文章</button>
     </div>
-  </div>
 </div>
 
 <div class="max-width">
-  <!-- 使用提示 -->
+    <!-- Token 状态提示条 -->
+    <div class="token-status" id="token-status" style="display:none">
+      <div class="token-status-text">
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="currentColor" style="color:#f59e0b;width:1.1rem;height:1.1rem;vertical-align:-0.15rem"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+        <span id="token-status-msg">未配置 GitHub Token，所有功能不可用。请点右上角「设置」。</span>
+      </div>
+      <button class="btn-sm" id="token-status-go" style="background:#f59e0b;color:#fff;border:none">去设置</button>
+    </div>
+
+    <!-- 使用提示 -->
   <div class="hint-bar" id="hint-bar">
     <div class="hint-text">
       <strong>发布流程</strong>：写好文章 → 点「发布」→ 自动提交到 GitHub → 自动构建部署 → 约 1-2 分钟后线上生效
@@ -320,7 +331,19 @@
   }
 
   // 设置面板
-  $('btn-settings').addEventListener('click', () => {
+  
+  // Token 状态检查
+  function checkTokenStatus() {
+    const el = document.getElementById('token-status');
+    const msg = document.getElementById('token-status-msg');
+    if (!el) return;
+    if (localStorage.getItem('gh_token')) { el.style.display = 'none'; }
+    else { el.style.display = 'flex'; }
+  }
+  checkTokenStatus();
+  $('token-status-go')?.addEventListener('click', () => { $('btn-settings')?.click(); });
+
+$('btn-settings').addEventListener('click', () => {
     $('settings-panel').classList.toggle('open');
     $('cfg-token').value = cfg.token;
     $('cfg-owner').value = cfg.owner;
@@ -338,6 +361,7 @@
     localStorage.setItem('gh_repo', cfg.repo);
     localStorage.setItem('gh_branch', cfg.branch);
     $('settings-panel').classList.remove('open');
+          checkTokenStatus();
     showToast('配置已保存', 'success');
   });
 
