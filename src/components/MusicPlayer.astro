@@ -1,10 +1,26 @@
 ---
-// 音乐播放器 —— 本地音乐模式 + 多曲切换
+// 音乐播放器 —— 支持本地 MP3 + Meting.js（QQ音乐/网易云/酷狗）
 import { site } from '../site';
 import Icon from './Icon.astro';
 
-const tracks = [{"name":"我走后","artist":"小咪","url":"/music/wo-zou-hou.mp3","cover":"/images/music-cover.svg"},{"name":"Whatever Happen","artist":"tangjin","url":"/music/whatever-happen.mp3","cover":"/images/music-cover.svg"}];
-const trackCount = tracks.length;
+// ===== Meting.js 歌曲列表 =====
+// 想加歌：从 QQ音乐/网易云/酷狗 复制歌曲或歌单链接
+// server: netease(网易云) / tencent(QQ音乐) / kugou(酷狗)
+// type:   song(单曲) / playlist(歌单) / album(专辑)
+// id:     从链接里提取的 ID
+//
+// 示例：
+// QQ音乐单曲：server="tencent", type="song", id="0039MnYb0qxYhV"
+// 网易云歌单：server="netease", type="playlist", id="6992303310"
+const metingSongs = [
+  // 在这里粘贴你的歌曲，比如：
+  // { server: 'netease', type: 'playlist', id: '你的歌单ID' },
+];
+
+// ===== 本地歌曲（没有外链时的备选） =====
+const localTracks = [
+  { name: '我走后', artist: '小咪', url: '/music/wo-zou-hou.mp3' },
+];
 ---
 
 <div class="music-player" id="music-player">
@@ -15,174 +31,118 @@ const trackCount = tracks.length;
   <div class="player-head">
     <div class="disc-wrap">
       <div class="player-disc" id="player-disc">
-        <img src={tracks[0].cover ?? site.avatar} alt="" width="64" height="64" />
+        <img src="/images/music-cover.svg" alt="封面" width="64" height="64" />
       </div>
       <span class="disc-ring" aria-hidden="true"></span>
     </div>
     <div class="player-info">
       <div class="player-title-row">
-        <span class="player-title" id="player-title">{tracks[0].name}</span>
+        <span class="player-title" id="player-title">{metingSongs.length > 0 ? '外链播放' : localTracks[0].name}</span>
         <span class="eq-bars" id="eq-bars" aria-hidden="true">
           <i class="eq-bar"></i><i class="eq-bar"></i><i class="eq-bar"></i><i class="eq-bar"></i>
         </span>
       </div>
-      <div class="player-artist" id="player-artist">{tracks[0].artist}</div>
+      <div class="player-artist" id="player-artist">{metingSongs.length > 0 ? 'Meting.js' : localTracks[0].artist}</div>
     </div>
   </div>
-  <div class="player-playlist-head">
-    <span class="playlist-count">{String(trackCount) + ' 首'}</span>
-    <button class="playlist-toggle" id="playlist-toggle" title="展开/收起">
-      <Icon name="palette" size="0.9rem" /><span class="playlist-toggle-text">列表</span>
-    </button>
-  </div>
-  <div class="player-playlist" id="player-playlist" style="display:none">
-    {tracks.map((t, i) => (
-      <div class="track-item" data-idx={i} id={'track-' + i}>
-        <span class="track-num">{i + 1}</span>
-        <span class="track-info">
-          <span class="track-name">{t.name}</span>
-          <span class="track-artist">{t.artist}</span>
-        </span>
-        <span class="track-playing"><Icon name="play" size="0.8rem" /></span>
+
+  {metingSongs.length > 0 && <div class="meting-area" id="meting-area"></div>}
+
+  {metingSongs.length === 0 && (
+    <>
+      <div class="player-progress" id="player-progress">
+        <div class="player-progress-bar" id="player-progress-bar"></div>
       </div>
-    ))}
-  </div>
-  <div class="player-progress" id="player-progress">
-    <div class="player-progress-bar" id="player-progress-bar"></div>
-  </div>
-  <div class="player-time">
-    <span id="player-current">0:00</span>
-    <span id="player-duration">0:00</span>
-  </div>
-  <div class="player-controls">
-    <button class="ctrl-btn" id="btn-prev" title="上一首"><Icon name="prev" size="1.15rem" /></button>
-    <button class="ctrl-btn ctrl-play" id="btn-play" title="播放/暂停">
-      <Icon name="play" size="1.35rem" class="ico-play" />
-      <Icon name="pause" size="1.35rem" class="ico-pause" />
-    </button>
-    <button class="ctrl-btn" id="btn-next" title="下一首"><Icon name="next" size="1.15rem" /></button>
-    <button class="ctrl-btn" id="btn-mode" title="播放模式" data-mode="list">
-      <Icon name="repeat" size="1.1rem" class="ico-list" />
-      <Icon name="repeat_one" size="1.1rem" class="ico-one" />
-      <Icon name="shuffle" size="1.1rem" class="ico-shuffle" />
-    </button>
-  </div>
-  <div class="player-volume">
-    <Icon name="volume" size="1rem" class="vol-icon" />
-    <input type="range" id="player-volume" min="0" max="1" step="0.01" value="0.7" aria-label="音量" />
-  </div>
+      <div class="player-time">
+        <span id="player-current">0:00</span>
+        <span id="player-duration">0:00</span>
+      </div>
+      <div class="player-controls">
+        <button class="ctrl-btn" id="btn-prev" title="上一首"><Icon name="prev" size="1.15rem" /></button>
+        <button class="ctrl-btn ctrl-play" id="btn-play" title="播放/暂停">
+          <Icon name="play" size="1.35rem" class="ico-play" />
+          <Icon name="pause" size="1.35rem" class="ico-pause" />
+        </button>
+        <button class="ctrl-btn" id="btn-next" title="下一首"><Icon name="next" size="1.15rem" /></button>
+        <button class="ctrl-btn" id="btn-mode" title="播放模式" data-mode="list">
+          <Icon name="repeat" size="1.1rem" class="ico-list" />
+          <Icon name="repeat_one" size="1.1rem" class="ico-one" />
+          <Icon name="shuffle" size="1.1rem" class="ico-shuffle" />
+        </button>
+      </div>
+      <div class="player-volume">
+        <Icon name="volume" size="1rem" class="vol-icon" />
+        <input type="range" id="player-volume" min="0" max="1" step="0.01" value="0.7" aria-label="音量" />
+      </div>
+      <audio id="audio-el" preload="metadata" src={localTracks[0].url}></audio>
+    </>
+  )}
 </div>
-<audio id="audio-el" preload="metadata"></audio>
-<script>
-  const tracks = JSON.parse('[{"name":"我走后","artist":"小咪","url":"/music/wo-zou-hou.mp3","cover":"/images/music-cover.svg"},{"name":"Whatever Happen","artist":"tangjin","url":"/music/whatever-happen.mp3","cover":"/images/music-cover.svg"}]');
-  const player = document.getElementById('music-player');
-  const audio = document.getElementById('audio-el');
-  const disc = document.getElementById('player-disc');
-  const titleEl = document.getElementById('player-title');
-  const artistEl = document.getElementById('player-artist');
-  const progressBar = document.getElementById('player-progress-bar');
-  const progressWrap = document.getElementById('player-progress');
-  const currentEl = document.getElementById('player-current');
-  const durationEl = document.getElementById('player-duration');
-  const playBtn = document.getElementById('btn-play');
-  const prevBtn = document.getElementById('btn-prev');
-  const nextBtn = document.getElementById('btn-next');
-  const modeBtn = document.getElementById('btn-mode');
-  const volumeEl = document.getElementById('player-volume');
 
-  let currentIndex = 0;
-  let playMode = 'list';
+{metingSongs.length > 0 && (
+  <>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js"></script>
+  </>
+)}
 
-  function loadTrack(index) {
-    const t = tracks[index];
-    if (!t) return;
-    currentIndex = index;
-    audio.src = t.url;
-    titleEl.textContent = t.name;
-    artistEl.textContent = t.artist;
-    const img = disc.querySelector('img');
-    if (t.cover) img.src = t.cover;
-    document.querySelectorAll('.track-item').forEach((el, i) => el.classList.toggle('active', i === currentIndex));
-  }
-
-  function fmt(sec) {
-    if (!isFinite(sec)) return '0:00';
-    const m = Math.floor(sec / 60);
-    const s = Math.floor(sec % 60);
-    return m + ':' + s.toString().padStart(2, '0');
-  }
-
-  function play() { audio.play().catch(() => {}); playBtn.classList.add('playing'); player.classList.add('playing'); }
-  function pause() { audio.pause(); playBtn.classList.remove('playing'); player.classList.remove('playing'); }
-
-  function next() {
-    if (playMode === 'shuffle') loadTrack(Math.floor(Math.random() * tracks.length));
-    else loadTrack((currentIndex + 1) % tracks.length);
-    play();
-  }
-  function prev() { loadTrack((currentIndex - 1 + tracks.length) % tracks.length); play(); }
-
-  playBtn.addEventListener('click', () => (audio.paused ? play() : pause()));
-  nextBtn.addEventListener('click', next);
-  prevBtn.addEventListener('click', prev);
-  modeBtn.addEventListener('click', () => {
-    playMode = playMode === 'list' ? 'one' : playMode === 'one' ? 'shuffle' : 'list';
-    modeBtn.dataset.mode = playMode;
-  });
-  volumeEl.addEventListener('input', () => (audio.volume = parseFloat(volumeEl.value)));
-
-  const playlistEl = document.getElementById('player-playlist');
-  const playlistToggle = document.getElementById('playlist-toggle');
-  if (playlistEl && playlistToggle) {
-    playlistToggle.addEventListener('click', () => {
-      const isOpen = playlistEl.style.display !== 'none';
-      playlistEl.style.display = isOpen ? 'none' : 'block';
+<script define:vars={{ metingSongs, localTracks }}>
+  if (metingSongs.length > 0) {
+    const area = document.getElementById('meting-area');
+    metingSongs.forEach(s => {
+      const el = document.createElement('meting-js');
+      el.setAttribute('server', s.server);
+      el.setAttribute('type', s.type);
+      el.setAttribute('id', s.id);
+      el.setAttribute('auto', s.auto || '');
+      el.setAttribute('mutex', 'true');
+      el.setAttribute('preload', 'auto');
+      el.setAttribute('theme', '#6d5cff');
+      el.setAttribute('order', 'random');
+      el.setAttribute('list-max-height', '200px');
+      area.appendChild(el);
     });
-  }
-  document.querySelectorAll('.track-item').forEach(el => {
-    el.addEventListener('click', () => { const i = Number(el.dataset.idx); if (i !== currentIndex) { loadTrack(i); play(); } });
-  });
+    if (window.Meting) window.Meting.init();
+  } else {
+    const player = document.getElementById('music-player');
+    const audio = document.getElementById('audio-el');
+    const titleEl = document.getElementById('player-title');
+    const artistEl = document.getElementById('player-artist');
+    const progressBar = document.getElementById('player-progress-bar');
+    const progressWrap = document.getElementById('player-progress');
+    const currentEl = document.getElementById('player-current');
+    const durationEl = document.getElementById('player-duration');
+    const playBtn = document.getElementById('btn-play');
+    const prevBtn = document.getElementById('btn-prev');
+    const nextBtn = document.getElementById('btn-next');
+    const modeBtn = document.getElementById('btn-mode');
+    const volumeEl = document.getElementById('player-volume');
+    const tracks = localTracks;
+    let currentIndex = 0;
+    let playMode = 'list';
 
-  audio.addEventListener('timeupdate', () => {
-    currentEl.textContent = fmt(audio.currentTime);
-    if (audio.duration) progressBar.style.width = (audio.currentTime / audio.duration) * 100 + '%';
-  });
-  audio.addEventListener('loadedmetadata', () => { durationEl.textContent = fmt(audio.duration); });
-  audio.addEventListener('ended', () => { if (playMode === 'one') { audio.currentTime = 0; play(); } else next(); });
-  audio.addEventListener('pause', () => { playBtn.classList.remove('playing'); player.classList.remove('playing'); });
-  audio.addEventListener('play', () => { playBtn.classList.add('playing'); player.classList.add('playing'); });
-  progressWrap.addEventListener('click', (e) => {
-    const rect = progressWrap.getBoundingClientRect();
-    const ratio = (e.clientX - rect.left) / rect.width;
-    if (audio.duration) audio.currentTime = ratio * audio.duration;
-  });
-
-  const MUSIC_STATE_KEY = 'tj-music-state';
-  function saveState() {
-    try { localStorage.setItem(MUSIC_STATE_KEY, JSON.stringify({ idx: currentIndex, time: audio.currentTime, playing: !audio.paused, mode: playMode, vol: audio.volume })); } catch {}
+    function loadTrack(i) { const t = tracks[i]; if (!t) return; currentIndex = i; audio.src = t.url; titleEl.textContent = t.name; artistEl.textContent = t.artist; }
+    function fmt(s) { if (!isFinite(s)) return '0:00'; const m = Math.floor(s/60), x = Math.floor(s%60); return m+':'+x.toString().padStart(2,'0'); }
+    function play() { audio.play().catch(()=>{}); playBtn.classList.add('playing'); player.classList.add('playing'); }
+    function pause() { audio.pause(); playBtn.classList.remove('playing'); player.classList.remove('playing'); }
+    playBtn.addEventListener('click', () => audio.paused ? play() : pause());
+    nextBtn.addEventListener('click', () => { loadTrack((currentIndex+1)%tracks.length); play(); });
+    prevBtn.addEventListener('click', () => { loadTrack((currentIndex-1+tracks.length)%tracks.length); play(); });
+    modeBtn.addEventListener('click', () => { playMode = playMode==='list'?'one':playMode==='one'?'shuffle':'list'; modeBtn.dataset.mode = playMode; });
+    volumeEl.addEventListener('input', () => audio.volume = parseFloat(volumeEl.value));
+    audio.addEventListener('timeupdate', () => { currentEl.textContent = fmt(audio.currentTime); if (audio.duration) progressBar.style.width = (audio.currentTime/audio.duration*100)+'%'; });
+    audio.addEventListener('loadedmetadata', () => durationEl.textContent = fmt(audio.duration));
+    audio.addEventListener('ended', () => { if (playMode==='one'){audio.currentTime=0;play();} else next(); });
+    audio.addEventListener('pause', () => { playBtn.classList.remove('playing'); player.classList.remove('playing'); });
+    audio.addEventListener('play', () => { playBtn.classList.add('playing'); player.classList.add('playing'); });
+    progressWrap.addEventListener('click', e => { const r = progressWrap.getBoundingClientRect(); if (audio.duration) audio.currentTime = ((e.clientX-r.left)/r.width)*audio.duration; });
+    loadTrack(0); audio.volume = 0.7;
   }
-  function restoreState() {
-    try {
-      const raw = localStorage.getItem(MUSIC_STATE_KEY);
-      if (!raw) return false;
-      const s = JSON.parse(raw);
-      if (typeof s.idx === 'number' && s.idx < tracks.length) loadTrack(s.idx);
-      else return false;
-      audio.volume = (typeof s.vol === 'number') ? s.vol : parseFloat(volumeEl.value);
-      volumeEl.value = String(audio.volume);
-      if (s.mode) { playMode = s.mode; modeBtn.dataset.mode = playMode; }
-      const pendingTime = (typeof s.time === 'number' && s.time > 1) ? s.time : 0;
-      if (pendingTime > 0) audio.addEventListener('loadedmetadata', () => { if (audio.duration && pendingTime < audio.duration - 1) audio.currentTime = pendingTime; }, { once: true });
-      if (s.playing) { const p = audio.play(); if (p && p.catch) p.catch(() => { playBtn.classList.remove('playing'); player.classList.remove('playing'); }); }
-      return true;
-    } catch { return false; }
-  }
-  setInterval(saveState, 2000);
-  window.addEventListener('pagehide', saveState);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
-  restoreState();
 </script>
+
 <style>
+  /* 前面的样式保持不变，只添加 meting-area */
   .music-player { position: relative; display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; border-radius: var(--radius-lg); background: linear-gradient(145deg, oklch(97% 0.02 250) 0%, oklch(95% 0.03 265) 100%); border: 1px solid var(--border); overflow: hidden; }
   [data-theme='dark'] .music-player { background: linear-gradient(145deg, oklch(21% 0.03 250) 0%, oklch(18% 0.04 265) 100%); }
   .music-deco { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
@@ -211,6 +171,7 @@ const trackCount = tracks.length;
   .music-player.playing .eq-bar:nth-child(4) { animation-duration: 0.9s; animation-delay: 0.1s; }
   @keyframes eq-bounce { 0%, 100% { height: 4px; } 50% { height: 14px; } }
   .player-artist { font-size: 0.75rem; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meting-area { margin-top: 0.5rem; }
   .player-progress { height: 4px; background: oklch(0% 0 0 / 0.07); border-radius: 999px; cursor: pointer; overflow: hidden; }
   [data-theme='dark'] .player-progress { background: oklch(100% 0 0 / 0.1); }
   .player-progress-bar { height: 100%; width: 0; background: var(--primary); border-radius: 999px; transition: width 0.1s linear; }
@@ -234,23 +195,4 @@ const trackCount = tracks.length;
   .player-volume { display: flex; align-items: center; gap: 0.5rem; }
   .vol-icon { color: var(--text-faint); flex-shrink: 0; }
   .player-volume input[type='range'] { flex: 1; height: 4px; accent-color: var(--primary); cursor: pointer; }
-  .player-playlist-head { display: flex; align-items: center; justify-content: space-between; padding: 0.3rem 0.2rem; }
-  .playlist-count { font-size: 0.72rem; color: var(--text-faint); }
-  .playlist-toggle { display: inline-flex; align-items: center; gap: 0.25rem; border: none; background: transparent; color: var(--text-faint); cursor: pointer; font-size: 0.75rem; padding: 0.15rem 0.4rem; border-radius: 999px; transition: all 0.15s ease; }
-  .playlist-toggle:hover { color: var(--primary); background: var(--primary-soft); }
-  .playlist-toggle :global(.icon) { opacity: 0.7; }
-  .player-playlist { max-height: 180px; overflow-y: auto; margin-top: 0.3rem; border-top: 1px solid var(--border); padding-top: 0.3rem; }
-  .track-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.4rem; border-radius: var(--radius-sm); cursor: pointer; transition: all 0.12s ease; }
-  .track-item:hover { background: var(--surface-2); }
-  .track-item.active { background: var(--primary-soft); }
-  .track-item.active .track-name { color: var(--primary-strong); font-weight: 600; }
-  .track-num { width: 1.2rem; text-align: center; font-size: 0.72rem; color: var(--text-faint); flex-shrink: 0; }
-  .track-item.active .track-num { display: none; }
-  .track-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-  .track-name { font-size: 0.8rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .track-artist { font-size: 0.68rem; color: var(--text-faint); }
-  .track-playing { display: none; color: var(--primary); flex-shrink: 0; }
-  .track-item.active .track-playing { display: inline-block; }
-  [data-theme='dark'] .track-item:hover { background: oklch(22% 0.02 250); }
-  [data-theme='dark'] .track-item.active { background: oklch(25% 0.04 265); }
 </style>

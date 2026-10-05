@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>管理后台 · tangjin.xyz</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f0d18; color: #e5e7eb; min-height: 100vh; }
+    .login-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; gap: 1.5rem; padding: 2rem; }
+    .login-card { background: #1a1726; border: 1px solid #2d2840; border-radius: 1rem; padding: 2.5rem; max-width: 420px; width: 100%; }
+    .login-card h1 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .login-card p { color: #9ca3af; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .login-card input { width: 100%; padding: 0.6rem 0.75rem; border-radius: 0.5rem; border: 1px solid #2d2840; background: #0f0d18; color: #e5e7eb; font-size: 0.9rem; margin-bottom: 1rem; }
+    .login-card input:focus { outline: none; border-color: #6d5cff; }
+    .login-card button { width: 100%; padding: 0.6rem; border-radius: 0.5rem; background: #6d5cff; color: #fff; cursor: pointer; border: none; font-size: 0.9rem; }
+    .login-card button:hover { background: #5b4ce0; }
+    .error { color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem; }
+    .back-link { color: #6d5cff; text-decoration: none; font-size: 0.85rem; }
+    .back-link:hover { text-decoration: underline; }
+    .token-help { font-size: 0.8rem; color: #6b7280; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #2d2840; }
+    .token-help a { color: #6d5cff; }
+    /* 后台 */
+    .admin { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .admin-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #2d2840; }
+    .admin-header h1 { font-size: 1.25rem; }
+    .user-info { display: flex; align-items: center; gap: 0.75rem; }
+    .user-info img { width: 32px; height: 32px; border-radius: 50%; }
+    .logout-btn { padding: 0.35rem 0.75rem; border-radius: 0.375rem; background: #2d2840; color: #e5e7eb; cursor: pointer; border: none; font-size: 0.8rem; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab { padding: 0.5rem 1rem; border-radius: 0.5rem; background: #1a1726; color: #9ca3af; cursor: pointer; border: none; font-size: 0.9rem; }
+    .tab.active { background: #6d5cff; color: #fff; }
+    .panel { display: none; background: #1a1726; border-radius: 0.75rem; padding: 1.5rem; border: 1px solid #2d2840; }
+    .panel.active { display: block; }
+    .panel h2 { margin-bottom: 1rem; font-size: 1.1rem; }
+    .form-group { margin-bottom: 1rem; }
+    .form-group label { display: block; font-size: 0.85rem; margin-bottom: 0.25rem; color: #9ca3af; }
+    .form-group input, .form-group textarea { width: 100%; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: 1px solid #2d2840; background: #0f0d18; color: #e5e7eb; font-size: 0.9rem; }
+    .form-group textarea { min-height: 200px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+    .submit-btn { padding: 0.6rem 1.5rem; border-radius: 0.5rem; background: #6d5cff; color: #fff; cursor: pointer; border: none; font-size: 0.9rem; }
+    .submit-btn:hover { background: #5b4ce0; }
+    .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; padding: 0.75rem 1.25rem; border-radius: 0.5rem; color: #fff; font-size: 0.9rem; opacity: 0; transform: translateY(10px); transition: all 0.3s; z-index: 9999; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.info { background: #6d5cff; }
+    .list-item { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.8rem; border: 1px solid #2d2840; border-radius: 0.5rem; margin-bottom: 0.4rem; }
+    .list-item-info { display: flex; flex-direction: column; gap: 0.1rem; }
+    .list-item-name { font-weight: 500; font-size: 0.9rem; }
+    .list-item-desc { font-size: 0.75rem; color: #9ca3af; }
+    .list-item-actions { display: flex; gap: 0.3rem; }
+    .list-item-actions button { padding: 0.25rem 0.5rem; border-radius: 0.375rem; background: #2d2840; color: #e5e7eb; cursor: pointer; border: none; font-size: 0.75rem; }
+    .list-item-actions button:hover { background: #6d5cff; }
+    .list-item-actions button.del:hover { background: #ef4444; }
+  </style>
+</head>
+<body>
+
+<div class="login-wrap" id="login-view">
+  <div class="login-card">
+    <h1>🔐 管理后台</h1>
+    <p>输入 GitHub Personal Access Token 登录（仅 TANGJIN13 可访问）</p>
+    <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx" />
+    <button id="btn-login">登录</button>
+    <div class="error" id="login-error"></div>
+    <div class="token-help">
+      Token 在 <a href="https://github.com/settings/tokens" target="_blank">GitHub Settings → Tokens</a> 生成，
+      需要勾选 <code>repo</code> 权限
+    </div>
+    <a class="back-link" href="/">← 返回首页</a>
+  </div>
+</div>
+
+<div class="admin" id="admin-view" style="display:none">
+  <header class="admin-header">
+    <h1>📝 管理后台</h1>
+    <div class="user-info">
+      <img id="user-avatar" src="" alt="" />
+      <span id="user-name"></span>
+      <button class="logout-btn" id="btn-logout">退出</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="posts">文章</button>
+    <button class="tab" data-panel="friends">友链</button>
+    <button class="tab" data-panel="categories">分类</button>
+  </div>
+
+  <div class="panel active" id="panel-posts">
+    <h2>发布文章</h2>
+    <div class="form-group">
+      <label>标题</label>
+      <input type="text" id="post-title" placeholder="文章标题" />
+    </div>
+    <div class="form-group">
+      <label>描述</label>
+      <input type="text" id="post-desc" placeholder="一句话摘要" />
+    </div>
+    <div class="form-group">
+      <label>标签（逗号分隔）</label>
+      <input type="text" id="post-tags" placeholder="Web安全, CTF" />
+    </div>
+    <div class="form-group">
+      <label>正文（Markdown）</label>
+      <textarea id="post-body" placeholder="在这里写 Markdown..."></textarea>
+    </div>
+    <button class="submit-btn" id="btn-publish">🚀 发布</button>
+  </div>
+
+  <div class="panel" id="panel-friends">
+    <h2>友链管理</h2>
+    <div class="form-group">
+      <label>名字</label>
+      <input type="text" id="friend-name" placeholder="朋友名字" />
+    </div>
+    <div class="form-group">
+      <label>网址</label>
+      <input type="text" id="friend-url" placeholder="https://..." />
+    </div>
+    <div class="form-group">
+      <label>头像链接</label>
+      <input type="text" id="friend-avatar" placeholder="https://..." />
+    </div>
+    <div class="form-group">
+      <label>一句话介绍</label>
+      <input type="text" id="friend-desc" placeholder="一句话介绍" />
+    </div>
+    <button class="submit-btn" id="btn-add-friend">➕ 添加友链</button>
+    <div id="friends-list" style="margin-top:1.5rem"></div>
+  </div>
+
+  <div class="panel" id="panel-categories">
+    <h2>分类管理</h2>
+    <div class="form-group">
+      <label>分类名</label>
+      <input type="text" id="cat-name" placeholder="分类名" />
+    </div>
+    <div class="form-group">
+      <label>slug（英文）</label>
+      <input type="text" id="cat-slug" placeholder="web-security" />
+    </div>
+    <div class="form-group">
+      <label>图标名</label>
+      <input type="text" id="cat-icon" placeholder="lock / flag / code" />
+    </div>
+    <button class="submit-btn" id="btn-add-cat">➕ 添加分类</button>
+    <div id="cats-list" style="margin-top:1.5rem"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const OWNER = 'TANGJIN13';
+  const REPO = 'tangjin-blog';
+  const BRANCH = 'main';
+  const $ = id => document.getElementById(id);
+
+  const token = localStorage.getItem('gh_token');
+  const user = JSON.parse(localStorage.getItem('gh_user') || 'null');
+  if (token && user && user.login === OWNER) showAdmin(user);
+  else showLogin();
+
+  function showLogin() { $('login-view').style.display = 'flex'; $('admin-view').style.display = 'none'; }
+  function showAdmin(u) {
+    $('login-view').style.display = 'none';
+    $('admin-view').style.display = 'block';
+    $('user-avatar').src = u.avatar_url;
+    $('user-name').textContent = u.login;
+    loadFriends(); loadCategories();
+  }
+
+  function toast(msg, type = 'info') {
+    const t = $('toast'); t.textContent = msg; t.className = 'toast show ' + type;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // 登录
+  $('btn-login').addEventListener('click', async () => {
+    const tk = $('token-input').value.trim();
+    if (!tk) { $('login-error').textContent = '请输入 token'; return; }
+    try {
+      const res = await fetch('https://api.github.com/user', { headers: { Authorization: 'token ' + tk } });
+      if (!res.ok) throw new Error('Token 无效');
+      const u = await res.json();
+      if (u.login !== OWNER) { $('login-error').textContent = '❌ ' + u.login + ' 不是管理员（需要 ' + OWNER + '）'; return; }
+      localStorage.setItem('gh_token', tk);
+      localStorage.setItem('gh_user', JSON.stringify(u));
+      showAdmin(u);
+    } catch (e) { $('login-error').textContent = '登录失败: ' + e.message; }
+  });
+
+  $('btn-logout').addEventListener('click', () => { localStorage.removeItem('gh_token'); localStorage.removeItem('gh_user'); showLogin(); });
+
+  // 标签切换
+  document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    t.classList.add('active'); $('panel-' + t.dataset.panel).classList.add('active');
+  }));
+
+  // GitHub API
+  async function gh(path, opts = {}) {
+    const tk = localStorage.getItem('gh_token');
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}${path}`, {
+      ...opts,
+      headers: { Authorization: 'token ' + tk, 'Content-Type': 'application/json', ...opts.headers }
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.message || `HTTP ${res.status}`); }
+    return res.json();
+  }
+
+  async function commitFile(path, content, message) {
+    let sha = null;
+    try { const existing = await gh(`/contents/${path}?ref=${BRANCH}`); sha = existing.sha; } catch {}
+    await gh(`/contents/${path}`, {
+      method: 'PUT',
+      body: JSON.stringify({ message, content: btoa(unescape(encodeURIComponent(content))), branch: BRANCH, ...(sha ? { sha } : {}) })
+    });
+  }
+
+  // 发布文章
+  $('btn-publish').addEventListener('click', async () => {
+    const title = $('post-title').value.trim(), desc = $('post-desc').value.trim(),
+          tags = $('post-tags').value.trim(), body = $('post-body').value.trim();
+    if (!title || !body) { toast('标题和正文不能为空', 'error'); return; }
+    const slug = title.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-').replace(/^-|-$/g, '') || 'post';
+    const date = new Date().toISOString().slice(0, 10);
+    const tagList = tags ? tags.split(/[,，]/).map(t => `"${t.trim()}"`).join(', ') : '"随笔"';
+    const content = `---\ntitle: "${title}"\ndescription: "${desc}"\npublished: ${date}\ntags: [${tagList}]\n---\n\n${body}\n`;
+    try {
+      await commitFile(`src/content/posts/${date}-${slug}.md`, content, `Add post: ${title}`);
+      toast('✅ 已发布！约 1-2 分钟后上线', 'success');
+      $('post-title').value = ''; $('post-desc').value = ''; $('post-tags').value = ''; $('post-body').value = '';
+    } catch (e) { toast('发布失败: ' + e.message, 'error'); }
+  });
+
+  // 友链
+  async function loadFriends() {
+    try {
+      const file = await gh('/contents/src/pages/friends.astro?ref=' + BRANCH);
+      const content = decodeURIComponent(escape(atob(file.content)));
+      // 提取 friends 数组
+      const match = content.match(/const friends\s*=\s*\[([\s\S]*?)\];/);
+      const list = $('friends-list'); list.innerHTML = '';
+      if (match) {
+        const items = [...match[0].matchAll(/\{\s*name:\s*'([^']*)',\s*url:\s*'([^']*)',\s*avatar:\s*'([^']*)',\s*description:\s*'([^']*)'\s*\}/g)];
+        if (items.length === 0) { list.innerHTML = '<p style="color:#9ca3af">暂无友链</p>'; return; }
+        items.forEach(m => {
+          const div = document.createElement('div'); div.className = 'list-item';
+          div.innerHTML = `<div class="list-item-info"><span class="list-item-name">${m[1]}</span><span class="list-item-desc">${m[4]}</span></div><div class="list-item-actions"><button class="del">删除</button></div>`;
+          div.querySelector('.del').addEventListener('click', async () => { await deleteFriend(m[1]); });
+          list.appendChild(div);
+        });
+      }
+    } catch (e) { $('friends-list').innerHTML = '<p style="color:#9ca3af">加载失败: ' + e.message + '</p>'; }
+  }
+
+  async function deleteFriend(name) {
+    try {
+      const file = await gh('/contents/src/pages/friends.astro?ref=' + BRANCH);
+      let content = decodeURIComponent(escape(atob(file.content)));
+      // 删除对应的友链行
+      const re = new RegExp(`\\{\\s*name:\\s*'${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}'[^}]*\\},?\\n?`);
+      content = content.replace(re, '');
+      await commitFile('src/pages/friends.astro', content, `Remove friend: ${name}`);
+      toast('✅ 已删除', 'success'); loadFriends();
+    } catch (e) { toast('删除失败: ' + e.message, 'error'); }
+  }
+
+  $('btn-add-friend').addEventListener('click', async () => {
+    const name = $('friend-name').value.trim(), url = $('friend-url').value.trim(),
+          avatar = $('friend-avatar').value.trim(), desc = $('friend-desc').value.trim();
+    if (!name || !url) { toast('名字和网址不能为空', 'error'); return; }
+    try {
+      const file = await gh('/contents/src/pages/friends.astro?ref=' + BRANCH);
+      let content = decodeURIComponent(escape(atob(file.content)));
+      // 在 ]; 前插入新友链
+      const newEntry = `  { name: '${name}', url: '${url}', avatar: '${avatar}', description: '${desc}' },`;
+      content = content.replace(/(\n\];)/, `\n${newEntry}$1`);
+      await commitFile('src/pages/friends.astro', content, `Add friend: ${name}`);
+      toast('✅ 已添加', 'success');
+      $('friend-name').value = ''; $('friend-url').value = ''; $('friend-avatar').value = ''; $('friend-desc').value = '';
+      loadFriends();
+    } catch (e) { toast('添加失败: ' + e.message, 'error'); }
+  });
+
+  // 分类
+  async function loadCategories() {
+    try {
+      const file = await gh('/contents/src/data/categories.ts?ref=' + BRANCH);
+      const content = decodeURIComponent(escape(atob(file.content)));
+      const match = content.match(/const categories\s*=\s*\[([\s\S]*?)\];/);
+      const list = $('cats-list'); list.innerHTML = '';
+      if (match) {
+        const items = [...match[0].matchAll(/\{\s*name:\s*'([^']*)',\s*slug:\s*'([^']*)'[^}]*\}/g)];
+        if (items.length === 0) { list.innerHTML = '<p style="color:#9ca3af">暂无分类</p>'; return; }
+        items.forEach(m => {
+          const div = document.createElement('div'); div.className = 'list-item';
+          div.innerHTML = `<div class="list-item-info"><span class="list-item-name">${m[1]}</span><span class="list-item-desc">/${m[2]}</span></div><div class="list-item-actions"><button class="del">删除</button></div>`;
+          div.querySelector('.del').addEventListener('click', async () => { await deleteCategory(m[2]); });
+          list.appendChild(div);
+        });
+      }
+    } catch (e) { $('cats-list').innerHTML = '<p style="color:#9ca3af">加载失败: ' + e.message + '</p>'; }
+  }
+
+  async function deleteCategory(slug) {
+    try {
+      const file = await gh('/contents/src/data/categories.ts?ref=' + BRANCH);
+      let content = decodeURIComponent(escape(atob(file.content)));
+      const re = new RegExp(`\\{\\s*name:\\s*'[^']*'\\s*,\\s*slug:\\s*'${slug}'[^}]*\\},?\\n?`);
+      content = content.replace(re, '');
+      await commitFile('src/data/categories.ts', content, `Remove category: ${slug}`);
+      toast('✅ 已删除', 'success'); loadCategories();
+    } catch (e) { toast('删除失败: ' + e.message, 'error'); }
+  }
+
+  $('btn-add-cat').addEventListener('click', async () => {
+    const name = $('cat-name').value.trim(), slug = $('cat-slug').value.trim(), icon = $('cat-icon').value.trim();
+    if (!name || !slug) { toast('分类名和 slug 不能为空', 'error'); return; }
+    try {
+      const file = await gh('/contents/src/data/categories.ts?ref=' + BRANCH);
+      let content = decodeURIComponent(escape(atob(file.content)));
+      const newEntry = `  { name: '${name}', slug: '${slug}', description: '${name}', icon: '${icon || 'folder'}' },`;
+      content = content.replace(/(\n\];)/, `\n${newEntry}$1`);
+      await commitFile('src/data/categories.ts', content, `Add category: ${name}`);
+      toast('✅ 已添加', 'success');
+      $('cat-name').value = ''; $('cat-slug').value = ''; $('cat-icon').value = '';
+      loadCategories();
+    } catch (e) { toast('添加失败: ' + e.message, 'error'); }
+  });
+</script>
+</body>
+</html>
