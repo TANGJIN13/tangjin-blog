@@ -11,43 +11,14 @@ import Icon from '../components/Icon.astro';
         <header class="post-head">
           <div class="cover">
             <div class="cover-placeholder guestbook-cover">
-              <!-- 二次元装饰图 -->
-              <svg class="gb-deco-svg" viewBox="0 0 200 200" width="120" height="120" aria-hidden="true">
-                <defs>
-                  <radialGradient id="gb-glow" cx="50%" cy="50%" r="50%">
-                    <stop offset="0%" stop-color="#fff" stop-opacity="0.3"/>
-                    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-                  </radialGradient>
-                  <linearGradient id="gb-hair" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stop-color="#a78bfa"/>
-                    <stop offset="100%" stop-color="#7c3aed"/>
-                  </linearGradient>
-                  <linearGradient id="gb-dress" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#f0abfc"/>
-                    <stop offset="100%" stop-color="#c084fc"/>
-                  </linearGradient>
-                </defs>
-                <circle cx="100" cy="100" r="90" fill="url(#gb-glow)"/>
-                <ellipse cx="100" cy="78" rx="42" ry="40" fill="url(#gb-hair)"/>
-                <ellipse cx="100" cy="85" rx="28" ry="26" fill="#fef3c7"/>
-                <path d="M72 75 Q80 55 100 52 Q120 55 128 75 Q125 65 100 62 Q75 65 72 75Z" fill="url(#gb-hair)"/>
-                <ellipse cx="88" cy="90" rx="6" ry="8" fill="#fff"/>
-                <ellipse cx="112" cy="90" rx="6" ry="8" fill="#fff"/>
-                <circle cx="89" cy="91" r="4" fill="#1e1b4b"/>
-                <circle cx="113" cy="91" r="4" fill="#1e1b4b"/>
-                <circle cx="90" cy="89" r="1.5" fill="#fff"/>
-                <circle cx="114" cy="89" r="1.5" fill="#fff"/>
-                <ellipse cx="80" cy="98" rx="5" ry="3" fill="#f9a8d4" opacity="0.6"/>
-                <ellipse cx="120" cy="98" rx="5" ry="3" fill="#f9a8d4" opacity="0.6"/>
-                <path d="M95 103 Q100 107 105 103" fill="none" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round"/>
-                <path d="M82 110 Q100 105 118 110 L125 155 Q100 160 75 155 Z" fill="url(#gb-dress)"/>
-                <path d="M60 120 Q50 100 65 90 Q70 105 60 120Z" fill="#a78bfa" opacity="0.5"/>
-                <path d="M140 120 Q150 100 135 90 Q130 105 140 120Z" fill="#a78bfa" opacity="0.5"/>
-                <circle cx="50" cy="60" r="2" fill="#fff"><animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite"/></circle>
-                <circle cx="150" cy="70" r="1.5" fill="#fff"><animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/></circle>
-                <circle cx="40" cy="130" r="1.5" fill="#f0abfc"><animate attributeName="opacity" values="0.5;1;0.5" dur="1.8s" repeatCount="indefinite"/></circle>
-                <circle cx="160" cy="140" r="2" fill="#f0abfc"><animate attributeName="opacity" values="0.4;1;0.4" dur="2.2s" repeatCount="indefinite"/></circle>
-              </svg>
+              <!-- 壁纸背景 -->
+              <img class="gb-wallpaper" src="/images/wallpapers/wallpaper-02.svg" alt="" aria-hidden="true" />
+              <div class="gb-wallpaper-dim" aria-hidden="true"></div>
+              <!-- 哲理句子 -->
+              <div class="gb-quote">
+                <p class="gb-quote-text">"我们所做的每件事，都是在为未来投票。"</p>
+                <span class="gb-quote-author">— 未知</span>
+              </div>
               <span class="gb-icon-text"><Icon name="mail" size="1.2rem" /> 留言</span>
             </div>
           </div>
@@ -64,6 +35,11 @@ import Icon from '../components/Icon.astro';
               <li>需要 GitHub 账号登录后留言</li>
               <li>留言即表示同意公开展示</li>
             </ul>
+          </div>
+
+          <div class="gb-quote-block">
+            <p class="gb-quote-text">"世界上只有一种英雄主义，就是认清生活的真相后依然热爱它。"</p>
+            <span class="gb-quote-author">— 罗曼·罗兰</span>
           </div>
         </div>
 
@@ -124,22 +100,74 @@ import Icon from '../components/Icon.astro';
   .comments-card { margin-top: 1.25rem; padding: 1.5rem; }
 
   .guestbook-cover {
-    background: linear-gradient(145deg, oklch(70% 0.14 250) 0%, oklch(60% 0.18 280) 50%, oklch(70% 0.16 320) 100%) !important;
+    position: relative;
+    overflow: hidden;
+    min-height: 280px;
     flex-direction: column;
     gap: 0.5rem;
   }
-  .gb-deco-svg { animation: gb-float 4s ease-in-out infinite; }
-  @keyframes gb-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+  .gb-wallpaper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 8s ease;
+  }
+  .guestbook-cover:hover .gb-wallpaper { transform: scale(1.08); }
+  .gb-wallpaper-dim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom,
+      oklch(0% 0 0 / 0.3) 0%,
+      oklch(0% 0 0 / 0.55) 100%);
+  }
+  .gb-quote {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem 1.5rem 1rem;
+    color: #fff;
+  }
+  .gb-quote-text {
+    font-size: clamp(1rem, 2.5vw, 1.35rem);
+    font-weight: 600;
+    line-height: 1.6;
+    margin: 0 0 0.5rem;
+    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.5);
+    letter-spacing: 0.02em;
+  }
+  .gb-quote-author {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    text-shadow: 0 1px 6px oklch(0% 0 0 / 0.5);
   }
   .gb-icon-text {
+    position: relative;
+    z-index: 1;
     display: flex; align-items: center; gap: 0.35rem;
-    font-size: 1.1rem; font-weight: 600; color: #fff;
-    text-shadow: 0 2px 8px oklch(0% 0 0 / 0.3);
+    font-size: 1rem; font-weight: 500; color: #fff;
+    text-shadow: 0 2px 8px oklch(0% 0 0 / 0.4);
+    margin-bottom: 0.5rem;
   }
-  .guestbook-intro {
-    padding: 0.5rem 0;
+
+  .gb-quote-block {
+    margin-top: 1.5rem;
+    padding: 1.5rem 2rem;
+    border-left: 3px solid var(--primary);
+    background: var(--primary-soft);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    text-align: center;
+  }
+  .gb-quote-block .gb-quote-text {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: var(--text-soft);
+    font-weight: 500;
+    margin: 0 0 0.4rem;
+  }
+  .gb-quote-block .gb-quote-author {
+    font-size: 0.8rem;
+    color: var(--text-faint);
   }
   .guestbook-intro h2 {
     margin: 0 0 1rem;
