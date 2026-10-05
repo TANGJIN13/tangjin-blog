@@ -12,16 +12,13 @@ import { site } from '../site';
     <article class="post-main">
       <header class="post-head">
         <div class="cover">
-          <div class="cover-placeholder">
-            <Icon name="person" size="2.5rem" />
-          </div>
+          <div class="cover-placeholder"><Icon name="person" size="2.5rem" /></div>
         </div>
         <h1 class="post-title">关于我</h1>
         <p class="post-desc">Web 安全方向的探索者</p>
       </header>
 
       <div class="post-body custom-md">
-        <!-- 个人介绍卡片 -->
         <div class="deco-card glass">
           <div class="deco-card-header">
             <img class="deco-avatar" src={site.avatar} alt="头像" width="80" height="80" />
@@ -33,27 +30,22 @@ import { site } from '../site';
           <p>你好，我是 <strong>{site.title}</strong>。Web 安全方向的探索者，泡靶场、刷 CTF、复现漏洞，也折腾自己的小站。</p>
         </div>
 
-        <!-- 技术栈 -->
         <h2><Icon name="code" size="1.3rem" /> 技术栈</h2>
         <div class="tech-grid">
           <div class="tech-card glass onload-animation" style="animation-delay: 0.05s">
             <span class="tech-icon"><Icon name="lock" size="1.8rem" /></span>
-            <h4>Web 安全</h4>
-            <p>XSS / SQLi / SSRF / XXE</p>
+            <h4>Web 安全</h4><p>XSS / SQLi / SSRF / XXE</p>
           </div>
           <div class="tech-card glass onload-animation" style="animation-delay: 0.1s">
             <span class="tech-icon"><Icon name="flag" size="1.8rem" /></span>
-            <h4>CTF</h4>
-            <p>Web / Misc</p>
+            <h4>CTF</h4><p>Web / Misc</p>
           </div>
           <div class="tech-card glass onload-animation" style="animation-delay: 0.2s">
             <span class="tech-icon"><Icon name="terminal" size="1.8rem" /></span>
-            <h4>运维</h4>
-            <p>Linux / Docker / Nginx</p>
+            <h4>运维</h4><p>Linux / Docker / Nginx</p>
           </div>
         </div>
 
-        <!-- 时间线 -->
         <h2><Icon name="calendar" size="1.3rem" /> 时间线</h2>
         <div class="timeline">
           <div class="timeline-item onload-animation" style="animation-delay: 0.1s">
@@ -64,8 +56,16 @@ import { site } from '../site';
               <p>用 Astro 搭建了这个博客，记录安全学习之路。</p>
             </div>
           </div>
+          <div class="timeline-item onload-animation" style="animation-delay: 0.2s">
+            <div class="timeline-dot"></div>
+            <div class="timeline-content card-base">
+              <span class="timeline-date">2026</span>
+              <h4>成为 CTF 选手</h4>
+              <p>开始参加各种 CTF 比赛，刷题复现。</p>
+            </div>
+          </div>
         </div>
-        <!-- 联系方式 -->
+
         <h2><Icon name="mail" size="1.3rem" /> 联系</h2>
         <div class="contact-grid">
           {site.links.map((l) => (
@@ -76,25 +76,18 @@ import { site } from '../site';
           ))}
         </div>
 
-        <!-- 社交链接 -->
         <h2><Icon name="person" size="1.3rem" /> 社交</h2>
         <SocialLinks />
 
-        <!-- 技能标签云 -->
         <h2><Icon name="code" size="1.3rem" /> 技能</h2>
         <SkillCloud />
 
-        <!-- 装饰性引用 -->
-        <blockquote class="deco-quote">
-          <p>"安全是一场没有终点的旅程。"</p>
-        </blockquote>
+        <blockquote class="deco-quote"><p>"安全是一场没有终点的旅程。"</p></blockquote>
       </div>
 
-      <!-- Giscus 评论 -->
       <GiscusComments />
     </article>
 
-    <!-- 右侧 TOC -->
     <aside class="post-toc">
       <div class="card-base toc-card" id="toc-card">
         <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
@@ -104,157 +97,55 @@ import { site } from '../site';
   </div>
 </Base>
 
-<script>
-  const content = document.querySelector('.custom-md');
-  const tocNav = document.getElementById('toc-nav');
-  if (content && tocNav) {
-    const headings = content.querySelectorAll('h2, h3');
-    headings.forEach((h, i) => {
-      h.id = h.id || `heading-${i}`;
-      const a = document.createElement('a');
-      a.className = 'toc-item toc-level-' + h.tagName[1];
-      a.href = `#${h.id}`;
-      a.textContent = h.textContent;
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-      tocNav.appendChild(a);
-    });
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          tocNav.querySelectorAll('.toc-item').forEach(a => a.classList.remove('active'));
-          tocNav.querySelector(`a[href="#${entry.target.id}"]`)?.classList.add('active');
-        }
-      });
-    }, { rootMargin: '-80px 0px -70% 0px' });
-    headings.forEach(h => observer.observe(h));
-  }
-</script>
-
 <style>
   .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
-
   .post-head { margin-bottom: 2rem; }
-
-  .cover img, .cover-placeholder {
-    width: 100%; aspect-ratio: 2 / 1;
-    border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
-  }
+  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
   .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
   .cover-icon { font-size: 2.5rem; opacity: 0.8; }
-
-  .post-title {
-    font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem;
-    letter-spacing: -0.02em;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .post-desc { color: var(--text-soft); font-size: 1.05rem; }
-
   .post-body { font-size: 1.02rem; }
-
-  .deco-card {
-    border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem;
-    background: var(--gradient-card);
-  }
+  .deco-card { border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; background: var(--gradient-card); }
   .deco-card-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
   .deco-avatar { width: 56px; height: 56px; border-radius: 50%; border: 3px solid var(--surface); box-shadow: var(--shadow); }
   .deco-card h3 { margin: 0; font-size: 1.1rem; }
   .deco-subtitle { margin: 0; font-size: 0.82rem; color: var(--text-faint); }
-
-  .custom-md :global(h2) {
-    font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem;
-    padding-bottom: 0.4rem; border-bottom: 2px solid; border-image: var(--gradient-primary) 1;
-  }
-
-  .tech-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.8rem; margin-bottom: 2rem;
-  }
-  .tech-card {
-    border-radius: var(--radius-lg); padding: 1.2rem; text-align: center;
-    transition: all 0.25s ease;
-  }
+  .custom-md :global(h2) { font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid; border-image: var(--gradient-primary) 1; }
+  .tech-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 0.8rem; margin-bottom: 2rem; }
+  .tech-card { border-radius: var(--radius-lg); padding: 1.2rem; text-align: center; transition: all 0.25s ease; }
   .tech-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
   .tech-icon { font-size: 1.8rem; display: block; margin-bottom: 0.5rem; }
   .tech-card h4 { margin: 0 0 0.3rem; font-size: 0.95rem; }
   .tech-card p { margin: 0; font-size: 0.8rem; color: var(--text-faint); }
-
   .timeline { position: relative; padding-left: 1.5rem; margin-bottom: 2rem; }
-  .timeline::before {
-    content: ''; position: absolute; left: 6px; top: 0; bottom: 0;
-    width: 2px; background: var(--gradient-primary); border-radius: 999px;
-  }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: var(--gradient-primary); border-radius: 999px; }
   .timeline-item { position: relative; margin-bottom: 1.2rem; }
-  .timeline-dot {
-    position: absolute; left: -1.5rem; top: 0.5rem;
-    width: 12px; height: 12px; border-radius: 50%;
-    background: var(--primary); border: 3px solid var(--surface); box-shadow: var(--shadow-sm);
-  }
+  .timeline-dot { position: absolute; left: -1.5rem; top: 0.5rem; width: 12px; height: 12px; border-radius: 50%; background: var(--primary); border: 3px solid var(--surface); box-shadow: var(--shadow-sm); }
   .timeline-content { padding: 0.8rem 1rem; }
   .timeline-date { font-size: 0.75rem; color: var(--text-faint); font-weight: 600; }
   .timeline-content h4 { margin: 0.2rem 0; font-size: 1rem; }
   .timeline-content p { margin: 0; font-size: 0.88rem; color: var(--text-soft); }
-
   .contact-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 2rem; }
-  .contact-card {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.6rem 1.2rem; border-radius: 999px;
-    font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease;
-  }
+  .contact-card { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.2rem; border-radius: 999px; font-size: 0.9rem; font-weight: 500; transition: all 0.2s ease; }
   .contact-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
   .contact-icon { font-size: 1rem; }
-
-  .deco-quote {
-    margin: 2rem 0; padding: 1.2rem 1.5rem;
-    border-left: 4px solid; border-image: var(--gradient-primary) 1;
-    background: var(--primary-soft); border-radius: 0 var(--radius) var(--radius) 0;
-    font-style: italic; color: var(--text-soft);
-  }
+  .deco-quote { margin: 2rem 0; padding: 1.2rem 1.5rem; border-left: 4px solid; border-image: var(--gradient-primary) 1; background: var(--primary-soft); border-radius: 0 var(--radius) var(--radius) 0; font-style: italic; color: var(--text-soft); }
   .deco-quote p { margin: 0; font-size: 1.05rem; }
-
-  .custom-md :global(pre) {
-    background: #1e1e2e; color: #e5e7eb; border-radius: var(--radius);
-    padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6;
-    margin: 1.2em 0; box-shadow: var(--shadow-sm);
-  }
+  .custom-md :global(pre) { background: #1e1e2e; color: #e5e7eb; border-radius: var(--radius); padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; margin: 1.2em 0; box-shadow: var(--shadow-sm); }
   .custom-md :global(pre code) { background: none; padding: 0; color: inherit; }
-  .custom-md :global(:not(pre) > code) {
-    background: var(--surface-2); border: 1px solid var(--border);
-    border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em; color: var(--primary-strong);
-  }
-  .custom-md :global(blockquote) {
-    margin: 1.2em 0; padding: 0.7em 1.2em;
-    border-left: 3px solid; border-image: var(--gradient-primary) 1;
-    background: var(--primary-soft); border-radius: 0 var(--radius) var(--radius) 0; color: var(--text-soft);
-  }
-  .custom-md :global(table) {
-    width: 100%; border-collapse: collapse; margin: 1.2em 0;
-    font-size: 0.92rem; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm);
-  }
-  .custom-md :global(th), .custom-md :global(td) {
-    border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left;
-  }
+  .custom-md :global(:not(pre) > code) { background: var(--surface-2); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em; color: var(--primary-strong); }
+  .custom-md :global(blockquote) { margin: 1.2em 0; padding: 0.7em 1.2em; border-left: 3px solid; border-image: var(--gradient-primary) 1; background: var(--primary-soft); border-radius: 0 var(--radius) var(--radius) 0; color: var(--text-soft); }
+  .custom-md :global(table) { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 0.92rem; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
+  .custom-md :global(th), .custom-md :global(td) { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
   .custom-md :global(th) { background: var(--surface-2); font-weight: 600; }
   .custom-md :global(img) { border-radius: var(--radius-lg); margin: 1.2rem auto; box-shadow: var(--shadow); }
-
   .post-toc { position: sticky; top: 70px; align-self: start; }
   .toc-card { padding: 1rem; position: relative; }
   .toc-nav { display: flex; flex-direction: column; gap: 0.25rem; }
-  .toc-item {
-    font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem;
-    border-radius: var(--radius-sm); text-decoration: none !important; background: none !important;
-    transition: all 0.15s ease; border-left: 2px solid transparent;
-  }
+  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none !important; background: none !important; transition: all 0.15s ease; border-left: 2px solid transparent; }
   .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
   .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
   .toc-level-3 { padding-left: 1.2rem; font-size: 0.78rem; }
-
-  @media (max-width: 860px) {
-    .post-layout { grid-template-columns: 1fr; }
-    .post-toc { display: none; }
-  }
+  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
 </style>
