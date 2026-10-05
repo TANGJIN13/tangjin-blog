@@ -19,10 +19,15 @@ const daysSince = Math.max(1, Math.floor((Date.now() - startDate.getTime()) / 86
     <article class="post-main">
       <header class="post-head">
         <div class="cover">
-          <div class="cover-placeholder"><Icon name="person" size="2.5rem" /></div>
+          <div class="cover-placeholder about-cover">
+            <img class="about-cover-img" src="/images/wallpapers/about-cover.svg" alt="" aria-hidden="true" />
+            <div class="about-cover-dim" aria-hidden="true"></div>
+            <div class="about-cover-content">
+              <h1 class="post-title">关于我</h1>
+              <p class="post-desc">桂林电子科技大学 · 25级网安 · Web 安全</p>
+            </div>
+          </div>
         </div>
-        <h1 class="post-title">关于我</h1>
-        <p class="post-desc">Web 安全方向的探索者</p>
       </header>
 
       <div class="post-body custom-md">
@@ -158,7 +163,6 @@ const daysSince = Math.max(1, Math.floor((Date.now() - startDate.getTime()) / 86
   .deco-quote p { margin: 0; font-size: 1.05rem; }
 
   /* 站点统计 */
-  .about-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 0.8rem;
@@ -229,45 +233,74 @@ const daysSince = Math.max(1, Math.floor((Date.now() - startDate.getTime()) / 86
     padding: 0.8rem 1rem;
     border-radius: var(--radius-lg);
     transition: all 0.2s ease;
-  }
-  .learn-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-  .learn-head {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.5rem;
-  }
-  .learn-head :global(.icon) { color: var(--primary); }
-  .learn-name { font-size: 0.9rem; font-weight: 600; flex: 1; }
-  .learn-pct { font-size: 0.75rem; color: var(--text-faint); font-weight: 600; }
-  .learn-bar {
-    height: 6px;
-    background: oklch(0% 0 0 / 0.06);
-    border-radius: 999px;
+  /* 站点统计 */
+  .about-cover {
+    position: relative;
     overflow: hidden;
-    margin-bottom: 0.3rem;
+    min-height: 280px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
   }
-  .learn-bar-fill {
+  .about-cover-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
     height: 100%;
-    background: var(--gradient-primary);
-    border-radius: 999px;
-    transition: width 0.8s ease;
+    object-fit: cover;
+    transition: transform 8s ease;
   }
-  .learn-note { font-size: 0.72rem; color: var(--text-faint); }
-  .custom-md :global(pre) { background: #1e1e2e; color: #e5e7eb; border-radius: var(--radius); padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; margin: 1.2em 0; box-shadow: var(--shadow-sm); }
-  .custom-md :global(pre code) { background: none; padding: 0; color: inherit; }
-  .custom-md :global(:not(pre) > code) { background: var(--surface-2); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em; color: var(--primary-strong); }
-  .custom-md :global(blockquote) { margin: 1.2em 0; padding: 0.7em 1.2em; border-left: 3px solid; border-image: var(--gradient-primary) 1; background: var(--primary-soft); border-radius: 0 var(--radius) var(--radius) 0; color: var(--text-soft); }
-  .custom-md :global(table) { width: 100%; border-collapse: collapse; margin: 1.2em 0; font-size: 0.92rem; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-sm); }
-  .custom-md :global(th), .custom-md :global(td) { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
-  .custom-md :global(th) { background: var(--surface-2); font-weight: 600; }
-  .custom-md :global(img) { border-radius: var(--radius-lg); margin: 1.2rem auto; box-shadow: var(--shadow); }
-  .post-toc { position: sticky; top: 70px; align-self: start; }
-  .toc-card { padding: 1rem; position: relative; }
-  .toc-nav { display: flex; flex-direction: column; gap: 0.25rem; }
-  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none !important; background: none !important; transition: all 0.15s ease; border-left: 2px solid transparent; }
-  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
-  .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
-  .toc-level-3 { padding-left: 1.2rem; font-size: 0.78rem; }
-  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+  .about-cover:hover .about-cover-img { transform: scale(1.05); }
+  .about-cover-dim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, oklch(0% 0 0 / 0.3) 0%, oklch(0% 0 0 / 0.6) 100%);
+  }
+  .about-cover-content {
+    position: relative;
+    z-index: 1;
+    padding: 2rem 2rem 1.5rem;
+    color: #fff;
+  }
+  .about-cover-content .post-title {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.5);
+    background: none;
+    -webkit-text-fill-color: #fff;
+  }
+  .about-cover-content .post-desc {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.9;
+    text-shadow: 0 1px 8px oklch(0% 0 0 / 0.5);
+  }
+
+  /* 正在学习标签 */
+  .learn-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+  .learn-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+  .learn-tag:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .learn-tag :global(.icon) { color: var(--primary); opacity: 0.8; }
+
+  @media (max-width: 860px) {
+    .post-layout { grid-template-columns: 1fr; }
+    .post-toc { display: none; }
+    .about-cover { min-height: 220px; }
+    .about-cover-content { padding: 1.5rem 1.2rem 1.2rem; }
+  }
 </style>

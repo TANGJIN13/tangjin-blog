@@ -1,0 +1,125 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1025"/>
+      <stop offset="50%" stop-color="#2d1b4e"/>
+      <stop offset="100%" stop-color="#0f0a1a"/>
+    </linearGradient>
+    <radialGradient id="moon-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e0c3fc" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#e0c3fc" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="moon-body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fef9e7"/>
+      <stop offset="100%" stop-color="#f8d7a0"/>
+    </linearGradient>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a1025" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#0a0612"/>
+    </linearGradient>
+    <linearGradient id="hair-back" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7c5cbf"/>
+      <stop offset="100%" stop-color="#4a2d7a"/>
+    </linearGradient>
+    <linearGradient id="dress" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f0abfc"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f9a8d4"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <radialGradient id="sparkle" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blur1"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="blur2"><feGaussianBlur stdDeviation="8"/></filter>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="1200" height="400" fill="url(#bg)"/>
+
+  <!-- 月亮光晕 -->
+  <circle cx="900" cy="120" r="200" fill="url(#moon-glow)" filter="url(#blur2)"/>
+  <circle cx="900" cy="120" r="90" fill="url(#moon-glow)" filter="url(#blur1)"/>
+  <circle cx="900" cy="120" r="65" fill="url(#moon-body)"/>
+
+  <!-- 月亮上的兔子剪影 -->
+  <g transform="translate(875,95)" opacity="0.25">
+    <ellipse cx="0" cy="8" rx="14" ry="10" fill="#d4a853"/>
+    <circle cx="0" cy="-2" r="8" fill="#d4a853"/>
+    <ellipse cx="-4" cy="-12" rx="2.5" ry="6" fill="#d4a853"/>
+    <ellipse cx="4" cy="-12" rx="2.5" ry="6" fill="#d4a853"/>
+  </g>
+
+  <!-- 水面反射 -->
+  <rect y="300" width="1200" height="100" fill="url(#water)"/>
+  <g opacity="0.15">
+    <line x1="820" y1="310" x2="980" y2="310" stroke="#e0c3fc" stroke-width="1"/>
+    <line x1="840" y1="325" x2="960" y2="325" stroke="#e0c3fc" stroke-width="0.8"/>
+    <line x1="860" y1="340" x2="940" y2="340" stroke="#e0c3fc" stroke-width="0.6"/>
+  </g>
+
+  <!-- 樱花花瓣飘落 -->
+  <g opacity="0.7">
+    <ellipse cx="150" cy="80" rx="4" ry="7" fill="#f9a8d4" transform="rotate(30 150 80)"><animate attributeName="cy" values="80;350" dur="8s" repeatCount="indefinite"/><animate attributeName="cx" values="150;170" dur="8s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="350" cy="40" rx="3" ry="6" fill="#fbcfe8" transform="rotate(-20 350 40)"><animate attributeName="cy" values="40;360" dur="10s" repeatCount="indefinite"/><animate attributeName="cx" values="350;330" dur="10s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="550" cy="120" rx="3.5" ry="6.5" fill="#f9a8d4" transform="rotate(45 550 120)"><animate attributeName="cy" values="120;380" dur="9s" repeatCount="indefinite"/><animate attributeName="cx" values="550;580" dur="9s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="750" cy="60" rx="3" ry="5.5" fill="#fbcfe8" transform="rotate(-35 750 60)"><animate attributeName="cy" values="60;340" dur="11s" repeatCount="indefinite"/><animate attributeName="cx" values="750;720" dur="11s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="1050" cy="100" rx="3.5" ry="6" fill="#f9a8d4" transform="rotate(25 1050 100)"><animate attributeName="cy" values="100;370" dur="7s" repeatCount="indefinite"/><animate attributeName="cx" values="1050;1070" dur="7s" repeatCount="indefinite"/></ellipse>
+    <ellipse cx="250" cy="200" rx="2.5" ry="5" fill="#fbcfe8" transform="rotate(-40 250 200)"><animate attributeName="cy" values="200;390" dur="12s" repeatCount="indefinite"/><animate attributeName="cx" values="250;230" dur="12s" repeatCount="indefinite"/></ellipse>
+  </g>
+
+  <!-- 人物剪影 -->
+  <g transform="translate(280,160)">
+    <!-- 头发后 -->
+    <path d="M50 40 Q30 30 25 70 Q20 120 45 160 Q60 180 80 170 Q90 130 85 90 Q80 50 50 40Z" fill="url(#hair-back)" opacity="0.9"/>
+    <!-- 身体 -->
+    <path d="M40 80 Q60 75 80 80 L95 200 Q75 210 55 210 Q35 210 25 200 Z" fill="url(#dress)" opacity="0.85"/>
+    <!-- 领口丝带 -->
+    <path d="M50 85 L65 90 L58 100 Z" fill="url(#ribbon)"/>
+    <circle cx="60" cy="92" r="3" fill="#fff" opacity="0.6"/>
+    <!-- 头发前 -->
+    <path d="M38 55 Q30 45 40 35 Q55 28 70 35 Q80 45 75 60 Q70 50 60 48 Q50 48 42 55Z" fill="url(#hair-back)" opacity="0.95"/>
+    <!-- 刘海 -->
+    <path d="M45 58 Q50 52 58 58 Q54 53 50 56Z" fill="#4a2d7a" opacity="0.7"/>
+    <!-- 脸轮廓 -->
+    <ellipse cx="58" cy="68" rx="18" ry="20" fill="#fef3c7" opacity="0.8"/>
+    <!-- 眼睛 -->
+    <ellipse cx="52" cy="72" rx="3" ry="4" fill="#1e1b4b"/>
+    <ellipse cx="66" cy="72" rx="3" ry="4" fill="#1e1b4b"/>
+    <circle cx="53" cy="71" r="1.2" fill="#fff"/>
+    <circle cx="67" cy="71" r="1.2" fill="#fff"/>
+    <!-- 腮红 -->
+    <ellipse cx="48" cy="80" rx="4" ry="2.5" fill="#f9a8d4" opacity="0.5"/>
+    <ellipse cx="70" cy="80" rx="4" ry="2.5" fill="#f9a8d4" opacity="0.5"/>
+    <!-- 嘴 -->
+    <path d="M55 86 Q59 89 63 86" fill="none" stroke="#c084fc" stroke-width="1.2" stroke-linecap="round"/>
+    <!-- 翅膀装饰 -->
+    <path d="M25 100 Q10 80 20 65 Q28 78 25 100Z" fill="#a78bfa" opacity="0.4"/>
+    <path d="M90 100 Q105 80 95 65 Q88 78 90 100Z" fill="#a78bfa" opacity="0.4"/>
+  </g>
+
+  <!-- 闪光粒子 -->
+  <g>
+    <circle cx="200" cy="50" r="2" fill="#fff"><animate attributeName="opacity" values="0;1;0" dur="3s" repeatCount="indefinite"/></circle>
+    <circle cx="450" cy="80" r="1.5" fill="#f9a8d4"><animate attributeName="opacity" values="0.3;1;0.3" dur="2.5s" repeatCount="indefinite"/></circle>
+    <circle cx="700" cy="40" r="2" fill="#fff"><animate attributeName="opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite"/></circle>
+    <circle cx="1000" cy="180" r="1.5" fill="#fbcfe8"><animate attributeName="opacity" values="0;0.8;0" dur="3.5s" repeatCount="indefinite"/></circle>
+    <circle cx="1100" cy="60" r="1.8" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="2.8s" repeatCount="indefinite"/></circle>
+    <circle cx="600" cy="150" r="1.2" fill="#f9a8d4"><animate attributeName="opacity" values="0;1;0" dur="4.5s" repeatCount="indefinite"/></circle>
+    <circle cx="800" cy="250" r="1.5" fill="#fff"><animate attributeName="opacity" values="0.6;1;0.6" dur="3.2s" repeatCount="indefinite"/></circle>
+  </g>
+
+  <!-- 远景樱花树剪影 -->
+  <g opacity="0.3">
+    <rect x="50" y="200" width="6" height="100" rx="3" fill="#4a2d7a"/>
+    <ellipse cx="53" cy="195" rx="22" ry="28" fill="#7c5cbf"/>
+    <ellipse cx="45" cy="185" rx="12" ry="15" fill="#6d4ba0"/>
+  </g>
+  <g opacity="0.2">
+    <rect x="1100" y="220" width="5" height="80" rx="2.5" fill="#4a2d7a"/>
+    <ellipse cx="1102" cy="215" rx="18" ry="22" fill="#7c5cbf"/>
+  </g>
+</svg>
