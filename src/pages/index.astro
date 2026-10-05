@@ -11,7 +11,6 @@ import { categories } from '../data/categories';
 import { site } from '../site';
 
 const posts = await getPublishedPosts();
-const tags = await getTags();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
 ---
 
@@ -56,25 +55,11 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
 
       <!-- 右侧栏 -->
       <aside class="ref-sidebar-right">
-        {tags.length > 0 && (
-          <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
-            <h3 class="widget-title"><Icon name="tag" size="1.05rem" /> 标签</h3>
-            <div class="tag-cloud">
-              {tags.map((t) => (
-                <a class="tag-link" href={`/tags/${t.tag}/`}>
-                  #{t.tag}<span class="tag-count">{t.count}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
           <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
           <SiteStats
             postsCount={posts.length}
             categoriesCount={categories.length}
-            tagsCount={tags.length}
             totalWords={totalWords}
           />
         </div>
@@ -164,23 +149,6 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
   .section-title :global(.icon) { color: var(--primary); }
   .post-count { font-size: 0.8rem; color: var(--text-faint); }
   .post-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-  /* 标签 */
-  .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-  .tag-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    font-size: 0.75rem;
-    padding: 0.15rem 0.55rem;
-    border-radius: 999px;
-    background: oklch(0% 0 0 / 0.05);
-    color: var(--text-soft);
-    text-decoration: none !important;
-    transition: all 0.15s ease;
-  }
-  .tag-link:hover { background: var(--primary-soft); color: var(--primary); }
-  .tag-count { font-size: 0.65rem; color: var(--text-faint); }
 
   @media (max-width: 767px) {
     .ref-sidebar-left, .ref-sidebar-right { flex-direction: row; flex-wrap: wrap; }
