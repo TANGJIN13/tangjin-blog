@@ -7,14 +7,12 @@ import Icon from './Icon.astro';
 interface Props {
   postsCount: number;
   categoriesCount: number;
-  tagsCount: number;
   totalWords?: number;
 }
 
 const {
   postsCount,
   categoriesCount,
-  tagsCount,
   totalWords = 0,
 } = Astro.props;
 ---
@@ -29,10 +27,6 @@ const {
     <div class="stat-item">
       <span class="stat-num">{categoriesCount}</span>
       <span class="stat-label">分类</span>
-    </div>
-    <div class="stat-item">
-      <span class="stat-num">{tagsCount}</span>
-      <span class="stat-label">标签</span>
     </div>
     {totalWords > 0 && (
       <div class="stat-item">

@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import PostCard from '../components/PostCard.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import HeatmapWidget from '../components/HeatmapWidget.astro';
+import SearchWidget from '../components/SearchWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import SiteStats from '../components/SiteStats.astro';
 import Icon from '../components/Icon.astro';
@@ -56,6 +57,11 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
       <!-- 右侧栏 -->
       <aside class="ref-sidebar-right">
         <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+          <h3 class="widget-title"><Icon name="search" size="1.05rem" /> 搜索</h3>
+          <SearchWidget />
+        </div>
+
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
           <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
           <SiteStats
             postsCount={posts.length}
