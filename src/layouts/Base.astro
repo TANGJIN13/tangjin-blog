@@ -90,16 +90,30 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
           <button class="nav-btn" id="nav-theme" title="切换主题" aria-label="切换主题">
             <Icon name="palette" size="1.15rem" />
           </button>
+          <button class="nav-btn menu-btn" id="menu-btn" title="菜单" aria-label="打开菜单">
+            <svg width="1.15rem" height="1.15rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+          </button>
         </div>
       </div>
     </header>
 
+    <!-- 手机端菜单 -->
+    <div class="mobile-menu" id="mobile-menu">
+      <nav class="mobile-nav">
+        {navItems.map((it) => (
+          <a class="mobile-nav-item" href={it.href} aria-current={Astro.url.pathname === it.href ? 'page' : undefined}>
+            <Icon name={it.icon} size="1.1rem" />
+            <span>{it.label}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
+
     <!-- 主内容 -->
     <main class="main-layout">
       <slot />
-    </main>
 
-    <!-- 浮动控制 -->
+      <!-- 浮动控制 -->
     <div class="floating-controls" id="floating-controls">
       <button class="floating-btn" id="btn-top" title="回到顶部" aria-label="回到顶部">
         <Icon name="arrow_up" size="1.05rem" />
@@ -131,6 +145,8 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
 
     <!-- 樱花特效（全屏 canvas + 开关按钮） -->
     <SakuraEffect />
+
+    </main>
 
     <!-- 页脚 -->
     <footer class="site-footer">
@@ -236,6 +252,22 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         audioEl?.addEventListener('play', syncMf);
         audioEl?.addEventListener('pause', syncMf);
         syncMf();
+      }
+
+      // 手机端菜单
+      const menuBtn = document.getElementById('menu-btn');
+      const mobileMenu = document.getElementById('mobile-menu');
+      if (menuBtn && mobileMenu) {
+        menuBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('open');
+          menuBtn.classList.toggle('active');
+        });
+        mobileMenu.querySelectorAll('.mobile-nav-item').forEach(a => {
+          a.addEventListener('click', () => {
+            mobileMenu.classList.remove('open');
+            menuBtn.classList.remove('active');
+          });
+        });
       }
     </script>
   </body>
@@ -481,6 +513,66 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     .music-float-panel { width: 260px; }
   }
 
+  /* 手机端汉堡菜单按钮 */
+  .menu-btn { display: none; }
+  @media (max-width: 1023px) {
+    .menu-btn { display: grid; }
+  }
+
+  /* 手机端菜单面板 */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 8px 24px oklch(0% 0 0 / 0.12);
+    max-height: calc(100vh - var(--navbar-height) - 2rem);
+    overflow-y: auto;
+    transform: translateY(-8px);
+    opacity: 0;
+    transition: all 0.25s ease;
+  }
+  .mobile-menu.open {
+    display: block;
+    transform: translateY(0);
+    opacity: 1;
+  }
+  [data-theme='dark'] .mobile-menu {
+    background: oklch(16% 0.02 250);
+    border-bottom-color: oklch(100% 0 0 / 0.08);
+  }
+
+  .mobile-nav {
+    padding: 0.8rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-soft);
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+  }
+  .mobile-nav-item:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .mobile-nav-item[aria-current='page'] {
+    color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .mobile-nav-item :global(.icon) { opacity: 0.8; }
 
   @media (max-width: 1023px) {
     .nav { display: none; }
