@@ -72,6 +72,7 @@ jobs:
           # --chmod 强制目录 755 / 文件 644，否则 nginx 会因权限返回 403
           rsync -avz --delete --human-readable \
             --chmod=D755,F644 \
+            --no-group \
             --exclude '.well-known/' \
             -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
             dist/ "$SSH_USER@$SSH_HOST:/"
