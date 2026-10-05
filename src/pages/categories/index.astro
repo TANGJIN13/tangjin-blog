@@ -12,91 +12,170 @@ const categoryPosts = categories.map((cat) => ({
   ...cat,
   count: posts.filter((p) => p.data.category === cat.slug || p.data.tags.includes(cat.name)).length,
 }));
+const totalPosts = posts.length;
 ---
 
 <Base title="分类">
-  <div class="post-layout">
-    <article class="post-main">
-      <header class="post-head">
-        <div class="cover">
-          <div class="cover-placeholder">
-            <Icon name="folder" size="2.5rem" />
-          </div>
-        </div>
-        <h1 class="post-title">分类</h1>
-        <p class="post-desc">按分类浏览文章</p>
-      </header>
+  <div class="container post-container">
+    <!-- 顶部横幅 -->
+    <div class="cat-banner">
+      <img class="cat-banner-bg" src="/images/wallpapers/wallpaper-01.svg" alt="" aria-hidden="true" />
+      <div class="cat-banner-dim" aria-hidden="true"></div>
+      <div class="cat-banner-content">
+        <h1 class="cat-banner-title">分类</h1>
+        <p class="cat-banner-desc">按分类浏览文章，共 {totalPosts} 篇</p>
+      </div>
+    </div>
 
-      <div class="post-body custom-md">
-        <div class="categories-grid">
+    <div class="cat-page">
+      <!-- 主内容：分类卡片 -->
+      <div class="cat-main">
+        <div class="cat-grid">
           {categoryPosts.map((cat, i) => (
-            <a class="category-card glass onload-animation" href={`/categories/${cat.slug}/`} style={`animation-delay: ${i * 0.08}s`}>
-              <span class="category-icon"><Icon name={cat.icon || 'folder'} size="1.6rem" /></span>
-              <div class="category-info">
-                <h3 class="category-name">{cat.name}</h3>
-                <p class="category-desc">{cat.description || ''}</p>
+            <a class="cat-card glass" href={`/categories/${cat.slug}/`} style={`animation-delay: ${i * 0.06}s`}>
+              <div class="cat-card-icon" style={cat.icon ? '' : ''}>
+                <Icon name={cat.icon || 'folder'} size="1.5rem" />
               </div>
-              <span class="category-count">{cat.count}</span>
+              <div class="cat-card-body">
+                <h3 class="cat-card-name">{cat.name}</h3>
+                <p class="cat-card-desc">{cat.description || '暂无描述'}</p>
+              </div>
+              <div class="cat-card-right">
+                <span class="cat-card-count">{cat.count}</span>
+                <span class="cat-card-unit">篇</span>
+              </div>
             </a>
           ))}
-          {categoryPosts.length === 0 && (
-            <div class="card-base empty-state">
-              <div class="empty-icon"><Icon name="folder" size="2.5rem" /></div>
-              <p>还没有文章分类，编辑文章时添加 category frontmatter</p>
-            </div>
-          )}
         </div>
       </div>
-    </article>
 
-    <aside class="post-toc">
-      <div class="card-base toc-card">
-        <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 分类</h3>
-        <nav class="toc-nav">
-          {categoryPosts.map((cat) => (
-            <a class="toc-item" href={`/categories/${cat.slug}/`}>
-              <Icon name={cat.icon || 'folder'} size="1rem" /> {cat.name} <span class="tag-count">{cat.count}</span>
-            </a>
-          ))}
-        </nav>
-      </div>
-    </aside>
+      <!-- 侧栏：快速跳转（桌面端显示，手机端隐藏） -->
+      <aside class="cat-sidebar">
+        <div class="card-base cat-side-card">
+          <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 快速跳转</h3>
+          <nav class="cat-side-nav">
+            {categoryPosts.map((cat) => (
+              <a class="cat-side-item" href={`/categories/${cat.slug}/`}>
+                <Icon name={cat.icon || 'folder'} size="0.9rem" />
+                <span>{cat.name}</span>
+                <span class="cat-side-count">{cat.count}</span>
+              </a>
+            ))}
+          </nav>
+        </div>
+      </aside>
+    </div>
   </div>
 </Base>
 
 <style>
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
-  .post-head { margin-bottom: 2rem; }
-  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
-  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
-  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
-  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; letter-spacing: -0.02em; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
-  .post-body { font-size: 1.02rem; }
+  .post-container { margin-top: 2rem; }
 
-  .categories-grid { display: flex; flex-direction: column; gap: 0.6rem; }
-  .category-card {
-    display: flex; align-items: center; gap: 1rem;
-    padding: 1rem 1.2rem; border-radius: var(--radius-lg);
-    text-decoration: none !important; background: none !important;
+  /* 横幅 */
+  .cat-banner {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cat-banner-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .cat-banner-dim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, oklch(0% 0 0 / 0.3), oklch(0% 0 0 / 0.55));
+  }
+  .cat-banner-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 2rem;
+    color: #fff;
+  }
+  .cat-banner-title {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.4);
+  }
+  .cat-banner-desc {
+    margin: 0;
+    font-size: 0.95rem;
+    opacity: 0.9;
+    text-shadow: 0 1px 8px oklch(0% 0 0 / 0.4);
+  }
+
+  /* 布局 */
+  .cat-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* 分类卡片网格 */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 0.8rem;
+  }
+  .cat-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 1rem 1.2rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none !important;
     transition: all 0.25s ease;
   }
-  .category-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-  .category-icon { font-size: 1.8rem; }
-  .category-info { flex: 1; min-width: 0; }
-  .category-name { margin: 0; font-size: 1rem; font-weight: 600; }
-  .category-desc { margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--text-faint); }
-  .category-count { font-size: 1.2rem; font-weight: 700; color: var(--primary); }
+  .cat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+  .cat-card-icon {
+    width: 44px; height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .cat-card-body { flex: 1; min-width: 0; }
+  .cat-card-name { margin: 0; font-size: 0.95rem; font-weight: 600; }
+  .cat-card-desc { margin: 0.15rem 0 0; font-size: 0.78rem; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-card-right { text-align: right; flex-shrink: 0; }
+  .cat-card-count { font-size: 1.4rem; font-weight: 800; color: var(--primary); line-height: 1; }
+  .cat-card-unit { font-size: 0.7rem; color: var(--text-faint); }
 
-  .empty-state { text-align: center; padding: 3rem; }
-  .empty-icon { font-size: 3rem; margin-bottom: 0.5rem; }
-  .empty-state p { color: var(--text-faint); font-size: 0.9rem; }
+  /* 侧栏 */
+  .cat-sidebar { position: sticky; top: 88px; }
+  .cat-side-card { padding: 1rem; }
+  .cat-side-nav { display: flex; flex-direction: column; gap: 0.15rem; }
+  .cat-side-item {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+  }
+  .cat-side-item:hover { background: var(--surface-2); color: var(--text); }
+  .cat-side-item span:nth-child(2) { flex: 1; }
+  .cat-side-count { color: var(--text-faint); font-size: 0.75rem; }
 
-  .post-toc { position: sticky; top: 70px; align-self: start; }
-  .toc-card { padding: 1rem; }
-  .toc-nav { display: flex; flex-direction: column; gap: 0.15rem; }
-  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none !important; background: none !important; transition: all 0.15s ease; border-left: 2px solid transparent; display: flex; align-items: center; justify-content: space-between; }
-  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
-
-  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+  /* 手机端：隐藏侧栏，分类卡片单列 */
+  @media (max-width: 860px) {
+    .cat-page { grid-template-columns: 1fr; }
+    .cat-sidebar { display: none; }
+    .cat-grid { grid-template-columns: 1fr; }
+    .cat-banner { min-height: 150px; }
+  }
 </style>

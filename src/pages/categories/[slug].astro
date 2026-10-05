@@ -1,0 +1,92 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { categories } from '../../data/categories';
+import { site } from '../../site';
+
+export async function getStaticPaths() {
+  return categories.map((cat) => ({
+    params: { slug: cat.slug },
+    props: { category: cat },
+  }));
+}
+
+const { category } = Astro.props;
+const posts = await getCollection('posts', (p) => !p.data.draft && (p.data.category === category.slug || p.data.tags.includes(category.name)));
+---
+
+<Base title={`${category.name} · 分类`}>
+  <div class="container post-container">
+    <div class="cat-layout">
+      <article class="cat-main">
+        <header class="cat-head">
+          <div class="cat-cover">
+            <div class="cat-cover-inner">
+              <Icon name={category.icon || 'folder'} size="2rem" />
+            </div>
+          </div>
+          <h1 class="cat-title">{category.name}</h1>
+          <p class="cat-desc">{category.description || '该分类下的文章'}</p>
+        </header>
+
+        <div class="cat-body">
+          {posts.length > 0 ? (
+            <div class="cat-posts">
+              {posts.map((p) => (
+                <a class="cat-post-card glass" href={`/posts/${p.id}/`}>
+                  <div class="cat-post-info">
+                    <span class="cat-post-icon"><Icon name="article" size="0.9rem" /></span>
+                    <span class="cat-post-title">{p.data.title}</span>
+                  </div>
+                  <span class="cat-post-date">{p.data.published.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div class="cat-empty card-base">
+              <div class="empty-emoji">📝</div>
+              <h3>暂无文章</h3>
+              <p>这个分类还没有文章，先去写一篇吧～</p>
+              <a class="empty-back" href="/categories/">← 返回分类</a>
+            </div>
+          )}
+        </div>
+      </article>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .cat-layout { max-width: 720px; margin-inline: auto; }
+  .cat-head { text-align: center; margin-bottom: 2.5rem; }
+  .cat-cover { margin-bottom: 1rem; }
+  .cat-cover-inner {
+    width: 64px; height: 64px; margin-inline: auto;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    display: grid; place-items: center;
+    color: #fff; box-shadow: 0 4px 16px oklch(70% 0.14 250 / 0.35);
+  }
+  .cat-title { font-size: clamp(1.5rem, 4vw, 2rem); margin: 0 0 0.5rem; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .cat-desc { color: var(--text-soft); font-size: 1rem; margin: 0; }
+
+  .cat-posts { display: flex; flex-direction: column; gap: 0.6rem; }
+  .cat-post-card {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.9rem 1.2rem; border-radius: var(--radius-lg);
+    text-decoration: none !important; transition: all 0.2s ease;
+  }
+  .cat-post-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .cat-post-info { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
+  .cat-post-icon { color: var(--primary); flex-shrink: 0; }
+  .cat-post-title { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cat-post-date { font-size: 0.78rem; color: var(--text-faint); flex-shrink: 0; }
+
+  .cat-empty { text-align: center; padding: 3rem 2rem; margin-top: 1rem; }
+  .empty-emoji { font-size: 3rem; margin-bottom: 0.8rem; }
+  .cat-empty h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+  .cat-empty p { color: var(--text-faint); font-size: 0.9rem; margin: 0 0 1.2rem; }
+  .empty-back { color: var(--primary); font-size: 0.85rem; text-decoration: none !important; }
+  .empty-back:hover { text-decoration: underline !important; }
+</style>
