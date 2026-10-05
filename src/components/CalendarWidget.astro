@@ -1,0 +1,100 @@
+---
+// 日历组件
+import Icon from './Icon.astro';
+
+const now = new Date();
+const year = now.getFullYear();
+const month = now.getMonth();
+const today = now.getDate();
+
+// 获取当月天数和第一天是星期几
+const daysInMonth = new Date(year, month + 1, 0).getDate();
+const firstDayOfWeek = new Date(year, month, 1).getDay();
+
+// 星期标题
+const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+
+// 月份名称
+const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+
+// 生成日历格子
+const cells = [];
+// 前面的空格
+for (let i = 0; i < firstDayOfWeek; i++) {
+  cells.push({ type: 'empty' });
+}
+// 日期
+for (let d = 1; d <= daysInMonth; d++) {
+  cells.push({ type: 'day', day: d, isToday: d === today });
+}
+---
+
+<div class="calendar-widget">
+  <div class="calendar-header">
+    <span class="calendar-month">{monthNames[month]}</span>
+    <span class="calendar-year">{year}</span>
+  </div>
+  <div class="calendar-grid">
+    {weekDays.map(w => (
+      <span class="calendar-weekday">{w}</span>
+    ))}
+    {cells.map(cell => (
+      cell.type === 'empty' ? (
+        <span class="calendar-cell empty"></span>
+      ) : (
+        <span class:list={['calendar-cell', { today: cell.isToday }]}>
+          {cell.day}
+        </span>
+      )
+    ))}
+  </div>
+</div>
+
+<style>
+  .calendar-widget {
+    padding: 0.5rem 0;
+  }
+  .calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+  }
+  .calendar-month {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .calendar-year {
+    font-size: 0.8rem;
+    color: var(--text-faint);
+  }
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.2rem;
+  }
+  .calendar-weekday {
+    text-align: center;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    padding: 0.3rem 0;
+    font-weight: 500;
+  }
+  .calendar-cell {
+    text-align: center;
+    font-size: 0.78rem;
+    padding: 0.35rem 0;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    transition: all 0.15s ease;
+  }
+  .calendar-cell.empty {
+    background: transparent;
+  }
+  .calendar-cell.today {
+    background: var(--primary);
+    color: #fff;
+    font-weight: 600;
+  }
+</style>

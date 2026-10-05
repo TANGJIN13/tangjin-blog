@@ -4,6 +4,8 @@ import PostCard from '../components/PostCard.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import HeatmapWidget from '../components/HeatmapWidget.astro';
 import SearchWidget from '../components/SearchWidget.astro';
+import CalendarWidget from '../components/CalendarWidget.astro';
+import HolidayWidget from '../components/HolidayWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import SiteStats from '../components/SiteStats.astro';
 import Icon from '../components/Icon.astro';
@@ -62,6 +64,16 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
         </div>
 
         <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
+          <h3 class="widget-title"><Icon name="calendar" size="1.05rem" /> 日历</h3>
+          <CalendarWidget />
+        </div>
+
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.3s">
+          <h3 class="widget-title"><Icon name="celebration" size="1.05rem" /> 节假日</h3>
+          <HolidayWidget />
+        </div>
+
+        <div class="card-base widget-card onload-animation" style="animation-delay: 0.4s">
           <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
           <SiteStats
             postsCount={posts.length}

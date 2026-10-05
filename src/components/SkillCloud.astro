@@ -12,21 +12,32 @@ const skills = [
 ];
 ---
 
-<div class="learn-list">
-  {skills.map(s => (
-    <span class="learn-tag glass">
-      <Icon name={s.icon} size="0.85rem" />
-      {s.name}
-    </span>
-  ))}
+<div class="learn-section">
+  <h3 class="learn-title">正在学习</h3>
+  <div class="learn-list">
+    {skills.map(s => (
+      <span class="learn-tag glass">
+        <Icon name={s.icon} size="0.85rem" />
+        {s.name}
+      </span>
+    ))}
+  </div>
 </div>
 
 <style>
+  .learn-section { margin-bottom: 2rem; }
+  .learn-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
   .learn-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    margin-bottom: 2rem;
   }
   .learn-tag {
     display: inline-flex;

@@ -1,0 +1,122 @@
+---
+// 节假日倒计时组件
+import Icon from './Icon.astro';
+
+// 2026年中国法定节假日（公历日期）
+const holidays = [
+  { name: '元旦', date: '2026-01-01', icon: 'celebration' },
+  { name: '春节', date: '2026-02-17', icon: 'red_envelope' },
+  { name: '清明节', date: '2026-04-05', icon: 'nature' },
+  { name: '劳动节', date: '2026-05-01', icon: 'work' },
+  { name: '端午节', date: '2026-06-19', icon: 'sailing' },
+  { name: '中秋节', date: '2026-09-27', icon: 'nightlight' },
+  { name: '国庆节', date: '2026-10-01', icon: 'flag' },
+];
+
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+// 找到下一个节假日
+let nextHoliday = null;
+let minDays = Infinity;
+
+for (const h of holidays) {
+  const hDate = new Date(h.date);
+  const diff = Math.ceil((hDate - today) / (1000 * 60 * 60 * 24));
+  if (diff >= 0 && diff < minDays) {
+    minDays = diff;
+    nextHoliday = { ...h, daysLeft: diff };
+  }
+}
+
+// 如果今年的节日都过了，找明年的
+if (!nextHoliday) {
+  const nextYear = now.getFullYear() + 1;
+  for (const h of holidays) {
+    const hDate = new Date(h.date);
+    hDate.setFullYear(nextYear);
+    const diff = Math.ceil((hDate - today) / (1000 * 60 * 60 * 24));
+    if (diff >= 0 && diff < minDays) {
+      minDays = diff;
+      nextHoliday = { ...h, daysLeft: diff };
+    }
+  }
+}
+---
+
+<div class="holiday-widget">
+  {nextHoliday ? (
+    <div class="holiday-content">
+      <div class="holiday-icon">
+        <Icon name={nextHoliday.icon} size="1.5rem" />
+      </div>
+      <div class="holiday-info">
+        <span class="holiday-name">{nextHoliday.name}</span>
+        <span class="holiday-date">{nextHoliday.date}</span>
+      </div>
+      <div class="holiday-countdown">
+        <span class="countdown-num">{nextHoliday.daysLeft}</span>
+        <span class="countdown-label">天后</span>
+      </div>
+    </div>
+  ) : (
+    <div class="holiday-empty">今年没有更多节假日了</div>
+  )}
+</div>
+
+<style>
+  .holiday-widget {
+    padding: 0.5rem 0;
+  }
+  .holiday-content {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .holiday-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-md);
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .holiday-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .holiday-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .holiday-date {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+  }
+  .holiday-countdown {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .countdown-num {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+  }
+  .countdown-label {
+    font-size: 0.7rem;
+    color: var(--text-faint);
+  }
+  .holiday-empty {
+    text-align: center;
+    color: var(--text-faint);
+    font-size: 0.85rem;
+    padding: 1rem 0;
+  }
+</style>
