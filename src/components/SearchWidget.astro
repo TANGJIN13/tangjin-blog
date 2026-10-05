@@ -17,45 +17,47 @@ import Icon from './Icon.astro';
 </div>
 
 <script>
-  const input = document.getElementById('search-input');
-  const results = document.getElementById('search-results');
-  if (!input || !results) return;
+  (() => {
+    const input = document.getElementById('search-input');
+    const results = document.getElementById('search-results');
+    if (!input || !results) return;
 
-  // 获取文章数据（从页面中抓取）
-  const posts = [...document.querySelectorAll('.post-list article, .post-list a')].map(el => {
-    const title = el.querySelector('.post-card-title, .post-title')?.textContent?.trim() || '';
-    const link = el.closest('a') || el.querySelector('a');
-    const href = link?.getAttribute('href') || '#';
-    const desc = el.querySelector('.post-card-desc, .post-desc')?.textContent?.trim() || '';
-    return { title, href, desc };
-  }).filter(p => p.title);
+    // 获取文章数据（从页面中抓取）
+    const posts = [...document.querySelectorAll('.post-list article, .post-list a')].map(el => {
+      const title = el.querySelector('.post-card-title, .post-title')?.textContent?.trim() || '';
+      const link = el.closest('a') || el.querySelector('a');
+      const href = link?.getAttribute('href') || '#';
+      const desc = el.querySelector('.post-card-desc, .post-desc')?.textContent?.trim() || '';
+      return { title, href, desc };
+    }).filter(p => p.title);
 
-  input.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase();
-    if (!q) { results.innerHTML = ''; results.style.display = 'none'; return; }
-    const matches = posts.filter(p =>
-      p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
-    ).slice(0, 6);
+    input.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      if (!q) { results.innerHTML = ''; results.style.display = 'none'; return; }
+      const matches = posts.filter(p =>
+        p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
+      ).slice(0, 6);
 
-    if (matches.length === 0) {
-      results.innerHTML = '<div class="search-empty">没有找到相关文章</div>';
-    } else {
-      results.innerHTML = matches.map(p => `
-        <a class="search-result-item" href="${p.href}">
-          <span class="search-result-title">${p.title}</span>
-          ${p.desc ? `<span class="search-result-desc">${p.desc}</span>` : ''}
-        </a>
-      `).join('');
-    }
-    results.style.display = 'block';
-  });
+      if (matches.length === 0) {
+        results.innerHTML = '<div class="search-empty">没有找到相关文章</div>';
+      } else {
+        results.innerHTML = matches.map(p => `
+          <a class="search-result-item" href="${p.href}">
+            <span class="search-result-title">${p.title}</span>
+            ${p.desc ? `<span class="search-result-desc">${p.desc}</span>` : ''}
+          </a>
+        `).join('');
+      }
+      results.style.display = 'block';
+    });
 
-  // 点击外部收起
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-widget')) {
-      results.style.display = 'none';
-    }
-  });
+    // 点击外部收起
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-widget')) {
+        results.style.display = 'none';
+      }
+    });
+  })();
 </script>
 
 <style>
