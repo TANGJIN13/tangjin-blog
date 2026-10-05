@@ -1,77 +1,43 @@
 ---
-// 技能标签云 —— 改为"正在学习中"
+// 正在学习中
 import Icon from './Icon.astro';
 
-interface LearningItem {
-  name: string;
-  icon: string;
-  progress: number;  // 0-100
-  note?: string;
-}
-
-const learning: LearningItem[] = [
-  { name: 'Web 安全', icon: 'lock', progress: 35, note: '打靶场中' },
-  { name: 'CTF', icon: 'flag', progress: 20, note: '刷题中' },
-  { name: 'Python', icon: 'code', progress: 40, note: '写脚本' },
-  { name: 'Linux', icon: 'terminal', progress: 50, note: '日常用' },
-  { name: 'Docker', icon: 'cube', progress: 30, note: '搭环境' },
-  { name: 'Astro', icon: 'code', progress: 60, note: '博客用' },
+const learning = [
+  { name: 'Web 安全', icon: 'lock' },
+  { name: 'CTF', icon: 'flag' },
+  { name: 'Python', icon: 'code' },
+  { name: 'Linux', icon: 'terminal' },
+  { name: 'Docker', icon: 'cube' },
+  { name: 'Astro', icon: 'code' },
 ];
 ---
 
-<div class="learn-cloud">
+<div class="learn-list">
   {learning.map(item => (
-    <div class="learn-item glass">
-      <div class="learn-head">
-        <Icon name={item.icon} size="1.1rem" />
-        <span class="learn-name">{item.name}</span>
-        <span class="learn-pct">{item.progress}%</span>
-      </div>
-      <div class="learn-bar">
-        <div class="learn-bar-fill" style={`width: ${item.progress}%`}></div>
-      </div>
-      {item.note && <span class="learn-note">{item.note}</span>}
-    </div>
+    <span class="learn-tag glass">
+      <Icon name={item.icon} size="0.85rem" />
+      {item.name}
+    </span>
   ))}
 </div>
 
 <style>
-  .learn-cloud {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 0.7rem;
+  .learn-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
     margin-bottom: 2rem;
   }
-  .learn-item {
-    padding: 0.8rem 1rem;
-    border-radius: var(--radius-lg);
-    transition: all 0.2s ease;
-  }
-  .learn-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-  .learn-head {
-    display: flex;
+  .learn-tag {
+    display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.5rem;
-  }
-  .learn-head :global(.icon) { color: var(--primary); }
-  .learn-name { font-size: 0.9rem; font-weight: 600; flex: 1; }
-  .learn-pct { font-size: 0.75rem; color: var(--text-faint); font-weight: 600; }
-  .learn-bar {
-    height: 6px;
-    background: oklch(0% 0 0 / 0.06);
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
     border-radius: 999px;
-    overflow: hidden;
-    margin-bottom: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all 0.15s ease;
   }
-  .learn-bar-fill {
-    height: 100%;
-    background: var(--gradient-primary);
-    border-radius: 999px;
-    transition: width 0.8s ease;
-  }
-  .learn-note {
-    font-size: 0.72rem;
-    color: var(--text-faint);
-  }
+  .learn-tag:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .learn-tag :global(.icon) { color: var(--primary); opacity: 0.8; }
 </style>
