@@ -4,7 +4,14 @@ import GiscusComments from '../components/GiscusComments.astro';
 import Icon from '../components/Icon.astro';
 import SkillCloud from '../components/SkillCloud.astro';
 import SocialLinks from '../components/SocialLinks.astro';
+import { getPublishedPosts } from '../lib/posts';
 import { site } from '../site';
+
+const allPosts = await getPublishedPosts();
+const totalPosts = allPosts.length;
+const totalWords = allPosts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
+const startDate = new Date(site.startDate);
+const daysSince = Math.max(1, Math.floor((Date.now() - startDate.getTime()) / 86400000));
 ---
 
 <Base title="关于我">
@@ -82,6 +89,41 @@ import { site } from '../site';
         <h2><Icon name="code" size="1.3rem" /> 技能</h2>
         <SkillCloud />
 
+        <!-- 站点统计 -->
+        <h2><Icon name="chart" size="1.3rem" /> 站点统计</h2>
+        <div class="about-stats">
+          <div class="stat-box">
+            <span class="stat-num">{totalPosts}</span>
+            <span class="stat-label">文章</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">{daysSince}</span>
+            <span class="stat-label">天</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-num">{totalWords}</span>
+            <span class="stat-label">字</span>
+          </div>
+        </div>
+
+        <!-- 关于这个站 -->
+        <h2><Icon name="wave" size="1.3rem" /> 关于这个站</h2>
+        <div class="about-site glass">
+          <p>这个站是 <strong>2026 年</strong> 用 Astro 搭建的静态博客，没有数据库、没有后端，文章用 Markdown 写，推 GitHub 自动部署。</p>
+          <p>为什么要搭这个站？因为博客园广告太多、CSDN 体验太差，想找一个干净的地方记录自己的学习过程。</p>
+          <p>这里记录的东西可能很杂——Web 安全、CTF 题解、工具配置、踩坑记录、生活随笔。只要能帮到后来的自己，就值得写。</p>
+        </div>
+
+        <!-- 推荐 -->
+        <h2><Icon name="heart" size="1.3rem" /> 推荐</h2>
+        <div class="about-recommend glass">
+          <div class="rec-item">
+            <Icon name="link" size="0.9rem" />
+            <a href="https://c1everf0x.cn/" target="_blank" rel="noopener">C1everF0x's Blog</a>
+            <span class="rec-desc">—— 安全老哥的博客，我的视觉参照对象</span>
+          </div>
+        </div>
+
         <blockquote class="deco-quote"><p>"安全是一场没有终点的旅程。"</p></blockquote>
       </div>
 
@@ -132,6 +174,104 @@ import { site } from '../site';
   .contact-icon { font-size: 1rem; }
   .deco-quote { margin: 2rem 0; padding: 1.2rem 1.5rem; border-left: 4px solid; border-image: var(--gradient-primary) 1; background: var(--primary-soft); border-radius: 0 var(--radius) var(--radius) 0; font-style: italic; color: var(--text-soft); }
   .deco-quote p { margin: 0; font-size: 1.05rem; }
+
+  /* 站点统计 */
+  .about-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin-bottom: 2rem;
+  }
+  .stat-box {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
+  }
+  .stat-num {
+    display: block;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.2;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+  }
+
+  /* 关于这个站 */
+  .about-site {
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+  }
+  .about-site p {
+    margin: 0 0 0.8rem;
+    line-height: 1.8;
+    color: var(--text-soft);
+  }
+  .about-site p:last-child { margin-bottom: 0; }
+  .about-site strong { color: var(--text); }
+
+  /* 推荐 */
+  .about-recommend {
+    padding: 1.2rem 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 2rem;
+  }
+  .rec-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+  }
+  .rec-item :global(.icon) { color: var(--primary); flex-shrink: 0; }
+  .rec-item a {
+    color: var(--primary-strong);
+    text-decoration: none !important;
+    font-weight: 500;
+  }
+  .rec-item a:hover { text-decoration: underline !important; }
+  .rec-desc { color: var(--text-faint); font-size: 0.82rem; }
+
+  /* 学习中的技能 */
+  .learn-cloud {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 2rem;
+  }
+  .learn-item {
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease;
+  }
+  .learn-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .learn-head {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .learn-head :global(.icon) { color: var(--primary); }
+  .learn-name { font-size: 0.9rem; font-weight: 600; flex: 1; }
+  .learn-pct { font-size: 0.75rem; color: var(--text-faint); font-weight: 600; }
+  .learn-bar {
+    height: 6px;
+    background: oklch(0% 0 0 / 0.06);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 0.3rem;
+  }
+  .learn-bar-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 999px;
+    transition: width 0.8s ease;
+  }
+  .learn-note { font-size: 0.72rem; color: var(--text-faint); }
   .custom-md :global(pre) { background: #1e1e2e; color: #e5e7eb; border-radius: var(--radius); padding: 1rem 1.2rem; overflow-x: auto; font-size: 0.85rem; line-height: 1.6; margin: 1.2em 0; box-shadow: var(--shadow-sm); }
   .custom-md :global(pre code) { background: none; padding: 0; color: inherit; }
   .custom-md :global(:not(pre) > code) { background: var(--surface-2); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em; color: var(--primary-strong); }

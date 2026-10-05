@@ -1,65 +1,77 @@
 ---
-// 技能标签云 —— 关于页展示技术栈
+// 技能标签云 —— 改为"正在学习中"
 import Icon from './Icon.astro';
 
-interface Skill {
+interface LearningItem {
   name: string;
-  icon?: string;       // Icon 组件里的图标名
-  color?: string;      // 可选自定义色
+  icon: string;
+  progress: number;  // 0-100
+  note?: string;
 }
 
-const skills: Skill[] = [
-  { name: 'Web 安全', icon: 'lock', color: '#ef4444' },
-  { name: 'CTF', icon: 'flag', color: '#f59e0b' },
-  { name: '逆向工程', icon: 'code', color: '#8b5cf6' },
-  { name: '渗透测试', icon: 'terminal', color: '#10b981' },
-  { name: 'Python', icon: 'code', color: '#3b82f6' },
-  { name: 'JavaScript', icon: 'code', color: '#eab308' },
-  { name: 'Linux', icon: 'terminal', color: '#6366f1' },
-  { name: 'Docker', icon: 'cube', color: '#06b6d4' },
-  { name: 'Git', icon: 'branch', color: '#f97316' },
-  { name: 'Markdown', icon: 'text', color: '#84cc16' },
+const learning: LearningItem[] = [
+  { name: 'Web 安全', icon: 'lock', progress: 35, note: '打靶场中' },
+  { name: 'CTF', icon: 'flag', progress: 20, note: '刷题中' },
+  { name: 'Python', icon: 'code', progress: 40, note: '写脚本' },
+  { name: 'Linux', icon: 'terminal', progress: 50, note: '日常用' },
+  { name: 'Docker', icon: 'cube', progress: 30, note: '搭环境' },
+  { name: 'Astro', icon: 'code', progress: 60, note: '博客用' },
 ];
 ---
 
-<div class="skill-cloud">
-  {skills.map(s => (
-    <span class="skill-tag" style={s.color ? `--skill-color: ${s.color}` : ''}>
-      {s.icon && <Icon name={s.icon} size="0.85rem" />}
-      {s.name}
-    </span>
+<div class="learn-cloud">
+  {learning.map(item => (
+    <div class="learn-item glass">
+      <div class="learn-head">
+        <Icon name={item.icon} size="1.1rem" />
+        <span class="learn-name">{item.name}</span>
+        <span class="learn-pct">{item.progress}%</span>
+      </div>
+      <div class="learn-bar">
+        <div class="learn-bar-fill" style={`width: ${item.progress}%`}></div>
+      </div>
+      {item.note && <span class="learn-note">{item.note}</span>}
+    </div>
   ))}
 </div>
 
 <style>
-  .skill-cloud {
+  .learn-cloud {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.7rem;
+    margin-bottom: 2rem;
+  }
+  .learn-item {
+    padding: 0.8rem 1rem;
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease;
+  }
+  .learn-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .learn-head {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  .skill-tag {
-    display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.3rem 0.75rem;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .learn-head :global(.icon) { color: var(--primary); }
+  .learn-name { font-size: 0.9rem; font-weight: 600; flex: 1; }
+  .learn-pct { font-size: 0.75rem; color: var(--text-faint); font-weight: 600; }
+  .learn-bar {
+    height: 6px;
+    background: oklch(0% 0 0 / 0.06);
     border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--skill-color, var(--text));
-    background: oklch(0% 0 0 / 0.04);
-    border: 1px solid oklch(0% 0 0 / 0.08);
-    transition: all 0.15s ease;
+    overflow: hidden;
+    margin-bottom: 0.3rem;
   }
-  [data-theme='dark'] .skill-tag {
-    background: oklch(100% 0 0 / 0.06);
-    border-color: oklch(100% 0 0 / 0.1);
+  .learn-bar-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: 999px;
+    transition: width 0.8s ease;
   }
-  .skill-tag:hover {
-    transform: translateY(-2px);
-    background: var(--skill-color, var(--primary));
-    color: #fff;
-    border-color: var(--skill-color, var(--primary));
+  .learn-note {
+    font-size: 0.72rem;
+    color: var(--text-faint);
   }
-  .skill-tag :global(.icon) { opacity: 0.8; }
 </style>
