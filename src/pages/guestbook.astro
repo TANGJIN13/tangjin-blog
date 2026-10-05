@@ -1,0 +1,115 @@
+---
+import Base from '../layouts/Base.astro';
+import GiscusComments from '../components/GiscusComments.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<Base title="留言板">
+  <div class="container post-container">
+    <div class="post-layout">
+      <article class="post-main">
+        <header class="post-head">
+          <div class="cover">
+            <div class="cover-placeholder">
+              <Icon name="mail" size="2.5rem" />
+            </div>
+          </div>
+          <h1 class="post-title">留言板</h1>
+          <p class="post-desc">说点什么吧，你的每一条留言我都会看到</p>
+        </header>
+
+        <div class="post-body custom-md card-base">
+          <div class="guestbook-intro">
+            <h2>📝 留言须知</h2>
+            <ul>
+              <li>文明发言，互相尊重</li>
+              <li>禁止广告、违法内容</li>
+              <li>需要 GitHub 账号登录后留言</li>
+              <li>留言即表示同意公开展示</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="card-base comments-card">
+          <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 留言</h3>
+          <GiscusComments />
+        </div>
+      </article>
+
+      <aside class="post-toc">
+        <div class="card-base toc-card" id="toc-card">
+          <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 信息</h3>
+          <div class="toc-nav">
+            <span class="toc-item">
+              <Icon name="github" size="0.9rem" />
+              需要 GitHub 账号
+            </span>
+            <span class="toc-item">
+              <Icon name="lock" size="0.9rem" />
+              留言公开展示
+            </span>
+            <span class="toc-item">
+              <Icon name="heart" size="0.9rem" />
+              文明交流
+            </span>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .post-container { margin-top: 2rem; }
+  .post-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .post-head { margin-bottom: 2rem; }
+  .cover img, .cover-placeholder {
+    width: 100%; aspect-ratio: 2 / 1;
+    border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+  }
+  .cover-placeholder {
+    display: grid; place-items: center;
+    background: linear-gradient(145deg, oklch(70% 0.14 250) 0%, oklch(60% 0.18 280) 100%);
+  }
+  .post-title {
+    font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
+  .post-body { padding: 1.5rem 2rem; }
+  .comments-card { margin-top: 1.25rem; padding: 1.5rem; }
+
+  .guestbook-intro h2 {
+    margin: 0 0 1rem;
+    font-size: 1.3rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .guestbook-intro ul {
+    margin: 0; padding-left: 1.5rem;
+    line-height: 2;
+    color: var(--text-soft);
+  }
+  .guestbook-intro li { margin-bottom: 0.3rem; }
+
+  .post-toc { position: sticky; top: 88px; align-self: start; }
+  .toc-card { padding: 1rem; }
+  .toc-nav { display: flex; flex-direction: column; gap: 0.4rem; }
+  .toc-item {
+    font-size: 0.82rem; color: var(--text-soft);
+    padding: 0.4rem 0.5rem; border-radius: var(--radius-sm);
+    display: flex; align-items: center; gap: 0.4rem;
+  }
+  .toc-item:hover { background: var(--surface-2); }
+
+  @media (max-width: 860px) {
+    .post-layout { grid-template-columns: 1fr; }
+    .post-toc { display: none; }
+  }
+</style>
