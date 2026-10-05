@@ -10,54 +10,25 @@ const skills = [
   { name: 'Docker', icon: 'cube' },
   { name: 'JavaScript', icon: 'code' },
 ];
-
-const learning = [
-  { name: '逆向工程', icon: 'search' },
-  { name: '密码学', icon: 'key' },
-  { name: 'Astro', icon: 'code' },
-];
 ---
 
-<div class="skills-section">
-  <h3 class="skills-subtitle">已掌握</h3>
-  <div class="skills-list">
-    {skills.map(s => (
-      <span class="skill-tag glass">
-        <Icon name={s.icon} size="0.85rem" />
-        {s.name}
-      </span>
-    ))}
-  </div>
-
-  <h3 class="skills-subtitle">正在学习</h3>
-  <div class="skills-list">
-    {learning.map(s => (
-      <span class="skill-tag glass learning-tag">
-        <Icon name={s.icon} size="0.85rem" />
-        {s.name}
-        <span class="learning-badge">学习中</span>
-      </span>
-    ))}
-  </div>
+<div class="learn-list">
+  {skills.map(s => (
+    <span class="learn-tag glass">
+      <Icon name={s.icon} size="0.85rem" />
+      {s.name}
+    </span>
+  ))}
 </div>
 
 <style>
-  .skills-section { margin-bottom: 2rem; }
-  .skills-subtitle {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text-faint);
-    margin: 0 0 0.5rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .skills-subtitle:not(:first-child) { margin-top: 1rem; }
-  .skills-list {
+  .learn-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
+    margin-bottom: 2rem;
   }
-  .skill-tag {
+  .learn-tag {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -67,16 +38,6 @@ const learning = [
     font-weight: 500;
     transition: all 0.15s ease;
   }
-  .skill-tag:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
-  .skill-tag :global(.icon) { color: var(--primary); opacity: 0.8; }
-  .learning-tag {
-    border: 1px dashed var(--primary);
-    background: var(--primary-soft);
-  }
-  .learning-badge {
-    font-size: 0.65rem;
-    color: var(--primary);
-    font-weight: 600;
-    margin-left: 0.2rem;
-  }
+  .learn-tag:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+  .learn-tag :global(.icon) { color: var(--primary); opacity: 0.8; }
 </style>
