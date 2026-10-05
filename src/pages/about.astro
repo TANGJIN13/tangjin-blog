@@ -2,6 +2,8 @@
 import Base from '../layouts/Base.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import Icon from '../components/Icon.astro';
+import SkillCloud from '../components/SkillCloud.astro';
+import SocialLinks from '../components/SocialLinks.astro';
 import { site } from '../site';
 ---
 
@@ -87,6 +89,14 @@ import { site } from '../site';
             </a>
           ))}
         </div>
+
+        <!-- 社交链接 -->
+        <h2><Icon name="person" size="1.3rem" /> 社交</h2>
+        <SocialLinks />
+
+        <!-- 技能标签云 -->
+        <h2><Icon name="code" size="1.3rem" /> 技能</h2>
+        <SkillCloud />
 
         <!-- 装饰性引用 -->
         <blockquote class="deco-quote">

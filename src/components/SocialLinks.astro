@@ -1,0 +1,60 @@
+---
+// 社交链接卡片 —— 关于页展示社交账号
+import Icon from './Icon.astro';
+
+interface SocialLink {
+  name: string;
+  url: string;
+  icon: string;
+  color?: string;
+}
+
+const links: SocialLink[] = [
+  { name: 'GitHub', url: 'https://github.com/TANGJIN13', icon: 'github', color: '#333' },
+  // 在这里添加更多社交链接，格式：
+  // { name: 'Twitter', url: 'https://twitter.com/xxx', icon: 'twitter', color: '#1da1f2' },
+  // { name: '邮箱', url: 'mailto:you@example.com', icon: 'mail', color: '#ea4335' },
+];
+---
+
+<div class="social-links">
+  {links.map(l => (
+    <a class="social-link" href={l.url} target="_blank" rel="noopener" style={l.color ? `--social-color: ${l.color}` : ''}>
+      <Icon name={l.icon} size="1.1rem" />
+      <span>{l.name}</span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    background: oklch(0% 0 0 / 0.04);
+    border: 1px solid var(--border);
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+  }
+  [data-theme='dark'] .social-link {
+    background: oklch(100% 0 0 / 0.06);
+  }
+  .social-link:hover {
+    background: var(--social-color, var(--primary));
+    color: #fff;
+    border-color: var(--social-color, var(--primary));
+    transform: translateY(-2px);
+  }
+  .social-link :global(.icon) { opacity: 0.8; }
+</style>

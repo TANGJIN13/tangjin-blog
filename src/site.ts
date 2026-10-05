@@ -22,7 +22,8 @@ export const site = {
 
   heroImage: '/images/hero.svg',
   avatar: '/images/avatar.png',
-  icp: '',
+  /** 备案号 —— 显示在页脚，链接到工信部 */
+  icp: '桂ICP备2026005024号-1',
   /**
    * 建站日期（YYYY-MM-DD）—— 首页「运行时长」从这一天开始算。
    * 想改成实际的建站日，改这一行即可。

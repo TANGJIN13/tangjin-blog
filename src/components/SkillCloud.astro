@@ -1,0 +1,65 @@
+---
+// 技能标签云 —— 关于页展示技术栈
+import Icon from './Icon.astro';
+
+interface Skill {
+  name: string;
+  icon?: string;       // Icon 组件里的图标名
+  color?: string;      // 可选自定义色
+}
+
+const skills: Skill[] = [
+  { name: 'Web 安全', icon: 'lock', color: '#ef4444' },
+  { name: 'CTF', icon: 'flag', color: '#f59e0b' },
+  { name: '逆向工程', icon: 'code', color: '#8b5cf6' },
+  { name: '渗透测试', icon: 'terminal', color: '#10b981' },
+  { name: 'Python', icon: 'code', color: '#3b82f6' },
+  { name: 'JavaScript', icon: 'code', color: '#eab308' },
+  { name: 'Linux', icon: 'terminal', color: '#6366f1' },
+  { name: 'Docker', icon: 'cube', color: '#06b6d4' },
+  { name: 'Git', icon: 'branch', color: '#f97316' },
+  { name: 'Markdown', icon: 'text', color: '#84cc16' },
+];
+---
+
+<div class="skill-cloud">
+  {skills.map(s => (
+    <span class="skill-tag" style={s.color ? `--skill-color: ${s.color}` : ''}>
+      {s.icon && <Icon name={s.icon} size="0.85rem" />}
+      {s.name}
+    </span>
+  ))}
+</div>
+
+<style>
+  .skill-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  .skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--skill-color, var(--text));
+    background: oklch(0% 0 0 / 0.04);
+    border: 1px solid oklch(0% 0 0 / 0.08);
+    transition: all 0.15s ease;
+  }
+  [data-theme='dark'] .skill-tag {
+    background: oklch(100% 0 0 / 0.06);
+    border-color: oklch(100% 0 0 / 0.1);
+  }
+  .skill-tag:hover {
+    transform: translateY(-2px);
+    background: var(--skill-color, var(--primary));
+    color: #fff;
+    border-color: var(--skill-color, var(--primary));
+  }
+  .skill-tag :global(.icon) { opacity: 0.8; }
+</style>
