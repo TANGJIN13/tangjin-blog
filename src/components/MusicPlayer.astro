@@ -1,15 +1,25 @@
 ---
-// 音乐播放器 —— 本地 MP3 模式
+// 音乐播放器 —— Meting.js + 本地备选
 import { site } from '../site';
 import Icon from './Icon.astro';
 
-// ===== 播放列表 =====
-// 想加歌：把 MP3 文件放到 public/music/ 文件夹，然后在这里加一行
-// { name: '歌名', artist: '歌手', url: '/music/文件名.mp3' },
-const tracks = [
+// ===== 本地备选歌曲 =====
+const localTracks = [
   { name: '我走后', artist: '小咪', url: '/music/wo-zou-hou.mp3' },
   { name: 'Whatever Happen', artist: 'tangjin', url: '/music/whatever-happen.mp3' },
 ];
+
+// ===== Meting.js 配置（参考 c1everf0x.cn）=====
+const metingConfig = {
+  server: 'netease',
+  type: 'playlist',
+  id: '18456570568',
+  api: 'https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r',
+  fallbackApis: [
+    'https://api.injahow.cn/meting/?server=:server&type=:type&id=:id',
+    'https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id',
+  ],
+};
 ---
 
 <div class="music-player" id="music-player">
@@ -26,32 +36,21 @@ const tracks = [
     </div>
     <div class="player-info">
       <div class="player-title-row">
-        <span class="player-title" id="player-title">{tracks[0].name}</span>
+        <span class="player-title" id="player-title">加载中...</span>
         <span class="eq-bars" id="eq-bars" aria-hidden="true">
           <i class="eq-bar"></i><i class="eq-bar"></i><i class="eq-bar"></i><i class="eq-bar"></i>
         </span>
       </div>
-      <div class="player-artist" id="player-artist">{tracks[0].artist}</div>
+      <div class="player-artist" id="player-artist">正在连接音乐平台...</div>
     </div>
   </div>
   <div class="player-playlist-head">
-    <span class="playlist-count">{tracks.length} 首</span>
+    <span class="playlist-count" id="playlist-count">-- 首</span>
     <button class="playlist-toggle" id="playlist-toggle" title="展开/收起">
       <Icon name="palette" size="0.9rem" /><span class="playlist-toggle-text">列表</span>
     </button>
   </div>
-  <div class="player-playlist" id="player-playlist" style="display:none">
-    {tracks.map((t, i) => (
-      <div class:list={['track-item', { active: i === 0 }]} data-idx={i} id={`track-${i}`}>
-        <span class="track-num">{i + 1}</span>
-        <span class="track-info">
-          <span class="track-name">{t.name}</span>
-          <span class="track-artist">{t.artist}</span>
-        </span>
-        <span class="track-playing" aria-hidden="true"><Icon name="play" size="0.8rem" /></span>
-      </div>
-    ))}
-  </div>
+  <div class="player-playlist" id="player-playlist" style="display:none"></div>
   <div class="player-progress" id="player-progress">
     <div class="player-progress-bar" id="player-progress-bar"></div>
   </div>
@@ -77,9 +76,14 @@ const tracks = [
     <input type="range" id="player-volume" min="0" max="1" step="0.01" value="0.7" aria-label="音量" />
   </div>
 </div>
-<audio id="audio-el" preload="metadata" src={tracks[0].url}></audio>
+<audio id="audio-el" preload="metadata"></audio>
 
-<script define:vars={{ tracks }}>
+<!-- Meting.js + APlayer -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css">
+<script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js"></script>
+
+<script define:vars={{ localTracks, metingConfig }}>
   const player = document.getElementById('music-player');
   const audio = document.getElementById('audio-el');
   const titleEl = document.getElementById('player-title');
@@ -95,33 +99,146 @@ const tracks = [
   const volumeEl = document.getElementById('player-volume');
   const playlistEl = document.getElementById('player-playlist');
   const playlistToggle = document.getElementById('playlist-toggle');
+  const playlistCount = document.getElementById('playlist-count');
 
+  let tracks = [];
   let currentIndex = 0;
   let playMode = 'list';
+  let useMeting = false;
+  let metingPlayer = null;
 
-  function loadTrack(i) {
-    const t = tracks[i]; if (!t) return;
-    currentIndex = i; audio.src = t.url; titleEl.textContent = t.name; artistEl.textContent = t.artist;
-    updateHighlight();
-  }
   function fmt(s) { if (!isFinite(s)) return '0:00'; const m = Math.floor(s/60), x = Math.floor(s%60); return m+':'+x.toString().padStart(2,'0'); }
-  function play() { audio.play().catch(()=>{}); playBtn.classList.add('playing'); player.classList.add('playing'); }
-  function pause() { audio.pause(); playBtn.classList.remove('playing'); player.classList.remove('playing'); }
+
   function updateHighlight() {
     document.querySelectorAll('.track-item').forEach((el, i) => el.classList.toggle('active', i === currentIndex));
   }
 
+  function renderPlaylist() {
+    playlistEl.innerHTML = '';
+    tracks.forEach((t, i) => {
+      const div = document.createElement('div');
+      div.className = 'track-item' + (i === currentIndex ? ' active' : '');
+      div.dataset.idx = i;
+      div.innerHTML = `<span class="track-num">${i + 1}</span>
+        <span class="track-info"><span class="track-name">${t.name}</span><span class="track-artist">${t.artist}</span></span>
+        <span class="track-playing"><Icon name="play" size="0.8rem" /></span>`;
+      div.addEventListener('click', () => { if (i !== currentIndex) { loadTrack(i); play(); } });
+      playlistEl.appendChild(div);
+    });
+    playlistCount.textContent = tracks.length + ' 首';
+  }
+
+  function loadTrack(i) {
+    const t = tracks[i]; if (!t) return;
+    currentIndex = i;
+    if (useMeting && metingPlayer) {
+      metingPlayer.list.switch(i);
+    } else {
+      audio.src = t.url;
+      titleEl.textContent = t.name;
+      artistEl.textContent = t.artist;
+    }
+    updateHighlight();
+  }
+
+  function play() {
+    if (useMeting && metingPlayer) { metingPlayer.play(); }
+    else { audio.play().catch(()=>{}); }
+    playBtn.classList.add('playing'); player.classList.add('playing');
+  }
+
+  function pause() {
+    if (useMeting && metingPlayer) { metingPlayer.pause(); }
+    else { audio.pause(); }
+    playBtn.classList.remove('playing'); player.classList.remove('playing');
+  }
+
+  // 尝试初始化 Meting.js
+  async function initMeting() {
+    try {
+      const ap = new APlayer({
+        container: document.createElement('div'),
+        audio: [],
+        mini: false,
+        autoplay: false,
+        loop: 'all',
+        order: 'list',
+        preload: 'auto',
+        volume: 0.7,
+        customAudioType: {
+          'audio/mpeg': function(audio, player) { /* fallback */ }
+        },
+        meting: {
+          api: metingConfig.api,
+          server: metingConfig.server,
+          type: metingConfig.type,
+          id: metingConfig.id,
+        }
+      });
+
+      // 等待 Meting 加载
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('Meting timeout')), 15000);
+        ap.on('listready', () => { clearTimeout(timeout); resolve(); });
+        ap.on('error', () => { clearTimeout(timeout); reject(new Error('Meting error')); });
+      });
+
+      // 获取歌单
+      const list = ap.list;
+      if (list && list.audios && list.audios.length > 0) {
+        tracks = list.audios.map(a => ({ name: a.name, artist: a.artist, url: a.url, cover: a.cover }));
+        useMeting = true;
+        metingPlayer = ap;
+        titleEl.textContent = tracks[0].name;
+        artistEl.textContent = tracks[0].artist;
+        renderPlaylist();
+
+        // 同步播放状态
+        ap.on('play', () => { playBtn.classList.add('playing'); player.classList.add('playing'); });
+        ap.on('pause', () => { playBtn.classList.remove('playing'); player.classList.remove('playing'); });
+        ap.on('timeupdate', () => {
+          if (ap.audio && ap.audio.duration) {
+            progressBar.style.width = (ap.audio.currentTime / ap.audio.duration * 100) + '%';
+            currentEl.textContent = fmt(ap.audio.currentTime);
+            durationEl.textContent = fmt(ap.audio.duration);
+          }
+        });
+        ap.on('ended', () => {
+          if (playMode === 'one') { ap.list.switch(currentIndex); ap.play(); }
+          else { next(); }
+        });
+
+        return true;
+      }
+    } catch (e) {
+      console.log('Meting failed, fallback to local:', e);
+    }
+    return false;
+  }
+
+  // 本地模式
+  function initLocal() {
+    tracks = localTracks;
+    useMeting = false;
+    titleEl.textContent = tracks[0].name;
+    artistEl.textContent = tracks[0].artist;
+    renderPlaylist();
+    loadTrack(0);
+  }
+
+  // 控制
   playBtn.addEventListener('click', () => audio.paused ? play() : pause());
   nextBtn.addEventListener('click', () => { loadTrack((currentIndex+1)%tracks.length); play(); });
   prevBtn.addEventListener('click', () => { loadTrack((currentIndex-1+tracks.length)%tracks.length); play(); });
   modeBtn.addEventListener('click', () => { playMode = playMode==='list'?'one':playMode==='one'?'shuffle':'list'; modeBtn.dataset.mode = playMode; });
-  volumeEl.addEventListener('input', () => audio.volume = parseFloat(volumeEl.value));
+  volumeEl.addEventListener('input', () => {
+    const v = parseFloat(volumeEl.value);
+    if (useMeting && metingPlayer) metingPlayer.volume(v);
+    else audio.volume = v;
+  });
   playlistToggle.addEventListener('click', () => {
     const isOpen = playlistEl.style.display !== 'none';
     playlistEl.style.display = isOpen ? 'none' : 'block';
-  });
-  document.querySelectorAll('.track-item').forEach(el => {
-    el.addEventListener('click', () => { const i = Number(el.dataset.idx); if (i !== currentIndex) { loadTrack(i); play(); } });
   });
 
   audio.addEventListener('timeupdate', () => { currentEl.textContent = fmt(audio.currentTime); if (audio.duration) progressBar.style.width = (audio.currentTime/audio.duration*100)+'%'; });
@@ -148,6 +265,9 @@ const tracks = [
   setInterval(saveState, 2000);
   window.addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
+
+  // 初始化：先尝试 Meting，失败则用本地
+  initMeting().then(success => { if (!success) initLocal(); });
   restoreState();
 </script>
 
