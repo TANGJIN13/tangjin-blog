@@ -1,50 +1,55 @@
 #!/usr/bin/env bash
-# 发布当前 Obsidian 笔记到博客
-# 用法: 把这个脚本放到 Obsidian vault 里，在笔记右键 → 用终端打开 → 运行 ./publish.sh
-# 或者设置 Obsidian 的 Shell Commands 插件调用这个脚本
+# 发布 Obsidian 笔记到博客（支持分类）
+# 用法: ./publish.sh <笔记路径>
+# 示例: ./publish.sh ~/Documents/安全笔记/XSS复现.md
 
 set -uo pipefail
 
-PROJECT="$(cd "$(dirname "$0")" && pwd)/tangjin-blog"
+PROJECT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT="$(cd "$PROJECT" && pwd)"
 POSTS_DIR="$PROJECT/src/content/posts"
 
-# 获取当前激活的笔记路径（从 Obsidian 传入）
 NOTE_PATH="${1:-}"
-
 if [ -z "$NOTE_PATH" ] || [ ! -f "$NOTE_PATH" ]; then
-  echo "请在 Obsidian 中打开要发布的笔记，然后右键 → 用终端打开"
+  echo "❌ 请提供笔记路径"
+  echo "   用法: ./publish.sh /path/to/note.md"
   exit 1
 fi
 
-BASENAME="$(basename "$NOTE_PATH" .md)"
-TITLE="$(head -1 "$NOTE_PATH" | sed 's/^#\s*//')"
-DATE="$(date +%Y-%m-%d)"
-FILENAME="${DATE}-${BASENAME}.md"
+# 读取 frontmatter
+TITLE=$(grep -m1 '^title:' "$NOTE_PATH" 2>/dev/null | sed 's/.*title:\s*["'\'']\(.*\)["'\'']/\1/' || echo '')
+DESC=$(grep -m1 '^description:' "$NOTE_PATH" 2>/dev/null | sed 's/.*description:\s*["'\'']\(.*\)["'\'']/\1/' || echo '')
+DATE=$(grep -m1 '^published:' "$NOTE_PATH" 2>/dev/null | sed 's/.*published:\s*//' | cut -dT -f1 || date +%Y-%m-%d)
+TAGS=$(grep -m1 '^tags:' "$NOTE_PATH" 2>/dev/null | sed 's/.*tags:\s*//' || echo '[]')
+CATEGORY=$(grep -m1 '^category:' "$NOTE_PATH" 2>/dev/null | sed 's/.*category:\s*//' || echo '')
 
-# 读取 frontmatter（如果有）
-if head -1 "$NOTE_PATH" | grep -q '^---'; then
-  # 已有 frontmatter，直接复制
-  cp "$NOTE_PATH" "$POSTS_DIR/$FILENAME"
-else
-  # 没有 frontmatter，自动补充
-  {
-    echo "---"
-    echo "title: \"$TITLE\""
-    echo "description: \"$TITLE\""
-    echo "published: $DATE"
-    echo "tags: []"
-    echo "---"
-    echo ""
-    cat "$NOTE_PATH"
-  } > "$POSTS_DIR/$FILENAME"
+if [ -z "$TITLE" ]; then
+  FIRST_LINE=$(grep -m1 '^# ' "$NOTE_PATH" | sed 's/^# //' || echo '')
+  TITLE="$FIRST_LINE"
 fi
 
-echo "✓ 已发布: $FILENAME"
+if [ -z "$TITLE" ]; then
+  echo "❌ 找不到标题（frontmatter 里的 title 或第一行 # 标题）"
+  exit 1
+fi
 
-# 提交到 GitHub
+# 生成文件名
+SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | iconv -f utf-8 -t ascii//translit 2>/dev/null | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-\|-$//g')
+[ -z "$SLUG" ] && SLUG=$(echo "$TITLE" | md5sum | cut -c1-8)
+FILENAME="${DATE}-${SLUG}.md"
+
+# 复制文件（frontmatter 原样保留，包含 category）
+cp "$NOTE_PATH" "$POSTS_DIR/$FILENAME"
+
+echo "✓ 标题: $TITLE"
+echo "✓ 日期: $DATE"
+[ -n "$CATEGORY" ] && echo "✓ 分类: $CATEGORY"
+echo "✓ 文件: $FILENAME"
+
+# 提交
 cd "$PROJECT"
 git add -A
-git commit -m "post: $TITLE"
-git push
+git commit -q -m "post: $TITLE"
+git push -q
 
-echo "✓ 已推送到 GitHub，约 1-2 分钟后上线"
+echo "✓ 已推送，约 2 分钟后上线: https://tangjin.xyz"
