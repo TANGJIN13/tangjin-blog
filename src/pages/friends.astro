@@ -162,5 +162,5 @@ const friends: Friend[] = [
   .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
   .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
 
-  @media (max-width: 860px) { .post-layout { grid-template-columns: 1fr; } .post-toc { display: none; } }
+  @media (max-width: 860px) { .post-layout { grid-template-columns: minmax(0, 1fr); } .post-main { min-width: 0; } .post-toc { display: none; } }
 </style>

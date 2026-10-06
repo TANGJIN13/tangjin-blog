@@ -192,7 +192,8 @@ import Icon from '../components/Icon.astro';
   .toc-item:hover { background: var(--surface-2); }
 
   @media (max-width: 860px) {
-    .post-layout { grid-template-columns: 1fr; }
+    .post-layout { grid-template-columns: minmax(0, 1fr); }
+    .post-main { min-width: 0; }
     .post-toc { display: none; }
   }
 </style>
