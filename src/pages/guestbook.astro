@@ -83,7 +83,7 @@ import Icon from '../components/Icon.astro';
 
   .post-head { margin-bottom: 2rem; }
   .cover img, .cover-placeholder {
-    width: 100%; aspect-ratio: 2 / 1;
+    width: 100%; aspect-ratio: auto; height: clamp(180px, 24vw, 250px);
     border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
   }
   .cover-placeholder {
@@ -102,7 +102,7 @@ import Icon from '../components/Icon.astro';
   .guestbook-cover {
     position: relative;
     overflow: hidden;
-    min-height: 210px;
+    height: clamp(180px, 24vw, 250px);
     flex-direction: column;
     gap: 0.5rem;
   }
