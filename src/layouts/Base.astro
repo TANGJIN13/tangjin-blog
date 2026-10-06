@@ -284,8 +284,25 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
       themeBtn?.addEventListener('click', () => {
         const order = ['light', 'dark', 'system'];
         const cur = localStorage.getItem('theme') || 'system';
-        apply(order[(order.indexOf(cur) + 1) % order.length]);
+        const next = order[(order.indexOf(cur) + 1) % order.length];
+        apply(next);
+        showToast({ light: '☀ 浅色模式', dark: '🌙 深色模式', system: '🖥 跟随系统' }[next]);
       });
+
+      // 轻提示：给"点了看不出变化"的按钮一个可见反馈
+      let toastTimer = 0;
+      function showToast(text) {
+        let el = document.getElementById('app-toast');
+        if (!el) {
+          el = document.createElement('div');
+          el.id = 'app-toast';
+          document.body.appendChild(el);
+        }
+        el.textContent = text;
+        el.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
+      }
 
       // 浮动播放器展开/收起（默认展开，记忆状态）+ 播放中按钮脉冲
       const mfWrap = document.getElementById('music-float');
@@ -682,13 +699,36 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     .nav { display: none; }
     .nav-grid { grid-template-columns: auto 1fr; }
   }
+
+  /* ============ 轻提示 toast ============ */
+  #app-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 6.5rem;
+    transform: translate(-50%, 12px);
+    z-index: 300;
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 28px oklch(0% 0 0 / 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+  #app-toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 </style>
 
 <style is:global>
   @media (max-width: 768px) {
-    .ref-sidebar-left,
-    .ref-sidebar-right { display: none !important; }
-    .ref-layout { grid-template-columns: 1fr !important; gap: 0; }
+    /* 手机端保留侧栏模块（个人卡/搜索/日历/统计），上下堆叠展示 */
+    .ref-layout { grid-template-columns: 1fr !important; gap: 0.75rem; }
     .container,
     .post-layout { width: 100% !important; max-width: 100% !important; padding-inline: 0.75rem; }
     .wallpaper-wrapper { height: clamp(280px, 50vh, 400px) !important; }
