@@ -10,17 +10,23 @@ import { site } from '../../site';
 export async function getStaticPaths() {
   const posts = await getPublishedPosts();
   return Promise.all(
-    posts.map(async (post) => {
+    posts.map(async (post, i) => {
       const { Content } = await render(post);
       return {
         params: { slug: post.id },
-        props: { post, Content },
+        props: {
+          post,
+          Content,
+          // 上一篇 = 更旧的一篇，下一篇 = 更新的一篇
+          older: posts[i + 1] ?? null,
+          newer: posts[i - 1] ?? null,
+        },
       };
     }),
   );
 }
 
-const { post, Content } = Astro.props;
+const { post, Content, older, newer } = Astro.props;
 const { title, description, published, updated, tags, cover } = post.data;
 const minutes = readingTime(post.body);
 const wordCount = post.body.replace(/\s/g, '').length;
@@ -37,6 +43,9 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   image={coverSrc.startsWith('http') ? coverSrc : `${site.url}${coverSrc}`}
   banner
 >
+  <!-- 阅读进度条 -->
+  <div class="read-progress" id="read-progress" aria-hidden="true"></div>
+
   <!-- 顶部壁纸横幅：文章标题 / 标签 / 元信息 -->
   <WallpaperBanner
     height="clamp(360px, 48vh, 540px)"
@@ -130,6 +139,24 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
           </a>
         </div>
       </div>
+
+      <!-- 上一篇 / 下一篇 -->
+      {(older || newer) && (
+        <nav class="pn-nav">
+          {older ? (
+            <a class="pn-card prev" href={`/posts/${older.id}/`}>
+              <span class="pn-label"><Icon name="prev" size="0.9rem" />上一篇</span>
+              <span class="pn-title">{older.data.title}</span>
+            </a>
+          ) : <span class="pn-card ghost" aria-hidden="true"></span>}
+          {newer ? (
+            <a class="pn-card next" href={`/posts/${newer.id}/`}>
+              <span class="pn-label">下一篇<Icon name="next" size="0.9rem" /></span>
+              <span class="pn-title">{newer.data.title}</span>
+            </a>
+          ) : <span class="pn-card ghost" aria-hidden="true"></span>}
+        </nav>
+      )}
 
       <!-- Giscus 评论 -->
       <div class="card-base comments-card">
