@@ -1,0 +1,79 @@
+/**
+ * 关于页的个人资料 —— 改这里就能改「关于我」页面，不用碰 HTML。
+ *
+ * 注意：icon 字段必须是 src/components/Icon.astro 里已有的名字，
+ * 写错了会退化成占位图标。可用的有：
+ * lock flag code terminal mail github link sparkle chart calendar person
+ * book text image moon wave archive folder tag search send copy sun monitor
+ */
+
+export interface Skill {
+  name: string;
+  icon: string;
+  /** 鼠标悬停时显示的一句说明 */
+  note?: string;
+}
+
+export interface TimelineItem {
+  /** 显示在卡片左上角，比如「2026」或「2026.03」 */
+  date: string;
+  title: string;
+  desc: string;
+  icon?: string;
+}
+
+export const profile = {
+  /** 头像旁边那行身份标签 */
+  headline: '桂林电子科技大学 · 25级网安 · Web 安全',
+
+  /**
+   * 「我是谁」下面的自我介绍。数组里每一项是一个段落，
+   * 可以用 HTML（比如 <strong>加粗</strong>）。
+   */
+  intro: [
+    '你好，我是 <strong>tj</strong>。桂林电子科技大学 25 级网络安全专业，目前主要往 <strong>Web 安全</strong>方向摸索。',
+    '这个站是我自己用 Astro 搭的，主要放两类东西：一是 CTF 打完之后的<strong>复现和复盘</strong>，二是学习路上踩过的坑。写得比较随意，但每一篇都是自己真跑过的。',
+    '如果你也在学安全，或者对某篇文章有不同看法，欢迎在下面留言——我都会看。',
+  ],
+
+  /** 已经能上手用的 */
+  skills: [
+    { name: 'Web 安全', icon: 'lock', note: 'SQL 注入 / XSS / 文件上传' },
+    { name: 'CTF', icon: 'flag', note: 'Web 方向，边打边学' },
+    { name: 'Python', icon: 'code', note: '写脚本、跑 PoC' },
+    { name: 'Linux', icon: 'terminal', note: '日常环境' },
+  ] as Skill[],
+
+  /** 正在啃的 */
+  learning: [
+    { name: 'Docker', icon: 'terminal', note: '搭靶场用' },
+    { name: 'JavaScript', icon: 'code', note: '前端审计' },
+    { name: '内网渗透', icon: 'lock', note: '还在入门' },
+    { name: 'Astro', icon: 'sparkle', note: '就是这个站' },
+  ] as Skill[],
+
+  /** 时间线，从上到下按顺序显示 */
+  timeline: [
+    {
+      date: '2026.10',
+      title: '这个博客上线',
+      desc: '用 Astro 从零搭起来，配好 GitHub Actions 自动部署。',
+      icon: 'sparkle',
+    },
+    {
+      date: '2026',
+      title: '开始打 CTF',
+      desc: '跟着队伍参加比赛，赛后把题目复现写下来。',
+      icon: 'flag',
+    },
+    {
+      date: '2025',
+      title: '入学 · 选了网安',
+      desc: '进入桂林电子科技大学网络安全专业。',
+      icon: 'book',
+    },
+  ] as TimelineItem[],
+
+  /** 页面最后那句自己想说的话 */
+  quote: '安全是一场没有终点的旅程。',
+};
