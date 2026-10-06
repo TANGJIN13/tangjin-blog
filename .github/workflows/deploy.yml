@@ -89,6 +89,15 @@ jobs:
             exit 1
           fi
 
+      # 部署完成后把链接推给搜索引擎（百度主动推送 / IndexNow / 各家 sitemap ping）
+      # 没有配置 Secret 时会自动跳过对应渠道，且不会让部署失败
+      - name: 提交链接到搜索引擎
+        continue-on-error: true
+        env:
+          BAIDU_PUSH_TOKEN: ${{ secrets.BAIDU_PUSH_TOKEN }}
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
+        run: node scripts/submit-urls.mjs
+
       - name: 部署结果摘要
         if: always()
         run: |
@@ -98,5 +107,6 @@ jobs:
             echo "- 提交：\`${{ github.sha }}\`"
             echo "- 触发：${{ github.event_name }}"
             echo "- 站点：https://tangjin.xyz"
+            echo "- 搜索引擎：已推送（百度/IndexNow/sitemap ping，详见「提交链接到搜索引擎」日志）"
             echo "- 时间：$(date '+%Y-%m-%d %H:%M:%S %Z')"
           } >> "$GITHUB_STEP_SUMMARY"
