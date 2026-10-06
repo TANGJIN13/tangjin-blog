@@ -5,7 +5,7 @@
 
 set -uo pipefail
 
-PROJECT="$(cd "$(dirname "$0")/.." && pwd)"
+PROJECT="$(cd "$(dirname "$0")" && pwd)"
 PROJECT="$(cd "$PROJECT" && pwd)"
 POSTS_DIR="$PROJECT/src/content/posts"
 
