@@ -1,5 +1,5 @@
 ---
-// 音乐播放器 —— Meting.js + 本地备选
+// 音乐播放器 —— 在线歌单（Meting API）+ 本地备选
 import { site } from '../site';
 import Icon from './Icon.astro';
 
@@ -9,14 +9,16 @@ const localTracks = [
   { name: 'Whatever Happen', artist: 'tangjin', url: '/music/whatever-happen.mp3' },
 ];
 
-// ===== Meting.js 配置（参考 c1everf0x.cn）=====
+// ===== Meting API 配置（歌单来源）=====
+// 注意：api.i-meto.com 的歌单接口可用，但其歌曲 url（type=url）已失效(404)；
+// api.injahow.cn 的歌曲 url 能正常 302 重定向到网易云真实 mp3，故排在首位。
 const metingConfig = {
   server: 'netease',
   type: 'playlist',
   id: '151681834',
-  api: 'https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r',
+  api: 'https://api.injahow.cn/meting/?server=:server&type=:type&id=:id',
   fallbackApis: [
-    'https://api.injahow.cn/meting/?server=:server&type=:type&id=:id',
+    'https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r',
     'https://api.moeyao.cn/meting/?server=:server&type=:type&id=:id',
   ],
 };
@@ -78,10 +80,9 @@ const metingConfig = {
 </div>
 <audio id="audio-el" preload="metadata"></audio>
 
-<!-- Meting.js + APlayer -->
+<!-- APlayer（在线歌单播放，本地备选用原生 audio） -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.css">
 <script src="https://cdn.jsdelivr.net/npm/aplayer@1.10.1/dist/APlayer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/meting@2.0.1/dist/Meting.min.js"></script>
 
 <script define:vars={{ localTracks, metingConfig }}>
   const player = document.getElementById('music-player');
@@ -133,11 +134,9 @@ const metingConfig = {
     currentIndex = i;
     if (useMeting && metingPlayer) {
       metingPlayer.list.switch(i);
-    } else {
-      audio.src = t.url;
-      titleEl.textContent = t.name;
-      artistEl.textContent = t.artist;
     }
+    titleEl.textContent = t.name;
+    artistEl.textContent = t.artist;
     updateHighlight();
   }
 
@@ -153,63 +152,100 @@ const metingConfig = {
     playBtn.classList.remove('playing'); player.classList.remove('playing');
   }
 
-  // 尝试初始化 Meting.js
+  function isPlaying() {
+    if (useMeting && metingPlayer) return !metingPlayer.audio.paused;
+    return !audio.paused;
+  }
+
+  function next() {
+    if (playMode === 'shuffle' && tracks.length > 1) {
+      let r = currentIndex;
+      while (r === currentIndex) r = Math.floor(Math.random() * tracks.length);
+      loadTrack(r);
+    } else {
+      loadTrack((currentIndex + 1) % tracks.length);
+    }
+    play();
+  }
+
+  function prev() {
+    loadTrack((currentIndex - 1 + tracks.length) % tracks.length);
+    play();
+  }
+
+  // 归一化 Meting API 返回的字段（不同 API 字段名不同）
+  function normalizeTrack(item) {
+    return {
+      name: item.name || item.title || '未知歌曲',
+      artist: item.artist || item.author || '未知歌手',
+      url: item.url || '',
+      cover: item.cover || item.pic || '',
+    };
+  }
+
+  // 拉取歌单：依次尝试主 API 与备用 API
+  async function fetchPlaylist() {
+    const apis = [metingConfig.api, ...(metingConfig.fallbackApis || [])];
+    for (const api of apis) {
+      const url = api
+        .replace(':server', metingConfig.server)
+        .replace(':type', metingConfig.type)
+        .replace(':id', metingConfig.id)
+        .replace(':r', String(Math.random()));
+      try {
+        const resp = await fetch(url, { cache: 'no-cache' });
+        if (!resp.ok) continue;
+        const data = await resp.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data.map(normalizeTrack).filter(t => t.url);
+        }
+      } catch (e) {
+        console.log('Meting API 请求失败:', url, e);
+      }
+    }
+    return [];
+  }
+
+  // 尝试初始化在线歌单
   async function initMeting() {
     try {
+      const list = await fetchPlaylist();
+      if (list.length === 0) throw new Error('歌单为空');
+
       const ap = new APlayer({
         container: document.createElement('div'),
-        audio: [],
+        audio: list,
         mini: false,
         autoplay: false,
         loop: 'all',
         order: 'list',
         preload: 'auto',
         volume: 0.7,
-        customAudioType: {
-          'audio/mpeg': function(audio, player) { /* fallback */ }
-        },
-        meting: {
-          api: metingConfig.api,
-          server: metingConfig.server,
-          type: metingConfig.type,
-          id: metingConfig.id,
+      });
+
+      tracks = list;
+      useMeting = true;
+      metingPlayer = ap;
+      titleEl.textContent = tracks[0].name;
+      artistEl.textContent = tracks[0].artist;
+      renderPlaylist();
+
+      // 同步播放状态
+      ap.on('play', () => { playBtn.classList.add('playing'); player.classList.add('playing'); });
+      ap.on('pause', () => { playBtn.classList.remove('playing'); player.classList.remove('playing'); });
+      ap.on('timeupdate', () => {
+        if (ap.audio && ap.audio.duration) {
+          progressBar.style.width = (ap.audio.currentTime / ap.audio.duration * 100) + '%';
+          currentEl.textContent = fmt(ap.audio.currentTime);
+          durationEl.textContent = fmt(ap.audio.duration);
         }
       });
-
-      // 等待 Meting 加载
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Meting timeout')), 15000);
-        ap.on('listready', () => { clearTimeout(timeout); resolve(); });
-        ap.on('error', () => { clearTimeout(timeout); reject(new Error('Meting error')); });
+      ap.on('ended', () => {
+        if (playMode === 'one') { ap.list.switch(currentIndex); ap.play(); }
+        else { next(); }
       });
 
-      // 获取歌单
-      const list = ap.list;
-      if (list && list.audios && list.audios.length > 0) {
-        tracks = list.audios.map(a => ({ name: a.name, artist: a.artist, url: a.url, cover: a.cover }));
-        useMeting = true;
-        metingPlayer = ap;
-        titleEl.textContent = tracks[0].name;
-        artistEl.textContent = tracks[0].artist;
-        renderPlaylist();
-
-        // 同步播放状态
-        ap.on('play', () => { playBtn.classList.add('playing'); player.classList.add('playing'); });
-        ap.on('pause', () => { playBtn.classList.remove('playing'); player.classList.remove('playing'); });
-        ap.on('timeupdate', () => {
-          if (ap.audio && ap.audio.duration) {
-            progressBar.style.width = (ap.audio.currentTime / ap.audio.duration * 100) + '%';
-            currentEl.textContent = fmt(ap.audio.currentTime);
-            durationEl.textContent = fmt(ap.audio.duration);
-          }
-        });
-        ap.on('ended', () => {
-          if (playMode === 'one') { ap.list.switch(currentIndex); ap.play(); }
-          else { next(); }
-        });
-
-        return true;
-      }
+      return true;
     } catch (e) {
       console.log('Meting failed, fallback to local:', e);
     }
@@ -227,15 +263,11 @@ const metingConfig = {
   }
 
   // 控制
-  playBtn.addEventListener('click', () => audio.paused ? play() : pause());
-  nextBtn.addEventListener('click', () => { loadTrack((currentIndex+1)%tracks.length); play(); });
-  prevBtn.addEventListener('click', () => { loadTrack((currentIndex-1+tracks.length)%tracks.length); play(); });
+  playBtn.addEventListener('click', () => isPlaying() ? pause() : play());
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
   modeBtn.addEventListener('click', () => { playMode = playMode==='list'?'one':playMode==='one'?'shuffle':'list'; modeBtn.dataset.mode = playMode; });
-  volumeEl.addEventListener('input', () => {
-    const v = parseFloat(volumeEl.value);
-    if (useMeting && metingPlayer) metingPlayer.volume(v);
-    else audio.volume = v;
-  });
+  volumeEl.addEventListener('input', () => setVolume(parseFloat(volumeEl.value)));
   playlistToggle.addEventListener('click', () => {
     const isOpen = playlistEl.style.display !== 'none';
     playlistEl.style.display = isOpen ? 'none' : 'block';
@@ -243,32 +275,49 @@ const metingConfig = {
 
   audio.addEventListener('timeupdate', () => { currentEl.textContent = fmt(audio.currentTime); if (audio.duration) progressBar.style.width = (audio.currentTime/audio.duration*100)+'%'; });
   audio.addEventListener('loadedmetadata', () => durationEl.textContent = fmt(audio.duration));
-  audio.addEventListener('ended', () => { if (playMode==='one'){audio.currentTime=0;play();} else { loadTrack((currentIndex+1)%tracks.length); play(); } });
+  audio.addEventListener('ended', () => { if (playMode==='one'){audio.currentTime=0;play();} else { next(); } });
   audio.addEventListener('pause', () => { playBtn.classList.remove('playing'); player.classList.remove('playing'); });
   audio.addEventListener('play', () => { playBtn.classList.add('playing'); player.classList.add('playing'); });
-  progressWrap.addEventListener('click', e => { const r = progressWrap.getBoundingClientRect(); if (audio.duration) audio.currentTime = ((e.clientX-r.left)/r.width)*audio.duration; });
+  progressWrap.addEventListener('click', e => {
+    const r = progressWrap.getBoundingClientRect();
+    const ratio = (e.clientX - r.left) / r.width;
+    if (useMeting && metingPlayer && metingPlayer.audio && metingPlayer.audio.duration) {
+      metingPlayer.audio.currentTime = ratio * metingPlayer.audio.duration;
+    } else if (audio.duration) {
+      audio.currentTime = ratio * audio.duration;
+    }
+  });
 
   // 续播
   const STATE_KEY = 'tj-music-state';
-  function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify({ idx: currentIndex, time: audio.currentTime, playing: !audio.paused, mode: playMode, vol: audio.volume })); } catch {} }
+  function getCurTime() { return (useMeting && metingPlayer && metingPlayer.audio) ? metingPlayer.audio.currentTime : audio.currentTime; }
+  function setCurTime(t) { if (useMeting && metingPlayer && metingPlayer.audio) metingPlayer.audio.currentTime = t; else audio.currentTime = t; }
+  function getDuration() { return (useMeting && metingPlayer && metingPlayer.audio) ? metingPlayer.audio.duration : audio.duration; }
+  function getVolume() { return (useMeting && metingPlayer) ? metingPlayer.audio.volume : audio.volume; }
+  function setVolume(v) { if (useMeting && metingPlayer) metingPlayer.volume(v); else audio.volume = v; }
+  function saveState() { try { localStorage.setItem(STATE_KEY, JSON.stringify({ idx: currentIndex, time: getCurTime(), playing: isPlaying(), mode: playMode, vol: getVolume() })); } catch {} }
   function restoreState() {
     try {
       const s = JSON.parse(localStorage.getItem(STATE_KEY) || 'null'); if (!s) return;
-      if (typeof s.idx === 'number' && s.idx < tracks.length) loadTrack(s.idx);
-      audio.volume = (typeof s.vol === 'number') ? s.vol : 0.7; volumeEl.value = String(audio.volume);
+      if (typeof s.idx === 'number' && s.idx < tracks.length && s.idx !== currentIndex) loadTrack(s.idx);
+      const v = (typeof s.vol === 'number') ? s.vol : 0.7; setVolume(v); volumeEl.value = String(v);
       if (s.mode) { playMode = s.mode; modeBtn.dataset.mode = playMode; }
       const t = (typeof s.time === 'number' && s.time > 1) ? s.time : 0;
-      if (t > 0) audio.addEventListener('loadedmetadata', () => { if (audio.duration && t < audio.duration-1) audio.currentTime = t; }, { once: true });
-      if (s.playing) { const p = audio.play(); if (p && p.catch) p.catch(() => {}); }
+      if (t > 0) {
+        const apply = () => { const d = getDuration(); if (d && t < d - 1) setCurTime(t); };
+        const once = () => { apply(); };
+        if (useMeting && metingPlayer && metingPlayer.audio) { metingPlayer.audio.addEventListener('loadedmetadata', once, { once: true }); }
+        else audio.addEventListener('loadedmetadata', once, { once: true });
+      }
+      if (s.playing) play();
     } catch {}
   }
   setInterval(saveState, 2000);
   window.addEventListener('pagehide', saveState);
   document.addEventListener('visibilitychange', () => { if (document.hidden) saveState(); });
 
-  // 初始化：先尝试 Meting，失败则用本地
-  initMeting().then(success => { if (!success) initLocal(); });
-  restoreState();
+  // 初始化：先尝试 Meting，失败则用本地，完成后恢复续播状态
+  initMeting().then(success => { if (!success) initLocal(); restoreState(); });
 </script>
 
 <style>
