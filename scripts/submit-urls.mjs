@@ -10,7 +10,7 @@
  *   1. 百度「主动推送（实时）」—— 需要 BAIDU_PUSH_TOKEN（百度搜索资源平台获取）
  *   2. IndexNow（必应 Bing / Yandex / Seznam / Naver）—— 需要 INDEXNOW_KEY，
  *      留空时会从 public/indexnow-<key>.txt 自动识别
- *   3. 各家 sitemap ping（Bing / Google / 360 / 搜狗）—— 无需凭据
+ *   3. sitemap 可访问性自检（各家 ping 接口已停用，故不再 ping）
  *
  * 环境变量：
  *   SEO_SITE          站点地址，默认 https://tangjin.xyz
@@ -143,23 +143,19 @@ async function indexNow(urls) {
   return ok;
 }
 
-/* ---------- 5. 各家 sitemap ping ---------- */
-async function pingSitemap() {
+/* ---------- 5. sitemap 可见性自检（不再 ping，各家 ping 接口已停用） ----------
+ * 说明：Bing 的 /ping 已返回 410，Google 的 sitemap ping 已于 2023 年下线，
+ *       360 / 搜狗 的 ping 也返回 404。这些渠道现在靠各自的站长平台提交 sitemap，
+ *       所以这里只做一次「sitemap 可访问」自检，不再发无用的 ping 请求。
+ */
+async function checkSitemap() {
   const sitemap = `${SITE}/sitemap-index.xml`;
-  const endpoints = [
-    `https://www.bing.com/ping?sitemap=${encodeURIComponent(sitemap)}`,
-    `https://www.google.com/ping?sitemap=${encodeURIComponent(sitemap)}`,
-    `https://www.so.com/ping?sitemap=${encodeURIComponent(sitemap)}`,
-    `https://www.sogou.com/ping?url=${encodeURIComponent(sitemap)}`,
-  ];
-  if (DRY_RUN) { log('· sitemap ping：[dry-run] 跳过'); return; }
-  for (const ep of endpoints) {
-    try {
-      const resp = await fetch(ep);
-      log(`· ping ${new URL(ep).host}：HTTP ${resp.status}`);
-    } catch (e) {
-      log(`· ping ${new URL(ep).host}：失败 ${e.message}`);
-    }
+  if (DRY_RUN) { log('· sitemap 自检：[dry-run] 跳过'); return; }
+  try {
+    const resp = await fetch(sitemap);
+    log(`· sitemap 自检 ${sitemap}：HTTP ${resp.status}`);
+  } catch (e) {
+    log(`· sitemap 自检：失败 ${e.message}`);
   }
 }
 
@@ -180,7 +176,7 @@ if (!targets.length) {
 
 await baiduPush(targets);
 await indexNow(targets);
-await pingSitemap();
+await checkSitemap();
 
 if (!DRY_RUN) {
   saveSubmitted([...new Set([...submitted, ...all])]);

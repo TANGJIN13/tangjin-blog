@@ -13,8 +13,7 @@
 | robots.txt | `public/robots.txt`，声明了 Sitemap 地址、允许全部抓取 |
 | 新文章自动提交 | GitHub Actions 部署成功后自动跑 `scripts/submit-urls.mjs` |
 | 百度自动推送（JS） | 页面被访问即提交该 URL，官方 `push.js`，已注入 `Base.astro` |
-| IndexNow 推送 | 提交给 Bing / Yandex / Seznam / Naver，密钥文件已放在站点根目录 |
-| sitemap ping | 每次部署后 ping Bing / Google / 360 / 搜狗 |
+| IndexNow 推送 | 提交给 Bing / Yandex / Seznam / Naver，密钥文件已放在站点根目录（实测 Bing 返回 200） |
 | canonical / OG | 每页已带 `rel="canonical"` 与 Open Graph 元信息 |
 
 每次 `git push` 到 main → 构建部署 → 自动推送全部链接，**新文章发出来就会被通知到搜索引擎**。
@@ -64,7 +63,10 @@
 - **搜狗**：<https://zhanzhang.sogou.com/> 加站点 + sitemap
 - **神马/头条**：<https://zhanzhang.toutiao.com/>（可选）
 
-这些平台已被 `submit-urls.mjs` 的 ping 覆盖，只要登记了站点就会收到通知。
+这些平台只需在各自站长后台登记站点并填一次 sitemap 地址即可。
+
+> 注：早期流行的「sitemap ping 接口」（Bing `/ping`、Google `/ping`、360、搜狗）现在分别返回
+> 410 / 已下线 / 404，已不再有效，因此脚本里去掉了这些无用请求，只保留 IndexNow 与百度主动推送。
 
 ---
 
