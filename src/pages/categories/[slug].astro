@@ -89,4 +89,14 @@ const posts = await getCollection('posts', (p) => !p.data.draft && (p.data.categ
   .cat-empty p { color: var(--text-faint); font-size: 0.9rem; margin: 0 0 1.2rem; }
   .empty-back { color: var(--primary); font-size: 0.85rem; text-decoration: none !important; }
   .empty-back:hover { text-decoration: underline !important; }
+
+  /* 手机端适配 */
+  @media (max-width: 860px) {
+    .cat-head { margin-bottom: 1.8rem; }
+    .cat-title { font-size: 1.45rem; }
+    .cat-desc { font-size: 0.9rem; }
+    .cat-post-card { padding: 0.8rem 0.95rem; }
+    .cat-post-title { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .cat-empty { padding: 2.2rem 1.2rem; }
+  }
 </style>
