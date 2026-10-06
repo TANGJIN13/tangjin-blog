@@ -110,8 +110,31 @@ cd tangjin-blog
 
 | 现象 | 原因 / 处理 |
 | --- | --- |
-| 新建笔记没弹分类选择 | 确认笔记建在 `tangjin-blog/src/content/posts` 里；确认 Templater 的 folder template 已配置并重启过 Obsidian |
+| 新建笔记没弹分类选择 | **先完全退出 Obsidian 再打开**（不是关窗口）。若还不行，按下面「模板不弹窗的三层开关」逐条核对 |
+| 模板确实没触发 | 手动补一次：`Ctrl+P` → `Templater: Open Insert Template Modal` → 选 `博客文章` |
 | Git 插件显示「not a git repository」 | `basePath` 没填对，设为 `tangjin-blog` 后重启 |
 | 保存了但 GitHub 上没提交 | 看 Obsidian 左下角 Git 状态；手动执行「Git: Commit-and-push」命令试试；确认 `git` 在系统 PATH 里 |
 | 推送了但博客没更新 | 去 GitHub 仓库 → Actions 看流水线是否变绿（一般是构建报错） |
 | 分类徽章没显示 | 检查 frontmatter 里 `category` 是不是这四个之一：`essay` / `article` / `summary` / `tools` |
+| 保存了但 GitHub 一直没动静 | 检查 `TANGJIN/.obsidian/community-plugins.json` 里有没有 `"obsidian-git"`——不在列表里就是插件没启用 |
+
+---
+
+## 六、模板不弹窗的三层开关
+
+Templater 要在新建笔记时自动套模板，**三个条件必须同时满足**，缺一个就静默不触发：
+
+1. **`trigger_on_file_creation: true`**（总开关，默认是 `false`）
+2. **`trigger_on_file_creation_mode: "folder"`**（用文件夹模板模式）
+3. **`folder_templates` 里有这一条**：
+   ```json
+   { "folder": "tangjin-blog/src/content/posts", "template": "Templates/博客文章.md" }
+   ```
+
+第 1 条最容易漏——只写 `trigger_on_file_creation_mode: "folder"` 是不够的，
+Templater 内部的判断是 `trigger_on_file_creation && mode === "folder"`。
+
+另外 Templater 只在**文件完全为空**时才套模板，所以要是新建时已经有内容，它也不会插手。
+
+改完配置务必**完全退出 Obsidian**（任务管理器里确认没有 Obsidian 进程）再重开，
+否则 Obsidian 退出时会用内存里的旧配置把你的改动覆盖回去。
