@@ -416,10 +416,11 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     justify-content: center;
   }
   .nav-item {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.4rem 0.75rem;
+    padding: 0.4rem 0.75rem 0.5rem;
     border-radius: var(--radius-sm);
     color: var(--text-soft);
     font-size: 0.9rem;
@@ -428,13 +429,35 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     white-space: nowrap;
     transition: color 0.18s ease, background-color 0.18s ease;
   }
-  .nav-item :global(.icon) { opacity: 0.85; }
+  .nav-item :global(.icon) { opacity: 0.85; transition: transform 0.18s ease; }
   .nav-item:hover { color: var(--text); background: oklch(0% 0 0 / 0.05); }
   .nav-item:hover :global(.icon) { transform: translateY(-1px); }
-  .nav-item[aria-current='page'] { color: var(--primary); background: var(--primary-soft); }
+
+  /* 悬停/激活时从中间展开的下划线 */
+  .nav-item::after {
+    content: '';
+    position: absolute;
+    left: 0.7rem; right: 0.7rem; bottom: 0.14rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .nav-item:hover::after,
+  .nav-item[aria-current='page']::after { transform: scaleX(1); }
+
+  .nav-item[aria-current='page'] {
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    font-weight: 600;
+  }
+  [data-theme='dark'] .nav-item[aria-current='page'] { color: var(--primary-light); }
 
   /* 壁纸页面上方导航为白色 */
   body.has-banner .top-row:not(.scrolled) .nav-item { color: oklch(100% 0 0 / 0.88); }
+  body.has-banner .top-row:not(.scrolled) .nav-item::after { background: #fff; }
   body.has-banner .top-row:not(.scrolled) .nav-item:hover {
     color: #fff;
     background: oklch(100% 0 0 / 0.16);
