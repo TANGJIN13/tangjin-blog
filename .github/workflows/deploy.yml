@@ -69,10 +69,12 @@ jobs:
           #       写 :/var/www/blog/ → 会建成 /var/www/blog/var/www/blog/  ❌
           #
           # --delete 会清理目标目录里多余的旧文件（安全，因为目标就是站点根）
-          # --chmod 强制目录 755 / 文件 644，否则 nginx 会因权限返回 403
-          rsync -avz --delete --human-readable \
-            --chmod=D755,F644 \
-            --no-group \
+          # 注意：服务器端密钥被 rrsync -wo 限制，它有一份安全白名单，
+          #       --chmod / --no-group / --human-readable 都不在白名单里，会被拒。
+          #       因此这里用 -rltpz（递归+链接+时间+权限+压缩）替代 -avz：
+          #       -a 展开的 -o/-g 会尝试 chown/chgrp，非 root 会失败告警且无效。
+          #       文件权限由构建产物默认的 644/755 保证（nginx 以 other 身份可读）。
+          rsync -rltpz --delete \
             --exclude '.well-known/' \
             -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
             dist/ "$SSH_USER@$SSH_HOST:/"
