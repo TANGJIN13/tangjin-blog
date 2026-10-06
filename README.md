@@ -11,6 +11,8 @@
 
 **在线访问 👉 [https://tangjin.xyz](https://tangjin.xyz)**
 
+📘 **使用指南（怎么写、怎么发、各功能怎么用）👉 [使用指南.md](使用指南.md)**
+
 ![站点预览](docs/screenshot-home.png)
 
 ---
@@ -27,12 +29,13 @@
 
 | 模块 | 说明 |
 |---|---|
-| 首页 | 壁纸轮播 + 文章列表 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图） |
-| 文章页 | 顶部横幅 + 自动生成目录 + 文末分享（复制链接 / 微博 / QQ 空间） |
+| 首页 | 分类入口 + 头条大卡 + 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏模块自动堆叠 |
+| 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享（复制链接 / 微博 / QQ 空间） |
 | 评论 | Giscus（GitHub Discussions 驱动，见下文） |
 | 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、歌词时间微调、失效音源自动跳过 |
-| 主题 | 亮色 / 暗色 / 跟随系统，评论框主题同步切换 |
-| 特效 | 樱花飘落、沉浸阅读模式 |
+| 主题 | 亮色 / 暗色 / 跟随系统，切换时底部提示当前模式，评论框主题同步 |
+| 特效 | 进入文章时樱花飘落约 10 秒（非全站常驻）、沉浸阅读模式 |
+| 归档 | 按年份竖向时间线展示，含总字数统计 |
 | 其他 | 归档 / 分类 / 标签 / 友链 / 留言板 / 全文搜索 / RSS / Sitemap |
 | 搜索引擎 | robots.txt + 自动 sitemap，部署后自动推送（百度主动推送 / IndexNow / 百度 JS 自动推送），详见 [SEO 文档](docs/SEO-搜索引擎提交.md) |
 
@@ -67,9 +70,21 @@ tangjin-blog/
 
 ## 写作与发布
 
-### 方式一：直接写 Markdown
+完整图文手册见 [使用指南.md](使用指南.md)，下面给速览。
 
-在 `src/content/posts/` 新建 `.md` 文件，frontmatter 格式：
+### 日常用法：Obsidian + Templater + obsidian-git（默认全自动）
+
+博客仓库就放在我的 Obsidian 笔记库里，写作即发布：
+
+1. 在文件树里 **右键 `tangjin-blog/src/content/posts` → 新建笔记**（注意：必须在 `posts` 文件夹内新建，新建笔记的分类选择弹窗才会触发）。
+2. Templater 模板自动弹出「选分类」窗口，并让你填标题 / 摘要 / 标签，最后自动改名为 `日期-标题.md`。
+3. 正常写 Markdown。保存后 `obsidian-git` 每 2 分钟自动 commit、每 3 分钟自动 push 到 GitHub → 自动部署。
+
+> **为什么「点新建笔记没弹窗」？** Obsidian 默认把新笔记建在**笔记库根目录**，而模板只在文件落在 `posts/` 时才触发。解决办法：① 如上在 `posts` 文件夹内右键新建；或 ② Obsidian 设置 → 文件与链接 → 新建笔记位置 → 指定到 `tangjin-blog/src/content/posts`。若改完仍不弹窗，彻底退出重开 Obsidian 即可。
+
+### 备用：直接写 Markdown / 手动发布
+
+在 `src/content/posts/` 新建 `.md`，frontmatter：
 
 ```markdown
 ---
@@ -77,24 +92,13 @@ title: "文章标题"
 description: "摘要"
 published: 2026-10-06
 tags: ["Web安全", "CTF"]
-category: web-security
+category: article      # essay / article / summary / tools 四选一
 ---
 
 正文用 Markdown 写。
 ```
 
-然后 `git push`，自动上线。
-
-### 方式二：Obsidian 一键发布（我的日常用法）
-
-博客项目放在我的 Obsidian 笔记库内，写完笔记后：
-
-```bash
-./publish.sh <笔记路径>     # 单篇发布
-node publish.cjs            # 批量发布 _publish/ 文件夹里的笔记
-```
-
-脚本会把笔记复制到 `src/content/posts/` 并自动 commit + push，触发部署。
+然后 `git push`，GitHub Actions 自动上线。仓库里还保留 `publish.sh` / `publish.cjs` 两个老脚本（批量搬笔记用），新流程已不需要。
 
 ## 评论系统
 
