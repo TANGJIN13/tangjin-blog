@@ -154,8 +154,67 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         <p>© {site.footer.since}–{new Date().getFullYear()} {site.author}</p>
         {site.icp && <p><a href="https://beian.miit.gov.cn/" rel="nofollow" target="_blank">{site.icp}</a></p>}
         <p class="footer-note">由 Astro 构建 · 静态托管 · 关注安全</p>
+        <p class="footer-visits" data-vc-wrap style="display:none">
+          总访问量 <span data-vc="site_pv">--</span> 次 · 访客 <span data-vc="site_uv">--</span> 人
+        </p>
       </div>
     </footer>
+
+    <script>
+      // 访问量统计（Vercount 公共服务，静态站免后端）
+      // 指标：site_pv 总访问量 / site_uv 访客数 / page_pv 单页阅读量
+      // 每次 astro:page-load（首屏 + SPA 导航）上报一次当前 URL = 一次页面浏览
+      const VC_API = 'https://events.vercount.one/api/v2/log';
+      const VC_UV_KEY = 'vercount_uv_tangjin_xyz';
+      const VC_CACHE = 'visitorCountData';
+
+      function vcIsNewUv() {
+        const has = document.cookie.split('; ').some((c) => c.startsWith(VC_UV_KEY + '='));
+        if (!has) document.cookie = VC_UV_KEY + '=1; path=/; max-age=31536000; samesite=lax';
+        return !has;
+      }
+
+      function vcRender(data) {
+        if (!data) return;
+        const fmt = (n) => Number(n || 0).toLocaleString('zh-CN');
+        document.querySelectorAll('[data-vc="site_pv"]').forEach((el) => { el.textContent = fmt(data.site_pv); });
+        document.querySelectorAll('[data-vc="site_uv"]').forEach((el) => { el.textContent = fmt(data.site_uv); });
+        document.querySelectorAll('[data-vc="page_pv"]').forEach((el) => { el.textContent = fmt(data.page_pv); });
+        document.querySelectorAll('[data-vc-wrap]').forEach((el) => { el.style.display = ''; });
+      }
+
+      async function vcLog() {
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 5000);
+          const res = await fetch(VC_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: location.href, isNewUv: vcIsNewUv() }),
+            signal: ctrl.signal,
+          });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          const json = await res.json();
+          const data = (json && json.data) || json;
+          if (data && typeof data === 'object') {
+            try { localStorage.setItem(VC_CACHE, JSON.stringify(data)); } catch (e) {}
+            vcRender(data);
+            return;
+          }
+        } catch (e) {}
+        // 接口失败时回退到本地缓存的上次数据（仅展示，不重复计数）
+        try {
+          const cached = localStorage.getItem(VC_CACHE);
+          if (cached) vcRender(JSON.parse(cached));
+        } catch (e) {}
+      }
+
+      let vcFired = false;
+      document.addEventListener('astro:page-load', () => { vcFired = true; vcLog(); });
+      // 兜底：万一没有 ClientRouter，400ms 后直接执行一次
+      setTimeout(() => { if (!vcFired) vcLog(); }, 400);
+    </script>
 
     <script>
       // 阅读进度
@@ -424,6 +483,8 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   }
   .footer-inner p { margin: 0; }
   .footer-note { color: var(--text-faint); font-size: 0.78rem; }
+  .footer-visits { color: var(--text-faint); font-size: 0.78rem; }
+  .footer-visits span[data-vc] { color: var(--primary-strong); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   /* ============ 浮动音乐播放器 —— 左下角常驻 ============ */
   .music-float {

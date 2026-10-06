@@ -71,6 +71,10 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
         <span class="pb-meta-item">
           <Icon name="text" size="0.95rem" />{wordCount} 字
         </span>
+        <span class="pb-sep" aria-hidden="true">·</span>
+        <span class="pb-meta-item" data-vc-wrap style="display:none">
+          <Icon name="eye" size="0.95rem" /><span data-vc="page_pv">--</span> 阅读
+        </span>
         {updated && updated > published && (
           <>
             <span class="pb-sep" aria-hidden="true">·</span>
