@@ -1,0 +1,141 @@
+---
+// 标签页：/tags/<标签>/ —— 文章页与首页标签都链到这里
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPublishedPosts, type Post } from '../../lib/posts';
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  const map = new Map<string, Post[]>();
+  for (const p of posts) {
+    for (const t of p.data.tags) {
+      if (!map.has(t)) map.set(t, []);
+      map.get(t)!.push(p);
+    }
+  }
+  return [...map.entries()].map(([tag, list]) => ({
+    params: { tag },
+    props: { tag, posts: list },
+  }));
+}
+
+interface Props {
+  tag: string;
+  posts: Post[];
+}
+const { tag, posts } = Astro.props;
+---
+
+<Base title={`#${tag}`} description={`标签「${tag}」下的全部文章`}>
+  <div class="post-layout">
+    <article class="post-main">
+      <header class="tg-hero">
+        <span class="tg-hero-icon">
+          <Icon name="tag" size="1.5rem" />
+        </span>
+        <div>
+          <p class="tg-kicker">标签</p>
+          <h1 class="tg-title">#{tag}</h1>
+        </div>
+        <span class="tg-total">{posts.length} 篇</span>
+      </header>
+
+      <div class="post-list">
+        {posts.map((p, i) => (
+          <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
+        ))}
+      </div>
+
+      <nav class="tg-back">
+        <a href="/search/"><Icon name="search" size="0.9rem" />去搜索</a>
+        <a href="/archive/"><Icon name="archive" size="0.9rem" />全部归档</a>
+      </nav>
+    </article>
+
+    <aside class="post-toc">
+      <div class="card-base toc-card">
+        <h3 class="widget-title"><Icon name="tag" size="1.05rem" /> 全部标签</h3>
+        <div class="tg-all">
+          <a class="tg-all-link" href="/tags/">查看标签总览 →</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<style>
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+
+  .tg-hero {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+  .tg-hero-icon {
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.25);
+    box-shadow: 0 4px 14px oklch(62% 0.14 250 / 0.18);
+    flex-shrink: 0;
+  }
+  [data-theme='dark'] .tg-hero-icon { color: var(--primary-light); }
+  .tg-kicker { margin: 0; font-size: 0.72rem; letter-spacing: 0.18em; color: var(--text-faint); }
+  .tg-title {
+    margin: 0;
+    font-size: clamp(1.4rem, 3.2vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.2;
+    word-break: break-all;
+  }
+  .tg-total {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.25);
+    padding: 0.14rem 0.6rem;
+    border-radius: 999px;
+  }
+  [data-theme='dark'] .tg-total { color: var(--primary-light); }
+
+  .post-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .tg-back { display: flex; gap: 0.6rem; margin-top: 1.25rem; flex-wrap: wrap; }
+  .tg-back a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+  }
+  .tg-back a:hover { color: var(--primary); border-color: oklch(70% 0.14 250 / 0.45); transform: translateY(-2px); }
+
+  .post-toc { position: sticky; top: 70px; align-self: start; }
+  .toc-card { padding: 1rem; }
+  .tg-all-link { font-size: 0.8rem; color: var(--primary); text-decoration: none !important; }
+
+  @media (max-width: 860px) {
+    .post-layout { grid-template-columns: 1fr; }
+    .post-toc { display: none; }
+    .tg-total { display: none; }
+  }
+</style>

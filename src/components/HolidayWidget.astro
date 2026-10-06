@@ -3,13 +3,14 @@
 import Icon from './Icon.astro';
 
 // 2026年中国法定节假日（公历日期）
+// 图标名必须是 Icon.astro 里已定义的，否则会退化成占位图标
 const holidays = [
-  { name: '元旦', date: '2026-01-01', icon: 'celebration' },
-  { name: '春节', date: '2026-02-17', icon: 'red_envelope' },
-  { name: '清明节', date: '2026-04-05', icon: 'nature' },
-  { name: '劳动节', date: '2026-05-01', icon: 'work' },
-  { name: '端午节', date: '2026-06-19', icon: 'sailing' },
-  { name: '中秋节', date: '2026-09-27', icon: 'nightlight' },
+  { name: '元旦', date: '2026-01-01', icon: 'sparkle' },
+  { name: '春节', date: '2026-02-17', icon: 'flag' },
+  { name: '清明节', date: '2026-04-05', icon: 'image' },
+  { name: '劳动节', date: '2026-05-01', icon: 'code' },
+  { name: '端午节', date: '2026-06-19', icon: 'wave' },
+  { name: '中秋节', date: '2026-09-27', icon: 'moon' },
   { name: '国庆节', date: '2026-10-01', icon: 'flag' },
 ];
 

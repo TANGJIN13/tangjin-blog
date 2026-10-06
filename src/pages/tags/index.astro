@@ -1,0 +1,134 @@
+---
+// 标签总览：/tags/
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { getTags } from '../../lib/posts';
+
+const tags = await getTags();
+const max = Math.max(...tags.map((t) => t.count), 1);
+---
+
+<Base title="标签" description="按标签浏览全部文章">
+  <div class="post-layout">
+    <article class="post-main">
+      <header class="tg-hero">
+        <span class="tg-hero-icon"><Icon name="tag" size="1.5rem" /></span>
+        <div>
+          <p class="tg-kicker">浏览方式</p>
+          <h1 class="tg-title">标签</h1>
+        </div>
+        <span class="tg-total">{tags.length} 个</span>
+      </header>
+
+      <div class="card-base tg-board">
+        {tags.length > 0 ? (
+          <div class="tg-cloud">
+            {tags.map((t) => {
+              // 文章越多字号越大：0.8rem ~ 1.5rem
+              const size = (0.8 + (t.count / max) * 0.7).toFixed(2);
+              return (
+                <a class="tg-item" href={`/tags/${t.tag}/`} style={`font-size: ${size}rem`}>
+                  #{t.tag}<em>{t.count}</em>
+                </a>
+              );
+            })}
+          </div>
+        ) : (
+          <p class="tg-empty">还没有标签，写篇文章加上 tags 就会出现在这里。</p>
+        )}
+      </div>
+
+      <nav class="tg-back">
+        <a href="/archive/"><Icon name="archive" size="0.9rem" />全部归档</a>
+        <a href="/categories/"><Icon name="folder" size="0.9rem" />按分类看</a>
+        <a href="/search/"><Icon name="search" size="0.9rem" />去搜索</a>
+      </nav>
+    </article>
+  </div>
+</Base>
+
+<style>
+  .post-layout { max-width: 900px; margin-inline: auto; }
+
+  .tg-hero { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.25rem; }
+  .tg-hero-icon {
+    width: 46px; height: 46px;
+    border-radius: 14px;
+    display: grid; place-items: center;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.25);
+    box-shadow: 0 4px 14px oklch(62% 0.14 250 / 0.18);
+    flex-shrink: 0;
+  }
+  [data-theme='dark'] .tg-hero-icon { color: var(--primary-light); }
+  .tg-kicker { margin: 0; font-size: 0.72rem; letter-spacing: 0.18em; color: var(--text-faint); }
+  .tg-title {
+    margin: 0;
+    font-size: clamp(1.4rem, 3.2vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.2;
+  }
+  .tg-total {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.25);
+    padding: 0.14rem 0.6rem;
+    border-radius: 999px;
+  }
+  [data-theme='dark'] .tg-total { color: var(--primary-light); }
+
+  .tg-board { padding: 1.25rem 1.35rem 1.4rem; }
+  .tg-cloud { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.85rem; }
+  .tg-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    font-weight: 700;
+    color: var(--text-soft);
+    text-decoration: none !important;
+    line-height: 1.4;
+    transition: color 0.18s ease, transform 0.18s ease;
+  }
+  .tg-item em {
+    font-style: normal;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0.05rem 0.32rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-faint);
+  }
+  .tg-item:hover {
+    color: var(--primary);
+    transform: translateY(-2px);
+  }
+  .tg-item:hover em { background: var(--primary-soft); color: var(--primary-strong); }
+
+  .tg-empty { margin: 0; font-size: 0.88rem; color: var(--text-faint); }
+
+  .tg-back { display: flex; gap: 0.6rem; margin-top: 1.25rem; flex-wrap: wrap; }
+  .tg-back a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+  }
+  .tg-back a:hover { color: var(--primary); border-color: oklch(70% 0.14 250 / 0.45); transform: translateY(-2px); }
+</style>

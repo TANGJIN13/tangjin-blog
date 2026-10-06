@@ -200,6 +200,20 @@ const catCounts = categories.map((c) => ({
     }
   });
 
+  // 支持带条件直接进入：/search/?q=关键词 或 ?cat=分类slug
+  // （首页标签、文章页标签都靠这个跳过来）
+  const params = new URLSearchParams(location.search);
+  const q0 = params.get('q') || '';
+  const cat0 = params.get('cat') || '';
+  if (q0) input.value = q0;
+  if (cat0) {
+    const chip = chips.querySelector('.sp-chip[data-cat="' + cat0 + '"]');
+    if (chip) {
+      chips.querySelectorAll('.sp-chip').forEach((c) => c.classList.toggle('active', c === chip));
+      activeCat = cat0;
+    }
+  }
+
   apply();
 </script>
 

@@ -1,6 +1,7 @@
 ---
 // 顶部壁纸横幅 —— 参照 c1everf0x.cn 的 #wallpaper-wrapper
 // 全宽 720px、多图轮播、底部波浪 + 渐变淡出
+import Icon from './Icon.astro';
 import { site } from '../site';
 
 interface Props {
@@ -48,9 +49,11 @@ const slides = single ? images.slice(0, 1) : images;
             <img class="wp-avatar" src={site.avatar} alt="头像" width="96" height="96" />
           </div>
 
-          <!-- 座右铭 —— 慢慢浮现 -->
+          <!-- 座右铭 —— 逐字浮现 -->
           <h1 class="wp-title">
-            <span class="wp-title-text">{site.motto}</span>
+            {[...site.motto].map((ch, i) => (
+              <span class="wp-char" style={`--i:${i}`}>{ch}</span>
+            ))}
           </h1>
           {site.mottoSub && <p class="wp-motto-sub">{site.mottoSub}</p>}
 
@@ -60,10 +63,21 @@ const slides = single ? images.slice(0, 1) : images;
             {site.links.map((l) => (
               <a class="wp-link" href={l.href} target="_blank" rel="noopener">{l.label}</a>
             ))}
+            <a class="wp-link wp-link-primary" href="#main-content">
+              <Icon name="article" size="0.95rem" />读读文章
+            </a>
           </div>
         </>
       )}
     </div>
+
+    <!-- 向下浏览引导 -->
+    {!hasSlot && (
+      <a class="wp-scroll" href="#main-content" aria-label="向下浏览">
+        <span class="wp-mouse"><i></i></span>
+        <span class="wp-scroll-text">向下浏览</span>
+      </a>
+    )}
   </div>
 
   <!-- 底部波浪 -->
@@ -163,13 +177,77 @@ const slides = single ? images.slice(0, 1) : images;
   }
 
   .wp-avatar-wrap { position: relative; animation: wp-reveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
-  .wp-title       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both; }
-  .wp-motto-sub   { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both; }
-  .wp-desc        { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.05s both; }
-  .wp-links       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.35s both; }
+  .wp-motto-sub   { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.1s both; }
+  .wp-desc        { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both; }
+  .wp-links       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.5s both; }
 
-  /* 座右铭每字再错开一点，像逐个浮现 */
-  .wp-title-text { display: inline-block; }
+  /* 座右铭逐字浮现：比整块 blur 更有「被写下来」的感觉 */
+  .wp-char {
+    display: inline-block;
+    white-space: pre;
+    animation: wp-char-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(0.45s + var(--i) * 0.09s);
+  }
+  @keyframes wp-char-in {
+    from { opacity: 0; transform: translateY(22px) scale(0.94); filter: blur(10px); }
+    to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+
+  /* ===== 向下浏览引导 ===== */
+  .wp-scroll {
+    position: absolute;
+    left: 50%;
+    bottom: 92px;
+    transform: translateX(-50%);
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    color: oklch(100% 0 0 / 0.8);
+    text-decoration: none !important;
+    animation: wp-reveal 1.2s ease 1.9s both;
+  }
+  .wp-scroll:hover { color: #fff; }
+  .wp-mouse {
+    width: 22px; height: 34px;
+    border-radius: 999px;
+    border: 2px solid oklch(100% 0 0 / 0.65);
+    display: grid;
+    justify-items: center;
+    padding-top: 6px;
+  }
+  .wp-mouse i {
+    width: 3px; height: 7px;
+    border-radius: 999px;
+    background: oklch(100% 0 0 / 0.9);
+    animation: wheel-roll 1.6s ease-in-out infinite;
+  }
+  @keyframes wheel-roll {
+    0%   { opacity: 0; transform: translateY(-3px); }
+    40%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(8px); }
+  }
+  .wp-scroll-text {
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    text-shadow: 0 1px 10px oklch(0% 0 0 / 0.5);
+  }
+  .wp-scroll:hover .wp-mouse { border-color: oklch(100% 0 0 / 0.95); }
+
+  /* 主按钮：实心主色，引导去读文章 */
+  .wp-link-primary {
+    background: oklch(70% 0.14 250 / 0.92);
+    border-color: oklch(100% 0 0 / 0.35);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .wp-link-primary:hover {
+    background: oklch(62% 0.16 250);
+    transform: translateY(-2px) scale(1.02);
+  }
 
   .wp-avatar {
     width: 96px; height: 96px;
