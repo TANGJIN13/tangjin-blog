@@ -59,7 +59,7 @@ tangjin-blog/
 │   ├── components/                # 组件（音乐播放器、评论、热力图…）
 │   ├── layouts/                   # 布局
 │   └── styles/                    # 全局样式
-├── publish.js / publish.sh        # Obsidian 笔记一键发布脚本
+├── publish.cjs / publish.sh       # Obsidian 笔记一键发布脚本
 ├── deploy.ps1                     # 本地直传服务器脚本（应急用）
 └── astro.config.mjs               # Astro 配置
 ```
@@ -90,7 +90,7 @@ category: web-security
 
 ```bash
 ./publish.sh <笔记路径>     # 单篇发布
-node publish.js             # 批量发布 _publish/ 文件夹里的笔记
+node publish.cjs            # 批量发布 _publish/ 文件夹里的笔记
 ```
 
 脚本会把笔记复制到 `src/content/posts/` 并自动 commit + push，触发部署。

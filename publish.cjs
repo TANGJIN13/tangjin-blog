@@ -19,14 +19,35 @@ const PROJECT = path.resolve(__dirname);
 const POSTS_DIR = path.join(PROJECT, 'src/content/posts');
 const OBSIDIAN_VAULT = process.env.OBSIDIAN_VAULT || '' ; // 可选：Obsidian vault 路径
 
+// ★ 博客的有效分类（与 src/data/categories.ts 保持一致）
+const CATEGORIES = [
+  { name: '随笔', slug: 'essay' },
+  { name: '文章', slug: 'article' },
+  { name: '年度总结', slug: 'summary' },
+  { name: '工具使用', slug: 'tools' },
+];
+
+// 分类归一化：接受中文分类名或英文 slug，不认识就返回空并警告
+function normalizeCategory(raw) {
+  if (!raw) return '';
+  const v = String(raw).trim();
+  const bySlug = CATEGORIES.find((c) => c.slug === v.toLowerCase());
+  if (bySlug) return bySlug.slug;
+  const byName = CATEGORIES.find((c) => c.name === v);
+  if (byName) return byName.slug;
+  console.warn(`⚠ 未知分类 "${v}"，有效分类: ${CATEGORIES.map((c) => `${c.name}(${c.slug})`).join(' / ')}。该字段将被忽略。`);
+  return '';
+}
+
 // 博客文章 frontmatter 模板
-function makeFrontmatter(title, description, tags = []) {
+function makeFrontmatter(title, description, tags = [], category = '') {
   const date = new Date().toISOString().slice(0, 10);
+  const esc = (s) => String(s).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
   return `---
-title: "${title}"
-description: "${description}"
+title: "${esc(title)}"
+description: "${esc(description)}"
 published: ${date}
-tags: ${JSON.stringify(tags)}
+tags: ${JSON.stringify(tags)}${category ? `\ncategory: ${category}` : ''}
 ---
 
 `;
@@ -47,17 +68,24 @@ function convertNote(content) {
   // 解析 Obsidian frontmatter
   const titleMatch = obsFM.match(/title:\s*"?([^"\n]+)"?/);
   const descMatch = obsFM.match(/description:\s*"?([^"\n]+)"?/);
+  const catMatch = obsFM.match(/category:\s*"?([^"\n]+)"?/);
   const tagsMatch = obsFM.match(/tags:\s*\[([^\]]+)\]/)
     || obsFM.match(/tags:\s*\n((?:\s*-\s*.+\n?)+)/);
-  
+
   const title = titleMatch ? titleMatch[1].trim() : '';
   const desc = descMatch ? descMatch[1].trim() : '';
+  const category = normalizeCategory(catMatch ? catMatch[1] : '');
   let tags = [];
   if (tagsMatch) {
-    if (tagsMatch[1].includes(',')) {
-      tags = tagsMatch[1].split(',').map(t => t.trim().replace(/"/g, ''));
+    if (tagsMatch[0].startsWith('tags: [')) {
+      // 行内写法: tags: [a, b]
+      tags = tagsMatch[1].split(',').map(t => t.trim().replace(/"/g, '')).filter(Boolean);
     } else {
-      tags = tagsMatch.slice(2).map(t => t.replace(/^\s*-\s*/, '').trim()).filter(Boolean);
+      // 列表写法:
+      // tags:
+      //   - a
+      //   - b
+      tags = tagsMatch[1].split('\n').map(t => t.replace(/^\s*-\s*/, '').trim().replace(/"/g, '')).filter(Boolean);
     }
   }
   
@@ -68,7 +96,7 @@ function convertNote(content) {
   converted = converted.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_, link, alias) => {
     const text = alias || link;
     const slug = link.toLowerCase().replace(/\s+/g, '-');
-    return `[${text}/](/posts/${slug}/)`;
+    return `[${text}](/posts/${slug}/)`;
   });
   
   // ![[embed]] → 图片
@@ -85,7 +113,7 @@ function convertNote(content) {
   // 移除 Obsidian 特有的 %%comments%%
   converted = converted.replace(/%%[^%]*%%/g, '');
   
-  return makeFrontmatter(title, desc, tags) + converted;
+  return makeFrontmatter(title, desc, tags, category) + converted;
 }
 
 function publishNote(filePath) {
