@@ -102,6 +102,22 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
           </div>
         )}
         <div class="foot-actions">
+          <div class="share-box">
+            <button class="foot-btn" id="share-toggle" type="button" title="分享本文">
+              <Icon name="send" size="1rem" />分享
+            </button>
+            <div class="share-panel" id="share-panel" hidden>
+              <button class="share-item" id="share-copy" type="button">
+                <Icon name="copy" size="1rem" />复制链接
+              </button>
+              <a class="share-item" id="share-weibo" href="#" target="_blank" rel="noopener">
+                <Icon name="send" size="1rem" />微博
+              </a>
+              <a class="share-item" id="share-qzone" href="#" target="_blank" rel="noopener">
+                <Icon name="link" size="1rem" />QQ空间
+              </a>
+            </div>
+          </div>
           <a class="foot-btn" href="/archive/">
             <Icon name="archive" size="1rem" />更多文章
           </a>
@@ -157,6 +173,40 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
     }, { rootMargin: '-80px 0px -70% 0px' });
     headings.forEach(h => observer.observe(h));
   }
+
+  // 分享功能
+  const shareToggle = document.getElementById('share-toggle');
+  const sharePanel = document.getElementById('share-panel');
+  if (shareToggle && sharePanel) {
+    shareToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sharePanel.hidden = !sharePanel.hidden;
+    });
+    document.addEventListener('click', (e) => {
+      if (!sharePanel.hidden && !e.target.closest('.share-box')) sharePanel.hidden = true;
+    });
+  }
+
+  const pageUrl = window.location.href;
+  const pageTitle = document.title;
+
+  const shareCopy = document.getElementById('share-copy');
+  shareCopy?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(pageUrl);
+      shareCopy.classList.add('copied');
+      const orig = shareCopy.innerHTML;
+      shareCopy.innerHTML = '<span class="share-ok">✓</span> 已复制';
+      setTimeout(() => { shareCopy.innerHTML = orig; shareCopy.classList.remove('copied'); }, 1600);
+    } catch {
+      window.prompt('复制链接：', pageUrl);
+    }
+  });
+
+  const shareWeibo = document.getElementById('share-weibo');
+  shareWeibo?.setAttribute('href', `https://service.weibo.com/share/share.php?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`);
+  const shareQzone = document.getElementById('share-qzone');
+  shareQzone?.setAttribute('href', `https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`);
 </script>
 
 <style>
@@ -255,7 +305,45 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   }
   .tag:hover { transform: translateY(-1px); background: var(--primary); color: var(--text-on-primary); }
 
-  .foot-actions { display: flex; gap: 0.5rem; }
+  .foot-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+  /* 分享面板 */
+  .share-box { position: relative; }
+  .share-panel {
+    position: absolute;
+    bottom: calc(100% + 0.5rem);
+    left: 0;
+    min-width: 150px;
+    padding: 0.4rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    z-index: 30;
+  }
+  .share-panel[hidden] { display: none; }
+  .share-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.7rem;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    text-align: left;
+    white-space: nowrap;
+  }
+  .share-item:hover { background: var(--surface-2); color: var(--primary-strong); }
+  .share-item :global(.icon) { color: var(--primary); opacity: 0.85; }
+  .share-ok { color: var(--primary); font-weight: 700; }
   .foot-btn {
     display: inline-flex; align-items: center; gap: 0.3rem;
     font-size: 0.82rem; padding: 0.35rem 0.85rem;

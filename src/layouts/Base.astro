@@ -254,21 +254,30 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         syncMf();
       }
 
-      // 手机端菜单
-      const menuBtn = document.getElementById('menu-btn');
-      const mobileMenu = document.getElementById('mobile-menu');
-      if (menuBtn && mobileMenu) {
-        menuBtn.addEventListener('click', () => {
+      // 手机端菜单 —— 用 onclick 保证幂等，客户端路由切页后通过 astro:page-load 重新初始化
+      function initMobileMenu() {
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (!menuBtn || !mobileMenu) return;
+        menuBtn.onclick = () => {
           mobileMenu.classList.toggle('open');
           menuBtn.classList.toggle('active');
-        });
+        };
         mobileMenu.querySelectorAll('.mobile-nav-item').forEach(a => {
-          a.addEventListener('click', () => {
+          a.onclick = () => {
             mobileMenu.classList.remove('open');
             menuBtn.classList.remove('active');
-          });
+          };
         });
       }
+      initMobileMenu();
+      document.addEventListener('astro:page-load', () => {
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        mobileMenu?.classList.remove('open');
+        menuBtn?.classList.remove('active');
+        initMobileMenu();
+      });
     </script>
   </body>
 </html>
