@@ -1,5 +1,6 @@
 ---
 import { formatDate, type Post } from '../lib/posts';
+import { categories } from '../data/categories';
 import Icon from './Icon.astro';
 
 interface Props {
@@ -8,8 +9,12 @@ interface Props {
 }
 
 const { post, style } = Astro.props;
-const { title, description, published, tags, cover } = post.data;
+const { title, description, published, tags, cover, category } = post.data;
 const coverSrc = cover ?? null;
+
+// 分类（frontmatter 里的 category 是 slug，取不到就按第一个标签兜底）
+const catSlug = category ?? '';
+const cat = categories.find((c) => c.slug === catSlug) ?? categories.find((c) => c.name === tags?.[0]);
 
 // 随机渐变封面
 const gradients = [
@@ -28,28 +33,33 @@ const randomGradient = gradients[hash % gradients.length];
   <div class="post-card-inner">
     <!-- 内容 -->
     <div class="post-card-content">
-      <a class="post-card-title" href={`/posts/${post.id}/`}>{title}</a>
-
-      <div class="post-meta">
-        <span class="meta-item">
-          <Icon name="calendar" size="0.95rem" />
+      <div class="card-top-row">
+        {cat && (
+          <a class="cat-badge" href={`/categories/${cat.slug}/`}>
+            <Icon name={cat.icon || 'folder'} size="0.8rem" />{cat.name}
+          </a>
+        )}
+        <span class="card-date">
+          <Icon name="calendar" size="0.85rem" />
           <time datetime={published.toISOString()}>{formatDate(published)}</time>
         </span>
-        {tags.length > 0 && (
-          <span class="meta-item">
-            <Icon name="tag" size="0.95rem" />
-            {tags[0]}
-          </span>
-        )}
       </div>
+
+      <a class="post-card-title" href={`/posts/${post.id}/`}>{title}</a>
 
       <p class="post-card-desc">{description}</p>
 
-      {tags.length > 0 && (
-        <div class="post-card-tags">
-          {tags.map((t) => <span class="tag">#{t}</span>)}
-        </div>
-      )}
+      <div class="card-bottom-row">
+        {tags.length > 0 && (
+          <div class="post-card-tags">
+            {tags.slice(0, 3).map((t) => <span class="tag">#{t}</span>)}
+          </div>
+        )}
+        <span class="read-more">
+          阅读全文
+          <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M13.2 5l-1.4 1.4 5.6 5.6-5.6 5.6 1.4 1.4 7-7z" /><path d="M4 11h9v2H4z" /></svg>
+        </span>
+      </div>
     </div>
 
     <!-- 封面 -->
@@ -61,19 +71,45 @@ const randomGradient = gradients[hash % gradients.length];
           <Icon name="text" size="1.7rem" />
         </div>
       )}
+      <span class="cover-shine" aria-hidden="true"></span>
     </a>
   </div>
 </article>
 
 <style>
   .post-card {
+    position: relative;
     border-radius: var(--radius-xl);
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--surface);
-    transition: border-color 0.2s ease;
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 6px 18px oklch(0% 0 0 / 0.05);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
   }
-  .post-card:hover { border-color: var(--primary); }
+  [data-theme='dark'] .post-card {
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 6px 18px oklch(0% 0 0 / 0.28);
+  }
+  .post-card:hover {
+    transform: translateY(-4px);
+    border-color: oklch(70% 0.14 250 / 0.5);
+    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 250 / 0.18);
+  }
+  [data-theme='dark'] .post-card:hover {
+    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 18px 38px oklch(0% 0 0 / 0.5);
+  }
+  /* 悬停时左侧亮起一条主色高光 */
+  .post-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--gradient-primary);
+    transform: scaleY(0);
+    transform-origin: center;
+    transition: transform 0.28s ease;
+    z-index: 2;
+  }
+  .post-card:hover::before { transform: scaleY(1); }
 
   .post-card-inner {
     display: flex;
@@ -86,57 +122,71 @@ const randomGradient = gradients[hash % gradients.length];
 
   .post-card-content {
     flex: 1;
-    padding: 1rem 1.25rem;
+    padding: 0.9rem 1.15rem 0.85rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.35rem;
     min-width: 0;
   }
+
+  .card-top-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.1rem;
+  }
+
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.14rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.28);
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+  }
+  .cat-badge:hover {
+    background: var(--gradient-primary);
+    color: var(--text-on-primary);
+    border-color: transparent;
+  }
+  [data-theme='dark'] .cat-badge { color: var(--primary-light); }
+
+  .card-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .card-date :global(.icon) { opacity: 0.65; }
 
   .post-card-title {
     font-size: 1.15rem;
     font-weight: 700;
-    line-height: 1.3;
+    line-height: 1.35;
     color: var(--text);
     text-decoration: none !important;
-    transition: color 0.15s ease;
-    position: relative;
-    padding-left: 0.75rem;
+    transition: color 0.18s ease;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
-  .post-card-title::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
-    height: 1.1rem;
-    border-radius: 2px;
-    background: var(--primary);
-    opacity: 0;
-    transition: opacity 0.15s ease;
-  }
-  .post-card:hover .post-card-title::before { opacity: 1; }
-  .post-card-title:hover { color: var(--primary) !important; }
-
-  .post-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    font-size: 0.78rem;
-    color: var(--text-faint);
-  }
-  .meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-  .meta-item :global(.icon) { opacity: 0.7; }
+  .post-card:hover .post-card-title { color: var(--primary) !important; }
 
   .post-card-desc {
     margin: 0;
     color: var(--text-soft);
-    font-size: 0.88rem;
+    font-size: 0.86rem;
+    line-height: 1.65;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -144,22 +194,54 @@ const randomGradient = gradients[hash % gradients.length];
     flex: 1;
   }
 
+  .card-bottom-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.15rem;
+  }
+
   .post-card-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.25rem;
-    margin-top: auto;
+    flex: 1;
+    min-width: 0;
   }
   .tag {
     font-size: 0.68rem;
-    padding: 0.1rem 0.45rem;
+    padding: 0.12rem 0.5rem;
     border-radius: 999px;
-    background: oklch(93% 0.01 250);
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
     color: var(--text-faint);
+    transition: all 0.18s ease;
   }
-  .post-card:hover .tag { background: var(--primary-soft); color: var(--primary); }
+  .post-card:hover .tag {
+    background: var(--primary-soft);
+    border-color: oklch(70% 0.14 250 / 0.25);
+    color: var(--primary-strong);
+  }
+  [data-theme='dark'] .post-card:hover .tag { color: var(--primary-light); }
+
+  .read-more {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--primary);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 0.25s ease;
+  }
+  .post-card:hover .read-more { opacity: 1; transform: translateX(0); }
+  .arrow { flex-shrink: 0; }
 
   .post-card-cover {
+    position: relative;
     display: block;
     width: 100%;
     aspect-ratio: 2 / 1;
@@ -172,7 +254,7 @@ const randomGradient = gradients[hash % gradients.length];
     .post-card-cover {
       width: 28%;
       aspect-ratio: auto;
-      min-height: 130px;
+      min-height: 140px;
     }
   }
 
@@ -180,9 +262,9 @@ const randomGradient = gradients[hash % gradients.length];
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .post-card:hover .post-card-cover img { transform: scale(1.05); }
+  .post-card:hover .post-card-cover img { transform: scale(1.07); }
 
   .cover-placeholder {
     width: 100%;
@@ -190,5 +272,22 @@ const randomGradient = gradients[hash % gradients.length];
     display: grid;
     place-items: center;
     color: oklch(100% 0 0 / 0.85);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .post-card:hover .cover-placeholder { transform: scale(1.07); }
+
+  /* 封面上的斜向光泽扫过 */
+  .cover-shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 35%, oklch(100% 0 0 / 0.28) 50%, transparent 65%);
+    transform: translateX(-120%);
+    transition: transform 0.7s ease;
+    pointer-events: none;
+  }
+  .post-card:hover .cover-shine { transform: translateX(120%); }
+
+  @media (max-width: 767px) {
+    .read-more { opacity: 1; transform: none; }
   }
 </style>

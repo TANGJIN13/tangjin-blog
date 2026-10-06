@@ -27,7 +27,9 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
       <!-- 左侧栏 -->
       <aside class="ref-sidebar-left">
         <div class="card-base profile-card onload-animation">
-          <img class="profile-avatar" src={site.avatar} alt="头像" width="72" height="72" />
+          <div class="avatar-ring">
+            <img class="profile-avatar" src={site.avatar} alt="头像" width="78" height="78" />
+          </div>
           <h3 class="profile-name">{site.title}</h3>
           <p class="profile-bio">Web 安全 / CTF / 漏洞复现</p>
           <nav class="profile-nav">
@@ -114,32 +116,80 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
   }
 
   /* 资料卡 */
-  .profile-card { text-align: center; padding: 1.25rem 1rem; }
+  .profile-card {
+    text-align: center;
+    padding: 1.5rem 1rem 1.1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  /* 卡片顶部一条主色渐变装饰线 */
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: var(--gradient-primary);
+  }
+
+  .avatar-ring {
+    width: 84px; height: 84px;
+    margin: 0 auto 0.7rem;
+    border-radius: 50%;
+    padding: 3px;
+    background: var(--gradient-primary);
+    box-shadow: 0 6px 20px oklch(62% 0.14 250 / 0.35);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .profile-card:hover .avatar-ring { transform: rotate(8deg) scale(1.05); }
   .profile-avatar {
-    width: 72px; height: 72px;
+    width: 100%; height: 100%;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid var(--surface);
-    box-shadow: var(--shadow-sm);
-    margin: 0 auto 0.75rem;
+    display: block;
   }
-  .profile-name { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.25rem; }
-  .profile-bio { font-size: 0.78rem; color: var(--text-faint); margin: 0 0 0.9rem; }
-  .profile-nav { display: flex; flex-direction: column; gap: 0.1rem; }
+
+  .profile-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 0.25rem;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .profile-bio {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin: 0 0 0.9rem;
+    display: inline-block;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+  }
+  .profile-nav { display: flex; flex-direction: column; gap: 0.15rem; }
   .nav-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.4rem 0.5rem;
+    padding: 0.45rem 0.6rem;
     border-radius: var(--radius-sm);
     color: var(--text-soft);
     font-size: 0.84rem;
     text-decoration: none !important;
-    transition: all 0.15s ease;
+    transition: all 0.18s ease;
+    position: relative;
   }
-  .nav-item :global(.icon) { opacity: 0.8; }
-  .nav-item:hover { background: oklch(0% 0 0 / 0.04); color: var(--text); }
-  .nav-item.active { background: var(--primary-soft); color: var(--primary); }
+  .nav-item :global(.icon) { opacity: 0.8; transition: transform 0.18s ease; }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); transform: translateX(3px); }
+  .nav-item:hover :global(.icon) { transform: scale(1.12); }
+  .nav-item.active {
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    font-weight: 600;
+  }
+  [data-theme='dark'] .nav-item.active { color: var(--primary-light); }
   .nav-item.active :global(.icon) { opacity: 1; }
 
   /* widget 标题带图标 */
@@ -153,19 +203,44 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
   /* 主内容 */
   .section-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.75rem;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px dashed var(--border);
   }
   .section-title {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
-    font-size: 1.2rem;
+    gap: 0.45rem;
+    font-size: 1.25rem;
+    font-weight: 800;
     margin: 0;
+    position: relative;
+    padding-left: 0.7rem;
+  }
+  .section-title::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 4px; height: 1.15rem;
+    border-radius: 3px;
+    background: var(--gradient-primary);
   }
   .section-title :global(.icon) { color: var(--primary); }
-  .post-count { font-size: 0.8rem; color: var(--text-faint); }
+  .post-count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.25);
+    padding: 0.12rem 0.6rem;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  [data-theme='dark'] .post-count { color: var(--primary-light); }
   .post-list { display: flex; flex-direction: column; gap: 0.75rem; }
 
   @media (max-width: 767px) {
