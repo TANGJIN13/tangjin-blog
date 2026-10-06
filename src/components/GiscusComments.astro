@@ -1,11 +1,12 @@
 ---
-// Giscus 评论组件 —— GitHub Discussions 驱动的评论系统
-// 支持 GitHub 登录评论 + 匿名（通过 GitHub 账号）
+// Giscus 评论组件 —— 由 GitHub Discussions 驱动
+// 读者用 GitHub 账号登录即可评论，数据存放在 tangjin-blog-comments 仓库的 Discussions 里
 interface Props {
   repo?: string;
   repoId?: string;
   category?: string;
   categoryId?: string;
+  title?: string;
 }
 
 const {
@@ -13,26 +14,76 @@ const {
   repoId = 'R_kgDOU7LPDA',
   category = 'Comments',
   categoryId = 'DIC_kwDOU7LPDM4DHAgr',
+  title = '评论',
 } = Astro.props;
 ---
 
-<div id="comments" class="giscus-container"></div>
-
-<script is:inline src="https://giscus.app/client.js"
+<section
+  id="comments"
+  class="giscus-container"
   data-repo={repo}
   data-repo-id={repoId}
   data-category={category}
   data-category-id={categoryId}
-  data-mapping="pathname"
-  data-strict="0"
-  data-reactions-enabled="1"
-  data-emit-metadata="0"
-  data-input-position="bottom"
-  data-theme="preferred_color_scheme"
-  data-lang="zh-CN"
-  data-loading="lazy"
-  crossorigin="anonymous"
-  async>
+>
+  <h3 class="giscus-title">{title}</h3>
+</section>
+
+<script>
+  // 注意：本脚本是 Astro 模块脚本（非 is:inline），整个会话只执行一次；
+  // 通过 astro:page-load 处理每次 SPA 导航，避免监听器重复注册。
+  function siteTheme(): 'light' | 'dark' {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+
+  function syncGiscusTheme() {
+    const iframe = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+    if (!iframe?.contentWindow) return;
+    iframe.contentWindow.postMessage(
+      { giscus: { setConfig: { theme: siteTheme() } } },
+      'https://giscus.app',
+    );
+  }
+
+  function loadGiscus() {
+    const container = document.getElementById('comments');
+    if (!container) return; // 当前页面没有评论区
+
+    // SPA 返回带缓存的页面时 iframe 已存在，只需同步主题
+    if (container.querySelector('iframe.giscus-frame')) {
+      syncGiscusTheme();
+      return;
+    }
+
+    // 清掉旧的注入脚本（如果有），重新动态注入
+    container.querySelectorAll('script[src*="giscus.app"]').forEach((s) => s.remove());
+
+    const s = document.createElement('script');
+    s.src = 'https://giscus.app/client.js';
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    s.setAttribute('data-repo', container.dataset.repo || '');
+    s.setAttribute('data-repo-id', container.dataset.repoId || '');
+    s.setAttribute('data-category', container.dataset.category || '');
+    s.setAttribute('data-category-id', container.dataset.categoryId || '');
+    s.setAttribute('data-mapping', 'pathname'); // 按页面路径区分讨论串
+    s.setAttribute('data-strict', '0');
+    s.setAttribute('data-reactions-enabled', '1');
+    s.setAttribute('data-emit-metadata', '0');
+    s.setAttribute('data-input-position', 'bottom');
+    s.setAttribute('data-theme', siteTheme()); // 初始主题跟随站点
+    s.setAttribute('data-lang', 'zh-CN');
+    s.setAttribute('data-loading', 'lazy');
+    container.appendChild(s);
+  }
+
+  document.addEventListener('astro:page-load', loadGiscus);
+  loadGiscus();
+
+  // 站点深浅色切换时，实时同步 giscus iframe 的主题
+  new MutationObserver((mutations) => {
+    if (mutations.some((m) => m.attributeName === 'data-theme')) syncGiscusTheme();
+  }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 </script>
 
 <style>
@@ -40,6 +91,12 @@ const {
     margin-top: 2rem;
     padding-top: 1.5rem;
     border-top: 1px solid var(--border);
+  }
+  .giscus-title {
+    margin: 0 0 1rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
   }
   /* Giscus iframe 宽度自适应 */
   .giscus-container :global(iframe) {
