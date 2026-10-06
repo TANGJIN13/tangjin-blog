@@ -1,27 +1,44 @@
 ---
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 ---
 
 <Base title="404" description="页面不存在">
   <div class="container">
-    <div class="notfound">
-      <div class="code">404</div>
-      <h1>页面走丢了</h1>
-      <p>你要找的内容可能被移动、删除，或者从未存在。</p>
-      <a class="btn" href="/">回到首页</a>
+    <div class="notfound onload-animation">
+      <!-- 迷路的 CTF 旗子：gradle 渐变 + 漂浮动画 -->
+      <div class="hero">
+        <span class="float-chip c1"><Icon name="flag" size="1.1rem" /></span>
+        <div class="code">404</div>
+        <span class="float-chip c2"><Icon name="search" size="1rem" /></span>
+      </div>
+      <h1>_flag 找不到了</h1>
+      <p>你要找的页面可能被移动、删除，或者从未存在——像一道没给出的 flag。</p>
+
+      <div class="actions">
+        <a class="btn primary" href="/"><Icon name="home" size="1rem" />回到首页</a>
+        <a class="btn" href="/archive/"><Icon name="archive" size="1rem" />翻翻归档</a>
+        <a class="btn" href="/about/"><Icon name="person" size="1rem" />认识站长</a>
+      </div>
     </div>
   </div>
 </Base>
 
 <style>
   .notfound {
-    max-width: 480px;
+    max-width: 520px;
     margin: 5rem auto;
     text-align: center;
+    padding: 0 1rem;
+  }
+
+  .hero {
+    position: relative;
+    display: inline-block;
   }
 
   .code {
-    font-size: 5rem;
+    font-size: clamp(4.5rem, 14vw, 7rem);
     font-weight: 800;
     line-height: 1;
     background: linear-gradient(135deg, var(--primary), var(--primary-strong));
@@ -29,30 +46,84 @@ import Base from '../layouts/Base.astro';
     background-clip: text;
     color: transparent;
     letter-spacing: -0.03em;
+    animation: bob 3.2s ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* 两侧漂浮的小图标 */
+  .float-chip {
+    position: absolute;
+    top: 10%;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.3);
+    animation: drift 4s ease-in-out infinite;
+  }
+  [data-theme='dark'] .float-chip { color: var(--primary-light); }
+  .float-chip.c1 { left: -4.2rem; animation-delay: 0.4s; }
+  .float-chip.c2 { right: -4.2rem; }
+  @keyframes drift {
+    0%, 100% { transform: translateY(0) rotate(-6deg); }
+    50% { transform: translateY(-12px) rotate(6deg); }
+  }
+  @media (max-width: 560px) {
+    .float-chip.c1 { left: -2.6rem; }
+    .float-chip.c2 { right: -2.6rem; }
   }
 
   h1 {
     font-size: 1.6rem;
-    margin-top: 0.5rem;
+    margin-top: 1rem;
+    font-weight: 800;
   }
 
   p {
     color: var(--text-soft);
+    margin-top: 0.4rem;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.6rem;
   }
 
   .btn {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.6rem 1.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.55rem 1.3rem;
     border-radius: 999px;
-    background: var(--primary);
-    color: var(--on-primary);
-    font-weight: 500;
-    transition: opacity 0.15s ease;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none !important;
+    transition: all 0.18s ease;
   }
-
   .btn:hover {
-    opacity: 0.88;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    transform: translateY(-2px);
     text-decoration: none;
   }
+  .btn.primary {
+    background: var(--gradient-primary);
+    color: var(--text-on-primary);
+    border-color: transparent;
+    box-shadow: 0 6px 18px oklch(62% 0.14 250 / 0.35);
+  }
+  .btn.primary:hover { color: var(--text-on-primary); filter: brightness(1.06); }
 </style>

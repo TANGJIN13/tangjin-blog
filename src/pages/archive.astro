@@ -1,7 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
-import PostListItem from '../components/PostListItem.astro';
-import { getPublishedPosts } from '../lib/posts';
+import Icon from '../components/Icon.astro';
+import { getPublishedPosts, formatDate, readingTime } from '../lib/posts';
 
 const posts = await getPublishedPosts();
 
@@ -13,25 +13,49 @@ for (const p of posts) {
   byYear.get(y)!.push(p);
 }
 const years = [...byYear.keys()].sort((a, b) => b - a);
+const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 0);
 ---
 
 <Base title="归档">
   <div class="container">
-    <header class="page-head">
-      <h1>归档</h1>
-      <p>共 {posts.length} 篇文章，按年份倒序排列。</p>
+    <header class="page-head onload-animation">
+      <h1><Icon name="archive" size="1.6rem" /> 归档</h1>
+      <p>
+        共 <strong>{posts.length}</strong> 篇文章 · 约 <strong>{(totalWords / 10000).toFixed(1)}</strong> 万字，按时间倒序
+      </p>
     </header>
 
-    {
-      years.map((y) => (
-        <section class="year">
-          <h2 class="year-title">{y}</h2>
-          <ul class="year-list">
-            {byYear.get(y)!.map((p) => <PostListItem post={p} />)}
-          </ul>
-        </section>
-      ))
-    }
+    <div class="timeline">
+      {
+        years.map((y) => (
+          <section class="year">
+            <div class="year-node">
+              <span class="year-num">{y}</span>
+              <span class="year-count">{byYear.get(y)!.length} 篇</span>
+            </div>
+            <ul class="year-list">
+              {byYear.get(y)!.map((p, i) => (
+                <li class="tl-item onload-animation" style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}>
+                  <span class="tl-dot" aria-hidden="true"></span>
+                  <a class="tl-card" href={`/posts/${p.id}/`}>
+                    <time class="tl-date" datetime={p.data.published.toISOString()}>
+                      {formatDate(p.data.published)}
+                    </time>
+                    <span class="tl-title">{p.data.title}</span>
+                    {p.data.tags.length > 0 && (
+                      <span class="tl-tags">{p.data.tags.slice(0, 3).map((t) => `#${t}`).join(' ')}</span>
+                    )}
+                    <span class="tl-arrow" aria-hidden="true">
+                      <Icon name="next" size="0.9rem" />
+                    </span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))
+      }
+    </div>
 
     {
       posts.length === 0 && (
@@ -45,38 +69,162 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
 
 <style>
   .page-head {
-    padding: 2.5rem 0 1.5rem;
+    padding: 2.5rem 0 2rem;
     text-align: center;
   }
-
   .page-head h1 {
     font-size: 2rem;
     letter-spacing: -0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
-
+  .page-head h1 :global(.icon) { color: var(--primary); }
   .page-head p {
     color: var(--text-soft);
+    margin-top: 0.4rem;
+  }
+  .page-head strong {
+    color: var(--primary-strong);
+    font-weight: 800;
+  }
+  [data-theme='dark'] .page-head strong { color: var(--primary-light); }
+
+  /* ============ 时间线 ============ */
+  .timeline {
+    position: relative;
+    max-width: 56rem;
+    margin: 0 auto;
+    padding-left: 1.5rem;
+  }
+  /* 渐变竖线 */
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 0.4rem;
+    bottom: 0.4rem;
+    width: 2px;
+    background: linear-gradient(180deg, var(--primary), oklch(70% 0.14 250 / 0.15));
+    border-radius: 2px;
   }
 
-  .year {
-    margin-bottom: 2rem;
-  }
+  .year { margin-bottom: 2.25rem; }
 
-  .year-title {
-    font-size: 1.15rem;
-    color: var(--text-soft);
-    padding-left: 0.75rem;
-    border-left: 3px solid var(--primary);
-    margin-bottom: 0.75rem;
+  .year-node {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+  .year-num {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1;
+  }
+  .year-count {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
   }
 
   .year-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
-    margin: 0;
-    padding: 0;
   }
+
+  .tl-item { position: relative; padding-left: 1.4rem; }
+  /* 时间线上的小圆点 */
+  .tl-dot {
+    position: absolute;
+    left: -1.5rem;
+    top: 50%;
+    transform: translate(calc(-50% + 7px), -50%);
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 2px solid var(--primary);
+    transition: all 0.2s ease;
+    z-index: 1;
+  }
+  .tl-item:hover .tl-dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 4px oklch(62% 0.14 250 / 0.18);
+  }
+
+  .tl-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    min-width: 0;
+  }
+  .tl-card:hover {
+    transform: translateX(4px);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+    box-shadow: var(--shadow);
+  }
+
+  .tl-date {
+    flex-shrink: 0;
+    font-size: 0.74rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+  }
+  [data-theme='dark'] .tl-date { color: var(--primary-light); }
+
+  .tl-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: color 0.15s ease;
+  }
+  .tl-card:hover .tl-title { color: var(--primary-strong); }
+  [data-theme='dark'] .tl-card:hover .tl-title { color: var(--primary-light); }
+
+  .tl-tags {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+  }
+
+  .tl-arrow {
+    flex-shrink: 0;
+    color: var(--primary);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: all 0.2s ease;
+  }
+  .tl-card:hover .tl-arrow { opacity: 1; transform: translateX(0); }
 
   .empty {
     padding: 3rem;
@@ -85,5 +233,11 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
     background: var(--surface);
     border: 1px dashed var(--border);
     border-radius: var(--radius-lg);
+  }
+
+  @media (max-width: 640px) {
+    .tl-tags { display: none; }
+    .year-num { font-size: 1.6rem; }
+    .timeline { padding-left: 1.2rem; }
   }
 </style>

@@ -3,7 +3,6 @@ import '../styles/global.css';
 import { site } from '../site';
 import Icon from '../components/Icon.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
-import SakuraEffect from '../components/SakuraEffect.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -142,9 +141,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         <Icon name="music" size="1.05rem" />
       </button>
     </div>
-
-    <!-- 樱花特效（全屏 canvas + 开关按钮） -->
-    <SakuraEffect />
 
     </main>
 

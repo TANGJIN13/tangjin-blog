@@ -20,6 +20,9 @@ import Icon from './Icon.astro';
   let petals = [];
   let sparkles = [];
   let mouse = { x: -1000, y: -1000 };
+  // 进页面只飘一阵子：到点后不再生成新花瓣，落完自然结束
+  const BURST_MS = 10000;
+  let spawnDeadline = 0;
 
   const PETAL_COLORS = ['#ffb7c5', '#ffc0cb', '#ff9eb5', '#ffd1dc', '#f8c8dc', '#ffafaf'];
   const SPARKLE_COLORS = ['#fff', '#ffe4f0', '#ffd7ec', '#fff0f5', '#ffe0ec'];
@@ -137,20 +140,26 @@ import Icon from './Icon.astro';
     // 鼠标跟随光晕
     drawMouseGlow();
 
-    // 樱花花瓣
-    for (const p of petals) {
+    // 樱花花瓣（只在生成窗口内补充，窗口过后逐渐落完）
+    for (let i = petals.length - 1; i >= 0; i--) {
+      const p = petals[i];
       p.y += p.speedY;
       p.x += p.speedX + Math.sin(p.swing) * 0.5;
       p.swing += p.swingSpeed;
       p.rotation += p.rotSpeed;
       if (p.y > canvas.height + 20) {
-        Object.assign(p, createPetal());
+        if (enabled && Date.now() < spawnDeadline) {
+          Object.assign(p, createPetal());
+        } else {
+          petals.splice(i, 1);
+          continue;
+        }
       }
       drawPetal(p);
     }
 
-    // 闪光粒子
-    if (enabled && mouse.x > 0) {
+    // 闪光粒子（同样只在窗口内生成）
+    if (enabled && Date.now() < spawnDeadline && mouse.x > 0) {
       // 偶尔在鼠标周围生成新闪光
       if (Math.random() < 0.3) {
         sparkles.push(createSparkle());
@@ -168,6 +177,17 @@ import Icon from './Icon.astro';
       }
     }
 
+    // 窗口过了且花瓣/闪光都落完了 → 自动收摊，结束循环
+    if (!enabled || Date.now() >= spawnDeadline) {
+      if (petals.length === 0 && sparkles.length === 0) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        enabled = false;
+        toggleBtn.classList.remove('active');
+        animId = 0;
+        return;
+      }
+    }
+
     animId = requestAnimationFrame(tick);
   }
 
@@ -175,6 +195,7 @@ import Icon from './Icon.astro';
     resize();
     petals = Array.from({ length: 35 }, createPetal);
     sparkles = [];
+    spawnDeadline = Date.now() + BURST_MS;
     tick();
   }
 
@@ -183,6 +204,7 @@ import Icon from './Icon.astro';
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     petals = [];
     sparkles = [];
+    spawnDeadline = 0;
   }
 
   function setEnabled(on) {

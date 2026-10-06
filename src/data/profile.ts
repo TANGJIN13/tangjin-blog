@@ -36,17 +36,19 @@ export const profile = {
     '如果你也在学安全，或者对某篇文章有不同看法，欢迎在下面留言——我都会看。',
   ],
 
-  /** 已经能上手用的 */
-  skills: [
+  /**
+   * 技能卡片 —— 全部按「正在学」展示（虚线卡片）。
+   * 想分「能上手 / 正在学」两组的话，把部分条目移回下面的 skills 即可。
+   */
+  skills: [] as Skill[],
+
+  /** 正在啃的 */
+  learning: [
     { name: 'Web 安全', icon: 'lock', note: 'SQL 注入 / XSS / 文件上传' },
     { name: 'CTF', icon: 'flag', note: 'Web 方向，边打边学' },
     { name: 'Python', icon: 'code', note: '写脚本、跑 PoC' },
     { name: 'Linux', icon: 'terminal', note: '日常环境' },
-  ] as Skill[],
-
-  /** 正在啃的 */
-  learning: [
-    { name: 'Docker', icon: 'terminal', note: '搭靶场用' },
+    { name: 'Docker', icon: 'monitor', note: '搭靶场用' },
     { name: 'JavaScript', icon: 'code', note: '前端审计' },
     { name: '内网渗透', icon: 'lock', note: '还在入门' },
     { name: 'Astro', icon: 'sparkle', note: '就是这个站' },

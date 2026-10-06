@@ -71,17 +71,21 @@ const stats = [
           ))}
         </div>
 
-        <!-- 技能 -->
-        <h2><Icon name="code" size="1.3rem" /> 能上手</h2>
-        <div class="skill-grid">
-          {profile.skills.map((s) => (
-            <div class="skill-card" title={s.note || ''}>
-              <span class="skill-icon"><Icon name={s.icon} size="1.15rem" /></span>
-              <span class="skill-name">{s.name}</span>
-              {s.note && <span class="skill-note">{s.note}</span>}
+        <!-- 技能（skills 为空时整块隐藏，只显示"正在学"） -->
+        {profile.skills.length > 0 && (
+          <>
+            <h2><Icon name="code" size="1.3rem" /> 能上手</h2>
+            <div class="skill-grid">
+              {profile.skills.map((s) => (
+                <div class="skill-card" title={s.note || ''}>
+                  <span class="skill-icon"><Icon name={s.icon} size="1.15rem" /></span>
+                  <span class="skill-name">{s.name}</span>
+                  {s.note && <span class="skill-note">{s.note}</span>}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        )}
 
         <h2><Icon name="sparkle" size="1.3rem" /> 正在学</h2>
         <div class="skill-grid">
