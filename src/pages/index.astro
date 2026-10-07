@@ -9,7 +9,7 @@ import HolidayWidget from '../components/HolidayWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import SiteStats from '../components/SiteStats.astro';
 import Icon from '../components/Icon.astro';
-import { getPublishedPosts, getTags, formatDate, formatDateTime, readingTime, pinToTop } from '../lib/posts';
+import { getPublishedPosts, getTags, pinToTop } from '../lib/posts';
 import { categories } from '../data/categories';
 import { site } from '../site';
 
@@ -17,17 +17,14 @@ const posts = await getPublishedPosts();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
 const tags = await getTags();
 
-// 最新一篇做「头条大卡」，其余走常规卡片；置顶文章浮到列表最前
-const [lead, ...rest] = posts;
-const restOrdered = pinToTop(rest);
+// 首页文章统一卡片网格；置顶文章浮到最前
+const ordered = pinToTop(posts);
 
 const catCounts = categories.map((c) => ({
   ...c,
   count: posts.filter((p) => p.data.category === c.slug).length,
 }));
 
-const leadCat = lead ? categories.find((c) => c.slug === lead.data.category) : null;
-const leadMinutes = lead ? readingTime(lead.body) : 0;
 ---
 
 <Base banner>
@@ -82,62 +79,15 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
           </div>
         </section>
 
-        <!-- 头条大卡 -->
-        {lead && (
+        <!-- 文章网格（统一卡片样式） -->
+        {ordered.length > 0 && (
           <section class="block">
             <div class="section-head">
-              <h2 class="section-title"><Icon name="sparkle" size="1.1rem" /> 最新一篇</h2>
-              <span class="post-count">刚刚更新</span>
-            </div>
-            <a class="lead-card onload-animation" href={`/posts/${lead.id}/`}>
-              <div class="lead-cover">
-                {lead.data.cover ? (
-                  <img src={lead.data.cover} alt="" loading="eager" />
-                ) : (
-                  <div class="lead-cover-ph">
-                    <span class="lead-ph-grid" aria-hidden="true"></span>
-                    <span class="lead-ph-icon">
-                      <Icon name={leadCat?.icon || 'article'} size="1.15rem" />
-                    </span>
-                  </div>
-                )}
-                <span class="lead-flag"><Icon name="sparkle" size="0.72rem" />最新</span>
-              </div>
-              <div class="lead-body">
-                <div class="lead-meta">
-                  {lead.data.pinned && (
-                    <span class="lead-pin" title="置顶"><Icon name="flag" size="0.72rem" />置顶</span>
-                  )}
-                  {leadCat && (
-                    <span class="lead-cat">
-                      <Icon name={leadCat.icon || 'folder'} size="0.78rem" />{leadCat.name}
-                    </span>
-                  )}
-                  <span class="lead-time"><Icon name="calendar" size="0.78rem" />发表于 {formatDateTime(lead.data.published)}</span>
-                  <span class="lead-time"><Icon name="clock" size="0.78rem" />约 {leadMinutes} 分钟</span>
-                </div>
-                <h3 class="lead-title">{lead.data.title}</h3>
-                <p class="lead-desc">{lead.data.description}</p>
-                <span class="lead-cta">
-                  开始阅读
-                  <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true">
-                    <path d="M13.2 5l-1.4 1.4 5.6 5.6-5.6 5.6 1.4 1.4 7-7z" /><path d="M4 11h9v2H4z" />
-                  </svg>
-                </span>
-              </div>
-            </a>
-          </section>
-        )}
-
-        <!-- 其余文章 -->
-        {rest.length > 0 && (
-          <section class="block">
-            <div class="section-head">
-              <h2 class="section-title"><Icon name="book" size="1.1rem" /> 往期文章</h2>
+              <h2 class="section-title"><Icon name="book" size="1.1rem" /> 最新文章</h2>
               <a class="section-more" href="/archive/">全部归档 →</a>
             </div>
             <div class="post-list">
-              {restOrdered.map((p, i) => (
+              {ordered.map((p, i) => (
                 <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
               ))}
             </div>
@@ -439,159 +389,6 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
   }
   .entry-card:hover .entry-count { color: var(--primary); }
 
-  /* ===== 头条卡：紧凑横排（小缩略图 + 文字），不做大面积封面 ===== */
-  .lead-card {
-    display: flex;
-    align-items: stretch;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    text-decoration: none !important;
-    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 8px 24px oklch(0% 0 0 / 0.06);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease;
-  }
-  [data-theme='dark'] .lead-card { box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 8px 24px oklch(0% 0 0 / 0.35); }
-  .lead-card:hover {
-    transform: translateY(-5px);
-    border-color: oklch(70% 0.14 250 / 0.55);
-    box-shadow: 0 3px 8px oklch(0% 0 0 / 0.06), 0 22px 46px oklch(62% 0.13 250 / 0.2);
-  }
-  [data-theme='dark'] .lead-card:hover { box-shadow: 0 3px 8px oklch(0% 0 0 / 0.3), 0 22px 46px oklch(0% 0 0 / 0.5); }
-
-  .lead-cover {
-    position: relative;
-    width: 148px;
-    flex-shrink: 0;
-    overflow: hidden;
-    background: var(--surface-2);
-  }
-  .lead-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-  .lead-card:hover .lead-cover img { transform: scale(1.06); }
-  /* 占位封面：跟随主题的低饱和柔光 + 细网格 + 居中图标，不再用大色块 */
-  .lead-cover-ph {
-    position: relative;
-    width: 100%; height: 100%;
-    display: grid; place-items: center;
-    overflow: hidden;
-    background:
-      radial-gradient(ellipse 90% 130% at 85% 0%, oklch(62% 0.14 250 / 0.14), transparent 55%),
-      radial-gradient(ellipse 80% 120% at 10% 100%, oklch(55% 0.17 265 / 0.10), transparent 55%),
-      var(--surface-2);
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .lead-card:hover .lead-cover-ph { transform: scale(1.04); }
-  .lead-ph-grid {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(oklch(55% 0.14 250 / 0.09) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(55% 0.14 250 / 0.09) 1px, transparent 1px);
-    background-size: 34px 34px;
-    mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, #000 25%, transparent 72%);
-    -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, #000 25%, transparent 72%);
-  }
-  .lead-ph-icon {
-    display: grid;
-    place-items: center;
-    width: 46px; height: 46px;
-    border-radius: 13px;
-    color: var(--primary-strong);
-    background: var(--surface);
-    border: 1px solid oklch(70% 0.14 250 / 0.35);
-    box-shadow: 0 4px 14px oklch(62% 0.14 250 / 0.14);
-    transform: rotate(-4deg);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  [data-theme='dark'] .lead-ph-icon { color: var(--primary-light); }
-  .lead-card:hover .lead-ph-icon { transform: rotate(0deg) scale(1.06); }
-
-  .lead-flag {
-    position: absolute;
-    top: 0.75rem; left: 0.75rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.22rem;
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--text-on-primary);
-    background: var(--gradient-primary);
-    box-shadow: 0 3px 12px oklch(0% 0 0 / 0.28);
-  }
-
-  .lead-body { flex: 1; min-width: 0; padding: 0.85rem 1.1rem 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; }
-  .lead-meta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-  .lead-cat {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.22rem;
-    padding: 0.14rem 0.55rem;
-    border-radius: 999px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--primary-strong);
-    background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 250 / 0.28);
-  }
-  [data-theme='dark'] .lead-cat { color: var(--primary-light); }
-  .lead-pin {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    padding: 0.12rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--text-on-primary);
-    background: var(--gradient-primary);
-    box-shadow: 0 2px 8px oklch(62% 0.14 250 / 0.22);
-  }
-  .lead-time {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.22rem;
-    font-size: 0.72rem;
-    color: var(--text-faint);
-    font-variant-numeric: tabular-nums;
-  }
-  .lead-time :global(.icon) { opacity: 0.6; }
-
-  .lead-title {
-    margin: 0;
-    font-size: 1.08rem;
-    font-weight: 800;
-    line-height: 1.35;
-    letter-spacing: -0.01em;
-    color: var(--text);
-    transition: color 0.2s ease;
-  }
-  .lead-card:hover .lead-title { color: var(--primary) !important; }
-
-  .lead-desc {
-    margin: 0;
-    color: var(--text-soft);
-    font-size: 0.88rem;
-    line-height: 1.7;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .lead-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.2rem;
-    margin-top: 0.15rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--primary);
-    transition: gap 0.22s ease;
-  }
-  .lead-card:hover .lead-cta { gap: 0.45rem; }
-
   /* ===== 标签云 ===== */
   .tag-card { padding: 1rem; }
   .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -632,9 +429,6 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
   @media (max-width: 767px) {
     .ref-sidebar-left, .ref-sidebar-right { flex-direction: row; flex-wrap: wrap; }
     .ref-sidebar-left > *, .ref-sidebar-right > * { flex: 1; min-width: 200px; }
-    .lead-cover { width: 96px; }
-    .lead-desc { display: none; }
-    .lead-title { font-size: 0.98rem; }
     .entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .entry-desc { display: none; }
   }
