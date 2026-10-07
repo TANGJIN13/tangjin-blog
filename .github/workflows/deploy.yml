@@ -39,7 +39,17 @@ jobs:
           cache: pnpm
 
       - name: 安装依赖
-        run: pnpm install --frozen-lockfile
+        run: |
+          set +e
+          pnpm install --frozen-lockfile > /tmp/install.log 2>&1
+          CODE=$?
+          if [ "$CODE" -ne 0 ]; then
+            { echo "== install log (tail 3000) =="; tail -c 3000 /tmp/install.log; } > /tmp/idiag.log 2>&1
+            MSG=$(sed -e "s/%/%25/g" -e "s/\r//g" /tmp/idiag.log | awk '{printf "%s%%0A", $0}')
+            echo "::error title=INSTALL_FAILED::${MSG}"
+            exit "$CODE"
+          fi
+          tail -c 800 /tmp/install.log
 
       - name: 构建站点
         run: |
