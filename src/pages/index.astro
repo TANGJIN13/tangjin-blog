@@ -9,7 +9,7 @@ import HolidayWidget from '../components/HolidayWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import SiteStats from '../components/SiteStats.astro';
 import Icon from '../components/Icon.astro';
-import { getPublishedPosts, getTags, formatDate, readingTime } from '../lib/posts';
+import { getPublishedPosts, getTags, formatDate, formatDateTime, readingTime, pinToTop } from '../lib/posts';
 import { categories } from '../data/categories';
 import { site } from '../site';
 
@@ -17,8 +17,9 @@ const posts = await getPublishedPosts();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
 const tags = await getTags();
 
-// 最新一篇做「头条大卡」，其余走常规卡片
+// 最新一篇做「头条大卡」，其余走常规卡片；置顶文章浮到列表最前
 const [lead, ...rest] = posts;
+const restOrdered = pinToTop(rest);
 
 const catCounts = categories.map((c) => ({
   ...c,
@@ -102,12 +103,15 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
               </div>
               <div class="lead-body">
                 <div class="lead-meta">
+                  {lead.data.pinned && (
+                    <span class="lead-pin" title="置顶"><Icon name="flag" size="0.72rem" />置顶</span>
+                  )}
                   {leadCat && (
                     <span class="lead-cat">
                       <Icon name={leadCat.icon || 'folder'} size="0.78rem" />{leadCat.name}
                     </span>
                   )}
-                  <span class="lead-time"><Icon name="calendar" size="0.78rem" />{formatDate(lead.data.published)}</span>
+                  <span class="lead-time"><Icon name="calendar" size="0.78rem" />发表于 {formatDateTime(lead.data.published)}</span>
                   <span class="lead-time"><Icon name="clock" size="0.78rem" />约 {leadMinutes} 分钟</span>
                 </div>
                 <h3 class="lead-title">{lead.data.title}</h3>
@@ -131,7 +135,7 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
               <a class="section-more" href="/archive/">全部归档 →</a>
             </div>
             <div class="post-list">
-              {rest.map((p, i) => (
+              {restOrdered.map((p, i) => (
                 <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
               ))}
             </div>
@@ -530,6 +534,18 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
     border: 1px solid oklch(70% 0.14 250 / 0.28);
   }
   [data-theme='dark'] .lead-cat { color: var(--primary-light); }
+  .lead-pin {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    box-shadow: 0 2px 8px oklch(62% 0.14 250 / 0.22);
+  }
   .lead-time {
     display: inline-flex;
     align-items: center;

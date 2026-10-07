@@ -1,5 +1,5 @@
 ---
-import { formatDate, type Post } from '../lib/posts';
+import { formatDate, formatDateTime, readingTime, type Post } from '../lib/posts';
 import { categories } from '../data/categories';
 import Icon from './Icon.astro';
 
@@ -9,8 +9,10 @@ interface Props {
 }
 
 const { post, style } = Astro.props;
-const { title, description, published, tags, cover, category } = post.data;
+const { title, description, published, updated, tags, cover, category, pinned } = post.data;
 const coverSrc = cover ?? null;
+const minutes = readingTime(post.body);
+const showUpdated = updated && updated > published;
 
 // 分类（frontmatter 里的 category 是 slug，取不到就按第一个标签兜底）
 const catSlug = category ?? '';
@@ -34,14 +36,17 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
     <!-- 内容 -->
     <div class="post-card-content">
       <div class="card-top-row">
+        {pinned && (
+          <span class="pin-badge" title="置顶"><Icon name="flag" size="0.78rem" />置顶</span>
+        )}
         {cat && (
           <a class="cat-badge" href={`/categories/${cat.slug}/`}>
             <Icon name={cat.icon || 'folder'} size="0.8rem" />{cat.name}
           </a>
         )}
-        <span class="card-date">
-          <Icon name="calendar" size="0.85rem" />
-          <time datetime={published.toISOString()}>{formatDate(published)}</time>
+        <span class="card-date" title="发表于">
+          <Icon name="calendar" size="0.82rem" />
+          <time datetime={published.toISOString()}>发表于 {formatDateTime(published)}</time>
         </span>
       </div>
 
@@ -55,11 +60,21 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
             {tags.slice(0, 3).map((t) => <span class="tag">#{t}</span>)}
           </div>
         )}
+        <span class="read-meta">
+          <Icon name="clock" size="0.8rem" />{minutes} 分钟
+        </span>
         <span class="read-more">
           阅读全文
           <svg class="arrow" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M13.2 5l-1.4 1.4 5.6 5.6-5.6 5.6 1.4 1.4 7-7z" /><path d="M4 11h9v2H4z" /></svg>
         </span>
       </div>
+
+      {showUpdated && (
+        <div class="card-updated">
+          <Icon name="repeat" size="0.78rem" />
+          <time datetime={updated.toISOString()}>更新于 {formatDateTime(updated)}</time>
+        </div>
+      )}
     </div>
 
     <!-- 封面 -->
@@ -239,6 +254,47 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
   }
   .post-card:hover .read-more { opacity: 1; transform: translateX(0); }
   .arrow { flex-shrink: 0; }
+
+  /* 置顶徽章：主色渐变小标 */
+  .pin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.14rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    box-shadow: 0 2px 8px oklch(62% 0.14 250 / 0.22);
+    flex-shrink: 0;
+  }
+
+  /* 阅读时长：卡片底部右侧小字 */
+  .read-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+  .read-meta :global(.icon) { opacity: 0.6; }
+
+  /* 更新于：标题下方一行浅色小字 */
+  .card-updated {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    margin-top: 0.1rem;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .card-updated :global(.icon) { opacity: 0.6; color: var(--primary-strong); }
+  [data-theme='dark'] .card-updated :global(.icon) { color: var(--primary-light); }
 
   .post-card-cover {
     position: relative;

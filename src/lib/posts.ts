@@ -46,3 +46,27 @@ export function readingTime(body: string | undefined): number {
   const chars = body.replace(/\s/g, '').length;
   return Math.max(1, Math.round(chars / 400));
 }
+
+/** 把 Date 格式化成「2026年10月4日 14:30」（含时间，用于卡片上的发表于/更新于） */
+const dateTimeFmt = new Intl.DateTimeFormat('zh-CN', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+export function formatDateTime(d: Date): string {
+  return dateTimeFmt.format(d).replace(/:/g, ':');
+}
+
+/**
+ * 把置顶文章浮到列表最前，其余保持原有（日期倒序）顺序。
+ * 不改变传入数组，返回新数组。归档页不调用此函数，因此保持纯日期倒序。
+ */
+export function pinToTop(list: Post[]): Post[] {
+  const pinned = list.filter((p) => p.data.pinned);
+  const others = list.filter((p) => !p.data.pinned);
+  return [...pinned, ...others];
+}

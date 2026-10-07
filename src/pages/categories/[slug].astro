@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import { categories } from '../../data/categories';
+import { pinToTop } from '../../lib/posts';
 import { site } from '../../site';
 
 export async function getStaticPaths() {
@@ -13,7 +14,8 @@ export async function getStaticPaths() {
 }
 
 const { category } = Astro.props;
-const posts = await getCollection('posts', (p) => !p.data.draft && (p.data.category === category.slug || p.data.tags.includes(category.name)));
+const raw = await getCollection('posts', (p) => !p.data.draft && (p.data.category === category.slug || p.data.tags.includes(category.name)));
+const posts = pinToTop(raw.sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf()));
 ---
 
 <Base title={`${category.name} · 分类`}>
@@ -37,6 +39,7 @@ const posts = await getCollection('posts', (p) => !p.data.draft && (p.data.categ
                 <a class="cat-post-card glass" href={`/posts/${p.id}/`}>
                   <div class="cat-post-info">
                     <span class="cat-post-icon"><Icon name="article" size="0.9rem" /></span>
+                    {p.data.pinned && <span class="cat-pin" title="置顶"><Icon name="flag" size="0.72rem" /></span>}
                     <span class="cat-post-title">{p.data.title}</span>
                   </div>
                   <span class="cat-post-date">{p.data.published.toLocaleDateString('zh-CN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
@@ -80,6 +83,8 @@ const posts = await getCollection('posts', (p) => !p.data.draft && (p.data.categ
   .cat-post-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
   .cat-post-info { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
   .cat-post-icon { color: var(--primary); flex-shrink: 0; }
+  .cat-pin { color: var(--primary-strong); flex-shrink: 0; display: inline-grid; place-items: center; }
+  [data-theme='dark'] .cat-pin { color: var(--primary-light); }
   .cat-post-title { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cat-post-date { font-size: 0.78rem; color: var(--text-faint); flex-shrink: 0; }
 
