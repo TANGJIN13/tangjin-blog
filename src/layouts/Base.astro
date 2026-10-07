@@ -179,14 +179,14 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         {site.icp && <p><a href="https://beian.miit.gov.cn/" rel="nofollow" target="_blank">{site.icp}</a></p>}
         <p class="footer-note">由 Astro 构建 · 静态托管 · 关注安全</p>
         <p class="footer-visits" data-vc-wrap style="display:none">
-          总访问量 <span data-vc="site_pv">--</span> 次 · 访客 <span data-vc="site_uv">--</span> 人
+          总访问量 <span data-vc="site_pv">--</span> 次
         </p>
       </div>
     </footer>
 
     <script>
       // 访问量统计（Vercount 公共服务，静态站免后端）
-      // 指标：site_pv 总访问量 / site_uv 访客数 / page_pv 单页阅读量
+      // 指标：site_pv 总访问量 / page_pv 单页阅读量
       // 每次 astro:page-load（首屏 + SPA 导航）上报一次当前 URL = 一次页面浏览
       const VC_API = 'https://events.vercount.one/api/v2/log';
       const VC_UV_KEY = 'vercount_uv_tangjin_xyz';
@@ -202,7 +202,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         if (!data) return;
         const fmt = (n) => Number(n || 0).toLocaleString('zh-CN');
         document.querySelectorAll('[data-vc="site_pv"]').forEach((el) => { el.textContent = fmt(data.site_pv); });
-        document.querySelectorAll('[data-vc="site_uv"]').forEach((el) => { el.textContent = fmt(data.site_uv); });
         document.querySelectorAll('[data-vc="page_pv"]').forEach((el) => { el.textContent = fmt(data.page_pv); });
         document.querySelectorAll('[data-vc-wrap]').forEach((el) => { el.style.display = ''; });
       }
