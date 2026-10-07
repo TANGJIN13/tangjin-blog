@@ -68,11 +68,31 @@ function convertEmbeds(text, mdDir) {
 export const obsidianCompatPlugin = {
   name: 'obsidian-compat',
 
-  /**
-   * 段落级处理：
-   * - 独立成段的 ![[图片]] → 重新解析成图片节点
-   * - 引用块里的 [!TYPE] 标注头 → **TYPE:**
-   */
+  /** 引用块级处理：> [!TYPE] 文字 → > **TYPE:** 文字（Obsidian 标注块） */
+  blockquote(node, ctx) {
+    const children = Array.isArray(node.children) ? node.children : [];
+    // 只处理「单段落、纯文本/图片」的简单标注块，复杂的保持原样
+    if (children.length !== 1 || children[0]?.type !== 'paragraph') return;
+    const kids = Array.isArray(children[0].children) ? children[0].children : [];
+    if (kids.length === 0 || !kids.every((c) => c?.type === 'text' || c?.type === 'image')) return;
+
+    const text = kids.map((c) => c.value ?? '').join('');
+    const m = text.match(/^\[!(\w+)\][+-]?\s*/);
+    if (!m) return;
+
+    let mdDir = '';
+    try {
+      if (ctx?.fileURL) mdDir = path.dirname(fileURLToPath(ctx.fileURL));
+    } catch {
+      mdDir = '';
+    }
+
+    const type = m[1].toUpperCase();
+    const rest = convertEmbeds(text.slice(m[0].length), mdDir);
+    return { raw: `> **${type}:** ${rest}` };
+  },
+
+  /** 段落级处理：独立成段的 ![[图片]] → 重新解析成图片节点 */
   paragraph(node, ctx) {
     // 只处理「干净」的段落（纯文本/图片，避免破坏加粗、链接、行内代码等格式）
     const children = Array.isArray(node.children) ? node.children : [];
@@ -80,7 +100,7 @@ export const obsidianCompatPlugin = {
     if (!simple || children.length === 0) return;
 
     const text = children.map((c) => c.value ?? '').join('');
-    if (typeof text !== 'string' || !text) return;
+    if (typeof text !== 'string' || !text.includes('![[')) return;
 
     // 文章路径 → 所在目录（用于「同目录图片」的相对路径分支）
     let mdDir = '';
@@ -90,19 +110,8 @@ export const obsidianCompatPlugin = {
       mdDir = '';
     }
 
-    // ① Obsidian 图片嵌入
-    if (text.includes('![[')) {
-      const converted = convertEmbeds(text, mdDir);
-      if (converted !== text) return { raw: converted };
-    }
-
-    // ② 标注块：> [!TYPE] 文字（在 blockquote 里的段落）
-    const m = text.match(/^\[!(\w+)\][+-]?\s*/);
-    if (m && ctx?.parent?.type === 'blockquote') {
-      const type = m[1].toUpperCase();
-      const rest = text.slice(m[0].length);
-      return { raw: `**${type}:** ${rest}` };
-    }
+    const converted = convertEmbeds(text, mdDir);
+    if (converted !== text) return { raw: converted };
 
     return;
   },
