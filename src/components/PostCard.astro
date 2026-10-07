@@ -10,7 +10,6 @@ interface Props {
 
 const { post, style } = Astro.props;
 const { title, description, published, updated, tags, cover, category, pinned } = post.data;
-const coverSrc = cover ?? null;
 const minutes = readingTime(post.body);
 const showUpdated = updated && updated > published;
 
@@ -22,31 +21,23 @@ const cat = categories.find((c) => c.slug === catSlug) ?? categories.find((c) =>
 const shownTags = tags.slice(0, 4);
 const moreTagCount = tags.length - shownTags.length;
 
-// 占位封面：按文章 id 稳定选一组双色调（半透明色叠加在 surface-2 上，亮/暗主题都自适应）
-const tints = [
-  ['oklch(70% 0.15 250 / 0.34)', 'oklch(62% 0.17 265 / 0.22)'],
-  ['oklch(72% 0.13 200 / 0.34)', 'oklch(64% 0.15 230 / 0.22)'],
-  ['oklch(74% 0.13 300 / 0.32)', 'oklch(66% 0.16 330 / 0.22)'],
-  ['oklch(74% 0.13 160 / 0.32)', 'oklch(66% 0.15 190 / 0.22)'],
-  ['oklch(76% 0.14 80 / 0.32)', 'oklch(68% 0.15 110 / 0.22)'],
-  ['oklch(74% 0.14 20 / 0.32)', 'oklch(66% 0.16 50 / 0.22)'],
+// 没写 cover 的文章：按 id 稳定挑一张风景照兜底（同一篇文章永远同一张）
+const fallbackCovers = [
+  '/images/covers/cover-01.jpg',
+  '/images/covers/cover-02.jpg',
+  '/images/covers/cover-03.jpg',
+  '/images/covers/cover-04.jpg',
+  '/images/covers/cover-05.jpg',
+  '/images/covers/cover-06.jpg',
 ];
 const hash = post.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-const [tintA, tintB] = tints[hash % tints.length];
-const phStyle = `--ph-a: ${tintA}; --ph-b: ${tintB}`;
+const coverSrc = cover ?? fallbackCovers[hash % fallbackCovers.length];
 ---
 
 <article class="post-card onload-animation" {style}>
-  <!-- 封面：置顶，16:9（无封面时用跟随主题的低饱和占位色 + 分类图标） -->
+  <!-- 封面：置顶，16:9（文章自带 cover 优先，没有就用风景照兜底） -->
   <a class="post-card-cover" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
-    {coverSrc ? (
-      <img src={coverSrc} alt="" loading="lazy" />
-    ) : (
-      <div class="cover-placeholder" style={phStyle}>
-        <span class="cover-ph-mark"><Icon name={cat?.icon || 'article'} size="6.5rem" /></span>
-        <span class="cover-ph-icon"><Icon name={cat?.icon || 'article'} size="1.5rem" /></span>
-      </div>
-    )}
+    <img src={coverSrc} alt="" loading="lazy" />
     <span class="cover-shine" aria-hidden="true"></span>
     {pinned && (
       <span class="cover-flag"><Icon name="flag" size="0.68rem" />置顶</span>
@@ -128,74 +119,6 @@ const phStyle = `--ph-a: ${tintA}; --ph-b: ${tintB}`;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .post-card:hover .post-card-cover img { transform: scale(1.06); }
-
-  .cover-placeholder {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    background:
-      radial-gradient(ellipse 95% 130% at 88% -12%, var(--ph-a), transparent 62%),
-      radial-gradient(ellipse 90% 125% at 4% 110%, var(--ph-b), transparent 62%),
-      var(--surface-2);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .post-card:hover .cover-placeholder { transform: scale(1.06); }
-
-  /* 网格纹理：中心清晰、四周径向淡出，填补大片空白 */
-  .cover-placeholder::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(oklch(45% 0.14 250 / 0.10) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(45% 0.14 250 / 0.10) 1px, transparent 1px);
-    background-size: 30px 30px;
-    mask-image: radial-gradient(ellipse 78% 80% at 50% 45%, #000 18%, transparent 74%);
-    -webkit-mask-image: radial-gradient(ellipse 78% 80% at 50% 45%, #000 18%, transparent 74%);
-  }
-  [data-theme='dark'] .cover-placeholder::before {
-    background-image:
-      linear-gradient(oklch(85% 0.10 250 / 0.12) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(85% 0.10 250 / 0.12) 1px, transparent 1px);
-  }
-
-  /* 右下角超大幽灵图标（很低的存在感，但把角落填满） */
-  .cover-ph-mark {
-    position: absolute;
-    right: -16px;
-    bottom: -20px;
-    color: oklch(50% 0.12 250 / 0.10);
-    transform: rotate(-8deg);
-    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
-  }
-  .cover-ph-mark :global(.icon) { display: block; }
-  [data-theme='dark'] .cover-ph-mark { color: oklch(88% 0.10 250 / 0.10); }
-  .post-card:hover .cover-ph-mark { transform: rotate(0deg) scale(1.06); color: oklch(50% 0.12 250 / 0.16); }
-
-  /* 居中图标徽章：更大、更立体，悬停回正 */
-  .cover-ph-icon {
-    position: relative;
-    z-index: 1;
-    display: grid;
-    place-items: center;
-    width: 54px;
-    height: 54px;
-    border-radius: 15px;
-    color: var(--primary-strong);
-    background: var(--surface);
-    border: 1px solid oklch(70% 0.14 250 / 0.35);
-    box-shadow: 0 10px 26px oklch(45% 0.14 250 / 0.22), 0 2px 6px oklch(0% 0 0 / 0.06);
-    transform: rotate(-4deg);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
-  }
-  [data-theme='dark'] .cover-ph-icon { color: var(--primary-light); }
-  .post-card:hover .cover-ph-icon {
-    transform: rotate(0deg) scale(1.08);
-    box-shadow: 0 14px 32px oklch(45% 0.14 250 / 0.30), 0 2px 6px oklch(0% 0 0 / 0.08);
-  }
 
   /* 封面上的斜向光泽扫过 */
   .cover-shine {
