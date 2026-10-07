@@ -12,6 +12,9 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # 统一按北京时间（东八区）构建。
+  # GitHub Actions 的构建机默认是 UTC，不设置会让说说/文章的时间显示比实际早 8 小时。
+  TZ: Asia/Shanghai
   # 服务器地址与部署用户（非机密，直接写在这里，方便修改）
   SSH_HOST: 49.232.251.198
   SSH_USER: ubuntu

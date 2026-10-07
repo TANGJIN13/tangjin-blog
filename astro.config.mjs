@@ -4,6 +4,10 @@ import sitemap from '@astrojs/sitemap';
 import { satteri } from '@astrojs/markdown-satteri';
 import { obsidianCompatPlugin } from './remark-obsidian.mjs';
 
+// 统一按北京时间（东八区）渲染日期。
+// 构建机时区不同（GitHub Actions 默认 UTC）会让页面时间比实际早 8 小时，这里显式固定。
+process.env.TZ = 'Asia/Shanghai';
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://tangjin.xyz',
