@@ -31,10 +31,6 @@ const fallbackCovers = [
   '/images/covers/cover-06.jpg',
   '/images/covers/cover-07.jpg',
   '/images/covers/cover-08.jpg',
-  '/images/covers/cover-09.jpg',
-  '/images/covers/cover-10.jpg',
-  '/images/covers/cover-11.jpg',
-  '/images/covers/cover-12.jpg',
 ];
 const hash = post.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
 const coverSrc = cover ?? fallbackCovers[hash % fallbackCovers.length];
