@@ -32,8 +32,9 @@ export const profile = {
    */
   intro: [
     '你好，我是 <strong>tj</strong>。桂林电子科技大学 25 级网络安全专业，目前主要往 <strong>Web 安全</strong>方向摸索。',
-    '这个站是我自己用 Astro 搭的，主要放两类东西：一是 CTF 打完之后的<strong>复现和复盘</strong>，二是学习路上踩过的坑。写得比较随意，但每一篇都是自己真跑过的。',
+    '这个站是我自己用 Astro 搭的，主要放两类东西：一是 CTF 打完之后的<strong>复现和复盘</strong>，二是学习路上踩过的坑。',
     '如果你也在学安全，或者对某篇文章有不同看法，欢迎在下面留言——我都会看。',
+    '如果你想联系我，可以通过 <strong>2020556277@qq.com</strong> 或 <strong>GitHub</strong> 找到我。',
   ],
 
   /**
@@ -70,7 +71,7 @@ export const profile = {
     },
     {
       date: '2025',
-      title: '入学 · 选了网安',
+      title: '网安专业入学 · 虽然专业不是自己预期的但最后也是挺感兴趣的。',
       desc: '进入桂林电子科技大学网络安全专业。',
       icon: 'book',
     },
