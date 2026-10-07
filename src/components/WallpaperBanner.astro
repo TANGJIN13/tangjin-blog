@@ -329,7 +329,15 @@ const slides = single ? images.slice(0, 1) : images;
   }
 
   @media (max-width: 767px) {
-    .wp-avatar { width: 72px; height: 72px; }
+    .wp-avatar { width: 64px; height: 64px; }
     .header-waves { height: 90px; }
+    /* 手机端横幅变矮，鼠标滚动引导会和文字重叠 —— 直接隐藏 */
+    .wp-scroll { display: none; }
+    /* 缓解拥挤：收紧间距、允许按钮换行 */
+    .wp-inner { gap: 0.4rem; }
+    .wp-links { flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 0.3rem; }
+    .wp-link { padding: 0.38rem 0.85rem; font-size: 0.8rem; }
+    .wp-desc { font-size: 0.82rem; padding-inline: 0.5rem; }
+    .wp-motto-sub { font-size: 0.75rem; }
   }
 </style>
