@@ -326,18 +326,10 @@ body.immersive-reading .post-layout {
 
 /* ============ 手机响应式 ============ */
 @media (max-width: 768px) {
-  /* 手机端保留侧栏模块（个人卡/搜索/日历/统计），上下堆叠展示 */
+  /* 手机端隐藏侧栏模块（个人卡/搜索/日历/统计），只保留文章主内容，回到原来的体验 */
   .ref-sidebar-left,
   .ref-sidebar-right {
-    display: flex !important;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .ref-sidebar-left > *,
-  .ref-sidebar-right > * {
-    flex: 1 1 100%;
-    min-width: 0;
+    display: none !important;
   }
   .ref-layout {
     grid-template-columns: 1fr !important;
