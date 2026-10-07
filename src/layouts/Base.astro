@@ -161,6 +161,13 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         <Icon name="music" size="1.05rem" />
         <span class="mini-eq" aria-hidden="true"><i></i><i></i><i></i></span>
       </button>
+
+      <!-- 首次进入提示：告诉访客左下角可以听歌（点一下展开播放器） -->
+      <div class="music-hint" id="music-hint" hidden>
+        <span class="mh-emoji" aria-hidden="true">🎵</span>
+        <span class="mh-text">左下角可以听歌</span>
+        <button class="mh-close" id="mh-close" type="button" aria-label="不再提示">×</button>
+      </div>
     </div>
 
     </main>
@@ -390,6 +397,41 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
       initPage();
       // 客户端路由每次换页完成后重新初始化（首次加载也会触发一次，幂等无副作用）
       document.addEventListener('astro:page-load', initPage);
+
+      // ---- 首次进入提示：左下角可以听歌 ----
+      // 每个浏览会话只提示一次（sessionStorage）：点气泡 = 展开播放器，点 × 或 7 秒后自动消失
+      (function musicHint() {
+        const HINT_KEY = 'music-hint-seen';
+        const hint = document.getElementById('music-hint');
+        const mfWrap = document.getElementById('music-float');
+        if (!hint || !mfWrap) return;
+        let seen = false;
+        try { seen = sessionStorage.getItem(HINT_KEY) === '1'; } catch (e) {}
+        if (seen) return;
+
+        let timer = 0;
+        function dismiss() {
+          clearTimeout(timer);
+          mfWrap.classList.remove('hinting');
+          hint.classList.add('hide');
+          setTimeout(() => { hint.hidden = true; }, 300);
+          try { sessionStorage.setItem(HINT_KEY, '1'); } catch (e) {}
+        }
+        function show() {
+          hint.hidden = false;
+          mfWrap.classList.add('hinting');
+          timer = setTimeout(dismiss, 7000);
+          const closeBtn = document.getElementById('mh-close');
+          if (closeBtn) closeBtn.onclick = (e) => { e.stopPropagation(); dismiss(); };
+          hint.onclick = (e) => {
+            if (e.target === closeBtn) return;
+            mfWrap.classList.add('expanded');
+            try { localStorage.setItem('music-float-expanded', '1'); } catch (e) {}
+            dismiss();
+          };
+        }
+        setTimeout(show, 1200);
+      })();
     </script>
 
     <!-- 百度「自动推送」：页面被访问时自动把该 URL 提交给百度（官方代码，无需 token） -->
@@ -664,6 +706,70 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   @keyframes mini-eq { 0%, 100% { height: 5px; } 50% { height: 15px; } }
   .music-float.playing:not(.expanded) .music-float-mini .icon { display: none; }
   .music-float.playing:not(.expanded) .music-float-mini .mini-eq { display: inline-flex; }
+
+  /* ===== 首次进入的「可以听歌」提示气泡（浮在播放器上方，小三角指向左下角） ===== */
+  .music-hint {
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 0.65rem);
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.45rem 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    box-shadow: 0 10px 30px oklch(0% 0 0 / 0.18);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    animation: hint-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both, hint-bob 2.2s ease-in-out 1s infinite;
+  }
+  .music-hint[hidden] { display: none; }
+  /* 指向下方播放器的小三角 */
+  .music-hint::after {
+    content: '';
+    position: absolute;
+    left: 1.15rem;
+    top: 100%;
+    border: 6px solid transparent;
+    border-top-color: var(--surface);
+  }
+  .music-hint::before {
+    content: '';
+    position: absolute;
+    left: 1.1rem;
+    top: calc(100% + 1px);
+    border: 7px solid transparent;
+    border-top-color: var(--border);
+    z-index: -1;
+  }
+  .mh-emoji { font-size: 0.95rem; line-height: 1; }
+  .mh-text { letter-spacing: 0.01em; }
+  .mh-close {
+    width: 22px; height: 22px;
+    border: none; border-radius: 50%;
+    background: var(--surface-2);
+    color: var(--text-faint);
+    font-size: 0.95rem; line-height: 1;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: all 0.16s ease;
+  }
+  .mh-close:hover { background: var(--primary-soft); color: var(--primary-strong); }
+
+  .music-hint.hide { animation: hint-out 0.28s ease both; }
+  @keyframes hint-pop { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+  @keyframes hint-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+  @keyframes hint-out { to { opacity: 0; transform: translateY(6px) scale(0.98); } }
+
+  /* 提示期间给播放器本体一圈主色光晕，视线更容易被引导过去 */
+  .music-float.hinting .music-float-mini,
+  .music-float.hinting .music-float-panel {
+    box-shadow: 0 0 0 3px oklch(70% 0.14 250 / 0.35), 0 8px 28px oklch(0% 0 0 / 0.16);
+  }
 
   /* 展开态：显示面板，隐藏小按钮 */
   .music-float.expanded .music-float-panel { display: block; }
