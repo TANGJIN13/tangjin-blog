@@ -28,7 +28,7 @@
 
 新建笔记时会依次询问：
 
-1. **分类**（下拉选择，Esc 默认「随笔」）：随笔 / 文章 / 年度总结 / 工具使用
+1. **分类**（下拉选择，Esc 默认「文章」）：文章 / 年度总结 / 工具使用
 2. **标题**
 3. **一句话简介**（可留空，但建议填，会显示在文章卡片上）
 4. **标签**（逗号分隔，可留空）
@@ -115,7 +115,7 @@ cd tangjin-blog
 | Git 插件显示「not a git repository」 | `basePath` 没填对，设为 `tangjin-blog` 后重启 |
 | 保存了但 GitHub 上没提交 | 看 Obsidian 左下角 Git 状态；手动执行「Git: Commit-and-push」命令试试；确认 `git` 在系统 PATH 里 |
 | 推送了但博客没更新 | 去 GitHub 仓库 → Actions 看流水线是否变绿（一般是构建报错） |
-| 分类徽章没显示 | 检查 frontmatter 里 `category` 是不是这四个之一：`essay` / `article` / `summary` / `tools` |
+| 分类徽章没显示 | 检查 frontmatter 里 `category` 是不是这三个之一：`article` / `summary` / `tools` |
 | 保存了但 GitHub 一直没动静 | 检查 `TANGJIN/.obsidian/community-plugins.json` 里有没有 `"obsidian-git"`——不在列表里就是插件没启用 |
 
 ---
