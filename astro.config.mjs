@@ -1,7 +1,8 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
-import { remarkObsidian } from './remark-obsidian.mjs';
+import { satteri } from '@astrojs/markdown-satteri';
+import { obsidianCompatPlugin } from './remark-obsidian.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -9,8 +10,11 @@ export default defineConfig({
   output: 'static',
   compressHTML: true,
   markdown: {
-    // Obsidian 语法兼容：![[图片]] 嵌入自动转成博客可渲染的图片；> [!标注] 转成引用块
-    remarkPlugins: [remarkObsidian()],
+    // Astro 7 默认的 Sätteri 处理器 + Obsidian 语法兼容插件：
+    // ![[图片]] 自动转成博客可渲染的图片；> [!标注] 转成引用块
+    processor: satteri({
+      mdastPlugins: [obsidianCompatPlugin],
+    }),
     shikiConfig: {
       theme: 'catppuccin-latte',
       wrap: true,
