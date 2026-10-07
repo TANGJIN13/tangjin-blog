@@ -26,21 +26,6 @@ const catCounts = categories.map((c) => ({
 }));
 
 const leadCat = lead ? categories.find((c) => c.slug === lead.data.category) : null;
-
-// 没配封面时给一张渐变底，避免大块空白
-const gradients = [
-  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-];
-const gradOf = (id) => {
-  const h = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  return gradients[h % gradients.length];
-};
-const leadGrad = lead ? gradOf(lead.id) : gradients[0];
 const leadMinutes = lead ? readingTime(lead.body) : 0;
 ---
 
@@ -106,18 +91,14 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
                 {lead.data.cover ? (
                   <img src={lead.data.cover} alt="" loading="eager" />
                 ) : (
-                  <div class="lead-cover-ph" style={`background: ${leadGrad}`}>
+                  <div class="lead-cover-ph">
                     <span class="lead-ph-grid" aria-hidden="true"></span>
-                    <span class="lead-ph-blob b1" aria-hidden="true"></span>
-                    <span class="lead-ph-blob b2" aria-hidden="true"></span>
                     <span class="lead-ph-icon">
-                      <Icon name={leadCat?.icon || 'article'} size="2.6rem" />
+                      <Icon name={leadCat?.icon || 'article'} size="2rem" />
                     </span>
-                    <span class="lead-ph-title">{lead.data.title}</span>
                   </div>
                 )}
                 <span class="lead-flag"><Icon name="sparkle" size="0.72rem" />最新</span>
-                <span class="lead-shine" aria-hidden="true"></span>
               </div>
               <div class="lead-body">
                 <div class="lead-meta">
@@ -479,60 +460,43 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
   }
   .lead-cover img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
   .lead-card:hover .lead-cover img { transform: scale(1.06); }
+  /* 占位封面：跟随主题的低饱和柔光 + 细网格 + 居中图标，不再用大色块 */
   .lead-cover-ph {
     position: relative;
     width: 100%; height: 100%;
     display: grid; place-items: center;
     overflow: hidden;
+    background:
+      radial-gradient(ellipse 90% 130% at 85% 0%, oklch(62% 0.14 250 / 0.14), transparent 55%),
+      radial-gradient(ellipse 80% 120% at 10% 100%, oklch(55% 0.17 265 / 0.10), transparent 55%),
+      var(--surface-2);
     transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .lead-card:hover .lead-cover-ph { transform: scale(1.06); }
-  /* 占位封面：渐变 + 网格纹理 + 光斑 + 大图标，像杂志封面而不是空白 */
+  .lead-card:hover .lead-cover-ph { transform: scale(1.04); }
   .lead-ph-grid {
     position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(oklch(100% 0 0 / 0.09) 1px, transparent 1px),
-      linear-gradient(90deg, oklch(100% 0 0 / 0.09) 1px, transparent 1px);
+      linear-gradient(oklch(55% 0.14 250 / 0.09) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(55% 0.14 250 / 0.09) 1px, transparent 1px);
     background-size: 34px 34px;
-    mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, #000 30%, transparent 75%);
-    -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, #000 25%, transparent 72%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 40%, #000 25%, transparent 72%);
   }
-  .lead-ph-blob {
-    position: absolute;
-    border-radius: 50%;
-    background: oklch(100% 0 0 / 0.14);
-    filter: blur(2px);
-  }
-  .lead-ph-blob.b1 { width: 190px; height: 190px; right: -52px; top: -64px; }
-  .lead-ph-blob.b2 { width: 110px; height: 110px; left: 10%; bottom: -46px; background: oklch(100% 0 0 / 0.1); }
   .lead-ph-icon {
     display: grid;
     place-items: center;
-    width: 86px; height: 86px;
-    border-radius: 26px;
-    color: oklch(100% 0 0 / 0.96);
-    background: oklch(100% 0 0 / 0.16);
-    border: 1px solid oklch(100% 0 0 / 0.32);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    box-shadow: 0 10px 34px oklch(0% 0 0 / 0.22);
+    width: 72px; height: 72px;
+    border-radius: 20px;
+    color: var(--primary-strong);
+    background: var(--surface);
+    border: 1px solid oklch(70% 0.14 250 / 0.35);
+    box-shadow: 0 6px 22px oklch(62% 0.14 250 / 0.16);
     transform: rotate(-4deg);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .lead-card:hover .lead-ph-icon { transform: rotate(0deg) scale(1.08); }
-  .lead-ph-title {
-    position: absolute;
-    left: 1.2rem; right: 1.2rem; bottom: 0.9rem;
-    font-size: clamp(0.95rem, 2vw, 1.3rem);
-    font-weight: 700;
-    color: oklch(100% 0 0 / 0.82);
-    text-shadow: 0 2px 14px oklch(0% 0 0 / 0.4);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: center;
-  }
+  [data-theme='dark'] .lead-ph-icon { color: var(--primary-light); }
+  .lead-card:hover .lead-ph-icon { transform: rotate(0deg) scale(1.06); }
 
   .lead-flag {
     position: absolute;
@@ -548,16 +512,6 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
     background: var(--gradient-primary);
     box-shadow: 0 3px 12px oklch(0% 0 0 / 0.28);
   }
-  /* 封面扫光 */
-  .lead-shine {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(105deg, transparent 38%, oklch(100% 0 0 / 0.24) 50%, transparent 62%);
-    transform: translateX(-120%);
-    transition: transform 0.8s ease;
-    pointer-events: none;
-  }
-  .lead-card:hover .lead-shine { transform: translateX(120%); }
 
   .lead-body { padding: 1rem 1.15rem 1.1rem; display: flex; flex-direction: column; gap: 0.4rem; }
   .lead-meta { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }

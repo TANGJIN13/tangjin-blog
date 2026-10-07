@@ -16,17 +16,17 @@ const coverSrc = cover ?? null;
 const catSlug = category ?? '';
 const cat = categories.find((c) => c.slug === catSlug) ?? categories.find((c) => c.name === tags?.[0]);
 
-// 随机渐变封面
-const gradients = [
-  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+// 占位封面：按文章 id 稳定选一种低饱和色调（半透明色叠加在 surface-2 上，亮/暗主题都自适应）
+const tints = [
+  'oklch(62% 0.14 250 / 0.16), oklch(55% 0.17 265 / 0.10)',
+  'oklch(62% 0.13 200 / 0.16), oklch(55% 0.15 230 / 0.10)',
+  'oklch(65% 0.12 300 / 0.14), oklch(58% 0.15 330 / 0.10)',
+  'oklch(64% 0.12 160 / 0.14), oklch(58% 0.14 190 / 0.10)',
+  'oklch(66% 0.13 80 / 0.14), oklch(60% 0.14 110 / 0.10)',
+  'oklch(64% 0.13 20 / 0.14), oklch(58% 0.15 50 / 0.10)',
 ];
 const hash = post.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-const randomGradient = gradients[hash % gradients.length];
+const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[hash % tints.length]}), var(--surface-2)`;
 ---
 
 <article class="post-card onload-animation" {style}>
@@ -271,9 +271,10 @@ const randomGradient = gradients[hash % gradients.length];
     height: 100%;
     display: grid;
     place-items: center;
-    color: oklch(100% 0 0 / 0.85);
+    color: var(--primary-strong);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
+  [data-theme='dark'] .cover-placeholder { color: var(--primary-light); }
   .post-card:hover .cover-placeholder { transform: scale(1.07); }
 
   /* 封面上的斜向光泽扫过 */

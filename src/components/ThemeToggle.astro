@@ -16,42 +16,48 @@ import Icon from './Icon.astro';
 </div>
 
 <script>
+  // 侧栏主题卡 —— 与导航栏主题按钮共用同一个存储键 'theme'，避免两套状态互相打架。
+  // 注意：站点启用了 ClientRouter（客户端路由），切页会替换 DOM 元素，
+  // 而模块脚本只在首次加载执行一次，所以必须在每次 astro:page-load 时重新绑定；
+  // 用 onclick= 赋值（而非 addEventListener）保证幂等，重复初始化也不会叠加事件。
   const root = document.documentElement;
-  const toggle = document.getElementById('theme-toggle')!;
-  const buttons = toggle.querySelectorAll<HTMLButtonElement>('.theme-btn');
-  const STORAGE_KEY = 'theme-preference';
+  const KEY = 'theme';
 
-  function getSystemTheme(): 'light' | 'dark' {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
+  const getSystem = (): 'light' | 'dark' =>
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-  function applyTheme(pref: 'light' | 'dark' | 'system') {
-    const effective = pref === 'system' ? getSystemTheme() : pref;
-    root.setAttribute('data-theme', effective);
-    buttons.forEach((b) => b.classList.toggle('active', b.dataset.theme === pref));
+  function getPref(): 'light' | 'dark' | 'system' {
     try {
-      localStorage.setItem(STORAGE_KEY, pref);
-    } catch {}
-  }
-
-  function getStored(): 'light' | 'dark' | 'system' {
-    try {
-      const v = localStorage.getItem(STORAGE_KEY);
+      const v = localStorage.getItem(KEY);
       if (v === 'light' || v === 'dark' || v === 'system') return v;
     } catch {}
     return 'system';
   }
 
-  buttons.forEach((b) => {
-    b.addEventListener('click', () => applyTheme(b.dataset.theme as 'light' | 'dark' | 'system'));
-  });
+  function paint() {
+    const toggle = document.getElementById('theme-toggle');
+    if (!toggle) return;
+    const pref = getPref();
+    // 恢复当前偏好对应的实际主题（system 时跟随系统）
+    root.setAttribute('data-theme', pref === 'system' ? getSystem() : pref);
+    toggle.querySelectorAll<HTMLButtonElement>('.theme-btn').forEach((b) => {
+      // 高亮当前选中的按钮
+      b.classList.toggle('active', b.dataset.theme === pref);
+      // 绑定点击（onclick 赋值是幂等的）
+      b.onclick = () => {
+        const t = b.dataset.theme as 'light' | 'dark' | 'system';
+        root.setAttribute('data-theme', t === 'system' ? getSystem() : t);
+        try {
+          localStorage.setItem(KEY, t);
+        } catch {}
+        paint();
+      };
+    });
+  }
 
-  // 跟随系统时，系统主题变化要实时响应
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    if (getStored() === 'system') applyTheme('system');
-  });
-
-  applyTheme(getStored());
+  paint();
+  // 客户端路由每次换页完成后重新初始化（首次加载也会触发一次，幂等无副作用）
+  document.addEventListener('astro:page-load', paint);
 </script>
 
 <style>

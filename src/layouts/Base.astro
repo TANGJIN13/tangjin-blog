@@ -213,83 +213,40 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     </script>
 
     <script>
-      // 阅读进度
-      const bar = document.getElementById('reading-progress');
-      if (bar) {
-        window.addEventListener('scroll', () => {
-          const h = document.documentElement;
-          const st = h.scrollTop || document.body.scrollTop;
-          const sh = h.scrollHeight - h.clientHeight;
-          bar.style.width = (sh > 0 ? (st / sh) * 100 : 0) + '%';
-        }, { passive: true });
-      }
+      // ============ 全局交互脚本（兼容 ClientRouter 客户端路由） ============
+      // 模块脚本只执行一次；客户端路由切页会替换 DOM 元素，旧的事件绑定随元素一起消失。
+      // 因此所有「绑定到元素」的初始化都放进 initPage()，在每次 astro:page-load 重新执行；
+      // 统一用 onclick= 赋值（而非 addEventListener）保证幂等，重复初始化不会叠加事件。
 
-      // 导航栏滚动变玻璃
-      const topRow = document.getElementById('top-row');
-      const onScroll = () => {
-        topRow?.classList.toggle('scrolled', window.scrollY > 40);
-        const show = window.scrollY > 300;
-        document.querySelectorAll('.floating-btn').forEach(b => b.classList.toggle('visible', show));
-      };
-      window.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-
-      // 回到顶部
-      document.getElementById('btn-top')?.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      });
-
-      // 沉浸阅读
-      const readingBtn = document.getElementById('btn-reading');
-      if (readingBtn) {
-        readingBtn.addEventListener('click', () => {
-          document.body.classList.toggle('immersive-reading');
-          readingBtn.classList.toggle('active');
-          try {
-            localStorage.setItem('immersive-reading',
-              document.body.classList.contains('immersive-reading') ? '1' : '0');
-          } catch {}
-        });
-        if (localStorage.getItem('immersive-reading') === '1') {
-          document.body.classList.add('immersive-reading');
-          readingBtn.classList.add('active');
-        }
-      }
-
-      // 壁纸切换
-      const wpBtn = document.getElementById('btn-wallpaper');
-      wpBtn?.addEventListener('click', () => {
-        const slides = document.querySelectorAll('.wp-slide');
-        if (!slides.length) return;
-        const active = [...slides].findIndex(s => s.classList.contains('active'));
-        slides[active].classList.remove('active');
-        slides[(active + 1) % slides.length].classList.add('active');
-      });
-
-      // 主题切换
       const root = document.documentElement;
-      const themeBtn = document.getElementById('nav-theme');
-      const apply = (t) => {
-        const eff = t === 'system'
-          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-          : t;
-        root.setAttribute('data-theme', eff);
-        try { localStorage.setItem('theme', t); } catch {}
+      const THEME_KEY = 'theme'; // 与侧栏主题卡共用同一个键
+
+      const getSavedTheme = () => {
+        try { return localStorage.getItem(THEME_KEY) || 'system'; } catch { return 'system'; }
       };
-      // 首屏恢复
-      (() => {
-        const saved = localStorage.getItem('theme') || 'system';
-        apply(saved);
-      })();
-      themeBtn?.addEventListener('click', () => {
-        const order = ['light', 'dark', 'system'];
-        const cur = localStorage.getItem('theme') || 'system';
-        const next = order[(order.indexOf(cur) + 1) % order.length];
-        apply(next);
-        showToast({ light: '☀ 浅色模式', dark: '🌙 深色模式', system: '🖥 跟随系统' }[next]);
+      const systemTheme = () =>
+        window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+
+      function applyTheme(t) {
+        root.setAttribute('data-theme', t === 'system' ? systemTheme() : t);
+        try { localStorage.setItem(THEME_KEY, t); } catch {}
+      }
+
+      // 首屏恢复主题
+      applyTheme(getSavedTheme());
+
+      // 客户端路由换页后 <html> 属性会被新文档覆盖，立即恢复主题，避免闪回亮色
+      document.addEventListener('astro:after-swap', () => {
+        const t = getSavedTheme();
+        root.setAttribute('data-theme', t === 'system' ? systemTheme() : t);
       });
 
-      // 轻提示：给"点了看不出变化"的按钮一个可见反馈
+      // 跟随系统时，系统主题变化要实时响应
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        if (getSavedTheme() === 'system') applyTheme('system');
+      });
+
+      // ---- 轻提示：给"点了看不出变化"的按钮一个可见反馈 ----
       let toastTimer = 0;
       function showToast(text) {
         let el = document.getElementById('app-toast');
@@ -304,29 +261,20 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         toastTimer = setTimeout(() => el.classList.remove('show'), 1600);
       }
 
-      // 浮动播放器展开/收起（默认展开，记忆状态）+ 播放中按钮脉冲
-      const mfWrap = document.getElementById('music-float');
-      const mfToggle = document.getElementById('music-float-toggle');
-      const mfMini = document.getElementById('music-float-mini');
-      if (mfWrap) {
-        // 默认展开，除非用户之前主动收起了
-        if (localStorage.getItem('music-float-expanded') === '0') {
-          mfWrap.classList.remove('expanded');
-        }
-        const setExpanded = (open) => {
-          mfWrap.classList.toggle('expanded', open);
-          try { localStorage.setItem('music-float-expanded', open ? '1' : '0'); } catch {}
-        };
-        mfToggle?.addEventListener('click', () => setExpanded(false));
-        mfMini?.addEventListener('click', () => setExpanded(true));
-        const audioEl = document.getElementById('audio-el');
-        const syncMf = () => { if (audioEl) mfWrap.classList.toggle('playing', !audioEl.paused); };
-        audioEl?.addEventListener('play', syncMf);
-        audioEl?.addEventListener('pause', syncMf);
-        syncMf();
+      // ---- 滚动相关：window 上的监听只需挂一次，但内部动态获取元素（切页后元素会换新） ----
+      function onScroll() {
+        const h = document.documentElement;
+        const st = h.scrollTop || document.body.scrollTop;
+        const sh = h.scrollHeight - h.clientHeight;
+        const bar = document.getElementById('reading-progress');
+        if (bar) bar.style.width = (sh > 0 ? (st / sh) * 100 : 0) + '%';
+        document.getElementById('top-row')?.classList.toggle('scrolled', window.scrollY > 40);
+        const show = window.scrollY > 300;
+        document.querySelectorAll('.floating-btn').forEach(b => b.classList.toggle('visible', show));
       }
+      window.addEventListener('scroll', onScroll, { passive: true });
 
-      // 手机端菜单 —— 用 onclick 保证幂等，客户端路由切页后通过 astro:page-load 重新初始化
+      // ---- 手机端菜单（幂等，可在每次换页后重复调用） ----
       function initMobileMenu() {
         const menuBtn = document.getElementById('menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -342,14 +290,85 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
           };
         });
       }
-      initMobileMenu();
-      document.addEventListener('astro:page-load', () => {
-        const menuBtn = document.getElementById('menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        mobileMenu?.classList.remove('open');
-        menuBtn?.classList.remove('active');
+
+      // ---- 每次换页都需要重新绑定的交互 ----
+      function initPage() {
+        onScroll();
+
+        // 沉浸阅读状态：body 会被换页替换，从 localStorage 恢复
+        const savedImmersive = (() => { try { return localStorage.getItem('immersive-reading'); } catch { return null; }})();
+        document.body.classList.toggle('immersive-reading', savedImmersive === '1');
+
+        // 回到顶部
+        const btnTop = document.getElementById('btn-top');
+        if (btnTop) btnTop.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // 沉浸阅读
+        const readingBtn = document.getElementById('btn-reading');
+        if (readingBtn) {
+          readingBtn.classList.toggle('active', savedImmersive === '1');
+          readingBtn.onclick = () => {
+            document.body.classList.toggle('immersive-reading');
+            readingBtn.classList.toggle('active');
+            try {
+              localStorage.setItem('immersive-reading',
+                document.body.classList.contains('immersive-reading') ? '1' : '0');
+            } catch {}
+          };
+        }
+
+        // 切换壁纸
+        const wpBtn = document.getElementById('btn-wallpaper');
+        if (wpBtn) {
+          wpBtn.onclick = () => {
+            const slides = document.querySelectorAll('.wp-slide');
+            if (!slides.length) return;
+            const active = [...slides].findIndex(s => s.classList.contains('active'));
+            slides[active]?.classList.remove('active');
+            slides[(active + 1) % slides.length]?.classList.add('active');
+          };
+        }
+
+        // 导航栏主题按钮：循环 浅色 → 深色 → 跟随系统
+        const themeBtn = document.getElementById('nav-theme');
+        if (themeBtn) {
+          themeBtn.onclick = () => {
+            const order = ['light', 'dark', 'system'];
+            const cur = getSavedTheme();
+            const next = order[(order.indexOf(cur) + 1) % order.length];
+            applyTheme(next);
+            showToast({ light: '☀ 浅色模式', dark: '🌙 深色模式', system: '🖥 跟随系统' }[next]);
+          };
+        }
+
+        // 浮动播放器展开/收起（transition:persist 元素不随换页替换，绑定一次即可）
+        const mfWrap = document.getElementById('music-float');
+        if (mfWrap && !mfWrap.dataset.bound) {
+          mfWrap.dataset.bound = '1';
+          if (localStorage.getItem('music-float-expanded') === '0') {
+            mfWrap.classList.remove('expanded');
+          }
+          const setExpanded = (open) => {
+            mfWrap.classList.toggle('expanded', open);
+            try { localStorage.setItem('music-float-expanded', open ? '1' : '0'); } catch {}
+          };
+          const mfToggle = document.getElementById('music-float-toggle');
+          const mfMini = document.getElementById('music-float-mini');
+          if (mfToggle) mfToggle.onclick = () => setExpanded(false);
+          if (mfMini) mfMini.onclick = () => setExpanded(true);
+          const audioEl = document.getElementById('audio-el');
+          const syncMf = () => { if (audioEl) mfWrap.classList.toggle('playing', !audioEl.paused); };
+          audioEl?.addEventListener('play', syncMf);
+          audioEl?.addEventListener('pause', syncMf);
+          syncMf();
+        }
+
         initMobileMenu();
-      });
+      }
+
+      initPage();
+      // 客户端路由每次换页完成后重新初始化（首次加载也会触发一次，幂等无副作用）
+      document.addEventListener('astro:page-load', initPage);
     </script>
 
     <!-- 百度「自动推送」：页面被访问时自动把该 URL 提交给百度（官方代码，无需 token） -->
