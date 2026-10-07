@@ -29,8 +29,11 @@
 
 | 模块 | 说明 |
 |---|---|
-| 首页 | 分类入口 + 头条大卡 + 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏模块自动堆叠 |
+| 首页 | 分类入口 + 文章卡片网格（16:9 封面 / 日期 / 分类 / 摘要 / 标签）+ 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏模块自动堆叠 |
 | 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享（复制链接 / 微博 / QQ 空间） |
+| 说说 | `/says/` 短动态，按时间倒序，支持心情 emoji 与配图；草稿用 `draft: true` 暂不公开 |
+| 相册 | `/album/` 瀑布流照片墙，点击开大图灯箱（← / → 翻页、Esc 关闭） |
+| 关于页 | `/about/` 名片 + 自动统计（篇数 / 天数 / 字数）+ 技能卡 + 时间线，内容改 `src/data/profile.ts` |
 | 评论 | Giscus（GitHub Discussions 驱动，见下文） |
 | 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、歌词时间微调、失效音源自动跳过 |
 | 主题 | 亮色 / 暗色 / 跟随系统，切换时底部提示当前模式，评论框主题同步 |
@@ -55,15 +58,19 @@
 ```
 tangjin-blog/
 ├── .github/workflows/deploy.yml   # 自动部署工作流（核心）
-├── public/                        # 静态资源（壁纸、头像、音乐）
+├── public/                        # 静态资源（壁纸、头像、相册照片、音乐、兜底封面）
 ├── src/
-│   ├── site.ts                    # 站点配置（标题、座右铭、社交链接等）
-│   ├── content/posts/             # 文章 Markdown
-│   ├── pages/                     # 页面路由
+│   ├── site.ts                    # 站点配置（标题、座右铭、社交链接、备案号等）
+│   ├── data/                      # 站点数据（关于页资料 / 分类 / 相册清单）
+│   ├── content/posts/             # 文章 Markdown（配图也放同目录）
+│   ├── content/says/              # 说说 Markdown
+│   ├── pages/                     # 页面路由（首页 / 文章 / 归档 / 说说 / 相册 / 关于 / 留言板…）
 │   ├── components/                # 组件（音乐播放器、评论、热力图…）
 │   ├── layouts/                   # 布局
 │   └── styles/                    # 全局样式
-├── publish.cjs / publish.sh       # Obsidian 笔记一键发布脚本
+├── docs/                          # 补充文档（SEO 提交、Obsidian 教程等）
+├── 使用指南.md                     # 内容添加手册（怎么写、怎么发、去哪改）
+├── publish.cjs / publish.sh       # Obsidian 笔记一键发布脚本（老流程，应急用）
 ├── deploy.ps1                     # 本地直传服务器脚本（应急用）
 └── astro.config.mjs               # Astro 配置
 ```
@@ -79,6 +86,7 @@ tangjin-blog/
 1. 在文件树里 **右键 `tangjin-blog/src/content/posts` → 新建笔记**（注意：必须在 `posts` 文件夹内新建，新建笔记的分类选择弹窗才会触发）。
 2. Templater 模板自动弹出「选分类」窗口，并让你填标题 / 摘要 / 标签，最后自动改名为 `日期-标题.md`。
 3. 正常写 Markdown。保存后 `obsidian-git` 每 2 分钟自动 commit、每 3 分钟自动 push 到 GitHub → 自动部署。
+4. 发**说说**：进 `src/content/says/` 右键新建，模板会自动填日期、问心情，并默认标成草稿（`draft: true`），写完把它改成 `false` 就公开。
 
 > **为什么「点新建笔记没弹窗」？** Obsidian 默认把新笔记建在**笔记库根目录**，而模板只在文件落在 `posts/` 时才触发。解决办法：① 如上在 `posts` 文件夹内右键新建；或 ② Obsidian 设置 → 文件与链接 → 新建笔记位置 → 指定到 `tangjin-blog/src/content/posts`。若改完仍不弹窗，彻底退出重开 Obsidian 即可。
 
@@ -100,6 +108,8 @@ category: article      # article / summary / tools 三选一
 
 然后 `git push`，GitHub Actions 自动上线。仓库里还保留 `publish.sh` / `publish.cjs` 两个老脚本（批量搬笔记用），新流程已不需要。
 
+> 站名 / 座右铭 / 备案号、**关于页内容**、分类、友链分别改哪个文件，见 [使用指南 §8](使用指南.md#8-想改站点信息去哪改)。
+
 ## 评论系统
 
 评论由 [Giscus](https://giscus.app) 驱动，原理很妙：
@@ -108,6 +118,7 @@ category: article      # article / summary / tools 三选一
 - 读者用 GitHub 账号登录即可评论、点赞、回复
 - 博客本身零后端、零数据库，评论数据全在 GitHub 上
 - 按页面路径（pathname）自动匹配讨论串
+- 文章页、关于页、留言板共用同一套组件，各自按自己的路径开串
 
 ## 自动部署原理（GitHub Actions）
 
