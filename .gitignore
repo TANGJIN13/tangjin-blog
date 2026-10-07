@@ -27,3 +27,5 @@ pnpm-debug.log*
 .workbuddy/
 .tmp-shots/
 .shots/
+
+/src/content/posts/
