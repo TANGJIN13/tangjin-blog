@@ -92,7 +92,7 @@ title: "文章标题"
 description: "摘要"
 published: 2026-10-06
 tags: ["Web安全", "CTF"]
-category: article      # essay / article / summary / tools 四选一
+category: article      # article / summary / tools 三选一
 ---
 
 正文用 Markdown 写。
