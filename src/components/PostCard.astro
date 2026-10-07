@@ -18,8 +18,9 @@ const showUpdated = updated && updated > published;
 const catSlug = category ?? '';
 const cat = categories.find((c) => c.slug === catSlug) ?? categories.find((c) => c.name === tags?.[0]);
 
-// 标签展示：最多 3 个，用顿号连接，多的显示「等 N 个」
-const tagText = tags.length > 3 ? `${tags.slice(0, 3).join('、')} 等${tags.length}个` : tags.join('、');
+// 标签展示：最多 4 个，多的显示「+N」
+const shownTags = tags.slice(0, 4);
+const moreTagCount = tags.length - shownTags.length;
 
 // 占位封面：按文章 id 稳定选一种低饱和色调（半透明色叠加在 surface-2 上，亮/暗主题都自适应）
 const tints = [
@@ -35,54 +36,60 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
 ---
 
 <article class="post-card onload-animation" {style}>
-  <div class="post-card-inner">
-    <!-- 封面：左侧圆角缩略图（无封面时用跟随主题的低饱和占位色） -->
-    <a class="post-card-cover" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
-      {coverSrc ? (
-        <img src={coverSrc} alt="" loading="lazy" />
-      ) : (
-        <div class="cover-placeholder" style={`background: ${randomGradient}`}>
-          <Icon name="text" size="1.7rem" />
-        </div>
-      )}
-      <span class="cover-shine" aria-hidden="true"></span>
-    </a>
-
-    <!-- 内容：标题 + 一整行元信息 + 摘要 -->
-    <div class="post-card-content">
-      <a class="post-card-title" href={`/posts/${post.id}/`}>{title}</a>
-
-      <div class="card-meta">
-        {pinned && (
-          <span class="meta-item is-pin" title="置顶"><Icon name="flag" size="0.75rem" />置顶</span>
-        )}
-        <span class="meta-item">
-          <Icon name="calendar" size="0.75rem" />发表于 <time datetime={published.toISOString()}>{formatDateTime(published)}</time>
-        </span>
-        {showUpdated && (
-          <span class="meta-item">
-            <Icon name="repeat" size="0.75rem" />更新于 <time datetime={updated.toISOString()}>{formatDateTime(updated)}</time>
-          </span>
-        )}
-        {cat && (
-          <a class="meta-item is-link" href={`/categories/${cat.slug}/`}>
-            <Icon name={cat.icon || 'folder'} size="0.75rem" />{cat.name}
-          </a>
-        )}
-        {tags.length > 0 && (
-          <span class="meta-item"><Icon name="tag" size="0.75rem" />{tagText}</span>
-        )}
-        <span class="meta-item"><Icon name="clock" size="0.75rem" />约 {minutes} 分钟</span>
+  <!-- 封面：置顶，16:9（无封面时用跟随主题的低饱和占位色 + 分类图标） -->
+  <a class="post-card-cover" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
+    {coverSrc ? (
+      <img src={coverSrc} alt="" loading="lazy" />
+    ) : (
+      <div class="cover-placeholder" style={`background: ${randomGradient}`}>
+        <span class="cover-ph-icon"><Icon name={cat?.icon || 'article'} size="1.5rem" /></span>
       </div>
+    )}
+    <span class="cover-shine" aria-hidden="true"></span>
+    {pinned && (
+      <span class="cover-flag"><Icon name="flag" size="0.68rem" />置顶</span>
+    )}
+  </a>
 
-      <p class="post-card-desc">{description}</p>
+  <!-- 正文：标题 → 图标小标签 → 摘要 → #标签 -->
+  <div class="post-card-body">
+    <a class="post-card-title" href={`/posts/${post.id}/`}>{title}</a>
+
+    <div class="card-meta">
+      <span class="meta-chip">
+        <Icon name="calendar" size="0.72rem" /><time datetime={published.toISOString()}>{formatDateTime(published)}</time>
+      </span>
+      {cat && (
+        <a class="meta-chip is-link" href={`/categories/${cat.slug}/`}>
+          <Icon name={cat.icon || 'folder'} size="0.72rem" />{cat.name}
+        </a>
+      )}
+      {showUpdated && (
+        <span class="meta-chip is-soft">
+          <Icon name="repeat" size="0.72rem" />更新于 <time datetime={updated.toISOString()}>{formatDateTime(updated)}</time>
+        </span>
+      )}
+      <span class="meta-chip is-soft"><Icon name="clock" size="0.72rem" />约 {minutes} 分钟</span>
     </div>
+
+    {description && <p class="post-card-desc">{description}</p>}
+
+    {shownTags.length > 0 && (
+      <div class="card-tags">
+        {shownTags.map((t) => (
+          <a class="tag-chip" href={`/search/?q=${encodeURIComponent(t)}`}>#{t}</a>
+        ))}
+        {moreTagCount > 0 && <span class="tag-chip is-more">+{moreTagCount}</span>}
+      </div>
+    )}
   </div>
 </article>
 
 <style>
   .post-card {
     position: relative;
+    display: flex;
+    flex-direction: column;
     border-radius: var(--radius-xl);
     overflow: hidden;
     border: 1px solid var(--border);
@@ -101,109 +108,8 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
   [data-theme='dark'] .post-card:hover {
     box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 18px 38px oklch(0% 0 0 / 0.5);
   }
-  /* 悬停时左侧亮起一条主色高光 */
-  .post-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--gradient-primary);
-    transform: scaleY(0);
-    transform-origin: center;
-    transition: transform 0.28s ease;
-    z-index: 2;
-  }
-  .post-card:hover::before { transform: scaleY(1); }
 
-  /* 手机端：封面在上、内容在下；桌面端：封面在左（内缩圆角相框式），内容在右 */
-  .post-card-inner {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-    padding: 0.85rem;
-  }
-  @media (min-width: 768px) {
-    .post-card-inner { flex-direction: row; align-items: stretch; }
-  }
-
-  .post-card-content {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-  }
-
-  .post-card-title {
-    font-size: 1.12rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--text);
-    text-decoration: none !important;
-    transition: color 0.18s ease;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .post-card:hover .post-card-title { color: var(--primary) !important; }
-
-  /* ===== 一整行元信息：置顶 | 发表于 | 更新于 | 分类 | 标签 | 时长 ===== */
-  .card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    row-gap: 0.25rem;
-    font-size: 0.72rem;
-    color: var(--text-faint);
-    font-variant-numeric: tabular-nums;
-  }
-  .meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.22rem;
-    white-space: nowrap;
-  }
-  .meta-item :global(.icon) { opacity: 0.65; flex-shrink: 0; }
-  /* 项与项之间的竖线分隔符（跟随换行） */
-  .meta-item + .meta-item::before {
-    content: '';
-    width: 1px;
-    height: 0.75rem;
-    background: oklch(0% 0 0 / 0.16);
-    margin: 0 0.55rem;
-  }
-  [data-theme='dark'] .meta-item + .meta-item::before { background: oklch(100% 0 0 / 0.16); }
-
-  /* 置顶：主色渐变小签 */
-  .meta-item.is-pin {
-    padding: 0.1rem 0.45rem;
-    border-radius: 999px;
-    font-weight: 700;
-    color: var(--text-on-primary);
-    background: var(--gradient-primary);
-    box-shadow: 0 2px 8px oklch(62% 0.14 250 / 0.22);
-  }
-  .meta-item.is-pin :global(.icon) { opacity: 1; }
-  .meta-item.is-pin + .meta-item::before { display: none; }
-
-  /* 分类可点击 */
-  .meta-item.is-link { text-decoration: none !important; color: var(--text-faint); transition: color 0.15s ease; }
-  .meta-item.is-link:hover { color: var(--primary-strong); }
-  [data-theme='dark'] .meta-item.is-link:hover { color: var(--primary-light); }
-
-  .post-card-desc {
-    margin: 0;
-    color: var(--text-soft);
-    font-size: 0.86rem;
-    line-height: 1.65;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  /* ===== 封面 ===== */
+  /* ===== 封面：顶部通栏 16:9 ===== */
   .post-card-cover {
     position: relative;
     display: block;
@@ -211,35 +117,37 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
     aspect-ratio: 16 / 9;
     overflow: hidden;
     flex-shrink: 0;
-    border-radius: 12px;
+    background: var(--surface-2);
     text-decoration: none !important;
   }
-  @media (min-width: 768px) {
-    .post-card-cover {
-      width: 200px;
-      aspect-ratio: auto;
-      min-height: 148px;
-    }
-  }
-
   .post-card-cover img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .post-card:hover .post-card-cover img { transform: scale(1.07); }
+  .post-card:hover .post-card-cover img { transform: scale(1.06); }
 
   .cover-placeholder {
     width: 100%;
     height: 100%;
     display: grid;
     place-items: center;
-    color: var(--primary-strong);
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  [data-theme='dark'] .cover-placeholder { color: var(--primary-light); }
-  .post-card:hover .cover-placeholder { transform: scale(1.07); }
+  .post-card:hover .cover-placeholder { transform: scale(1.06); }
+  .cover-ph-icon {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 13px;
+    color: var(--primary-strong);
+    background: var(--surface);
+    border: 1px solid oklch(70% 0.14 250 / 0.35);
+    box-shadow: 0 4px 14px oklch(62% 0.14 250 / 0.14);
+  }
+  [data-theme='dark'] .cover-ph-icon { color: var(--primary-light); }
 
   /* 封面上的斜向光泽扫过 */
   .cover-shine {
@@ -251,4 +159,119 @@ const randomGradient = `radial-gradient(ellipse 120% 140% at 80% 0%, ${tints[has
     pointer-events: none;
   }
   .post-card:hover .cover-shine { transform: translateX(120%); }
+
+  /* 封面左上角置顶小徽章 */
+  .cover-flag {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    box-shadow: 0 3px 12px oklch(0% 0 0 / 0.28);
+  }
+
+  .post-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    padding: 0.95rem 1rem 1rem;
+  }
+
+  .post-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--text);
+    text-decoration: none !important;
+    transition: color 0.18s ease;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .post-card:hover .post-card-title { color: var(--primary) !important; }
+
+  /* ===== 元信息小标签（图标 + 文字，带浅色底） ===== */
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.22rem 0.55rem;
+    border-radius: 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    text-decoration: none !important;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid oklch(70% 0.14 250 / 0.22);
+    transition: all 0.18s ease;
+  }
+  [data-theme='dark'] .meta-chip { color: var(--primary-light); }
+  .meta-chip :global(.icon) { opacity: 0.85; flex-shrink: 0; }
+  /* 次要信息（更新于 / 时长）：灰底，弱化 */
+  .meta-chip.is-soft {
+    color: var(--text-faint);
+    background: var(--surface-2);
+    border-color: var(--border-light);
+  }
+  .meta-chip.is-link:hover {
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    border-color: transparent;
+  }
+  .meta-chip.is-link:hover :global(.icon) { opacity: 1; }
+
+  .post-card-desc {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* ===== 底部 #标签（贴底对齐） ===== */
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: auto;
+    padding-top: 0.15rem;
+  }
+  .tag-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.16rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+  }
+  .tag-chip:hover {
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    border-color: transparent;
+  }
+  .tag-chip.is-more { cursor: default; }
 </style>

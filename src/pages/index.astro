@@ -627,7 +627,7 @@ const leadMinutes = lead ? readingTime(lead.body) : 0;
   }
   .cloud-tag:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
 
-  .post-list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .post-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 1rem; }
 
   @media (max-width: 767px) {
     .ref-sidebar-left, .ref-sidebar-right { flex-direction: row; flex-wrap: wrap; }
