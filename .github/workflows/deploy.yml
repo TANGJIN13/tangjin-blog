@@ -42,7 +42,25 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: 构建站点
-        run: pnpm build
+        run: |
+          set +e
+          pnpm build > /tmp/build.log 2>&1
+          CODE=$?
+          if [ "$CODE" -ne 0 ]; then
+            {
+              echo "== node =="; node -v
+              echo "== pnpm =="; pnpm -v
+              echo "== @esbuild =="; ls node_modules/@esbuild 2>&1
+              echo "== @bruits =="; ls node_modules/@bruits 2>&1
+              echo "== @img =="; ls node_modules/@img 2>&1
+              echo "== build log (tail 5000) =="
+              tail -c 5000 /tmp/build.log
+            } > /tmp/diag.log 2>&1
+            MSG=$(sed -e "s/%/%25/g" -e "s/\r//g" /tmp/diag.log | awk '{printf "%s%%0A", $0}')
+            echo "::error title=BUILD_FAILED::${MSG}"
+            exit "$CODE"
+          fi
+          tail -c 1500 /tmp/build.log
 
       - name: 检查构建产物
         run: |
