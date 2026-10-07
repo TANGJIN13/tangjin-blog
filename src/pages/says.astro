@@ -1,0 +1,129 @@
+---
+import { render } from 'astro:content';
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { site } from '../site';
+
+// 取全部说说，按 date 倒序
+const raw = await getCollection('says');
+const says = raw.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (await render(s)).Content })));
+---
+
+<Base title="说说">
+  <div class="container says-container">
+    <!-- 顶部横幅 -->
+    <div class="says-banner">
+      <img class="says-banner-bg" src="/images/wallpapers/wallpaper-02.svg" alt="" aria-hidden="true" />
+      <div class="says-banner-dim" aria-hidden="true"></div>
+      <div class="says-banner-content">
+        <h1 class="says-banner-title"><Icon name="comment" size="1.4rem" /> 说说</h1>
+        <p class="says-banner-desc">一些零碎的想法与瞬间</p>
+      </div>
+    </div>
+
+    <!-- 时间线 -->
+    {rendered.length > 0 ? (
+      <div class="says-timeline">
+        {rendered.map(({ entry, Content }, i) => (
+          <article class="say-card card-base onload-animation" style={`animation-delay: ${i * 0.06}s`}>
+            <div class="say-avatar">
+              <img src={site.avatar} alt="" width="40" height="40" />
+            </div>
+            <div class="say-body">
+              <div class="say-head">
+                <span class="say-name">{site.title}</span>
+                {entry.data.mood && <span class="say-mood">{entry.data.mood}</span>}
+                <time class="say-time" datetime={entry.data.date.toISOString()}>
+                  {entry.data.date.toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                </time>
+              </div>
+              <div class="say-text custom-md">
+                <Content />
+              </div>
+              {entry.data.images.length > 0 && (
+                <div class="say-images">
+                  {entry.data.images.map((img) => (
+                    <a class="say-img" href={img} target="_blank" rel="noopener">
+                      <img src={img} alt="" loading="lazy" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <div class="says-empty card-base">
+        <div class="empty-emoji">💬</div>
+        <h3>还没有说说</h3>
+        <p>在 <code>src/content/says/</code> 下新建一个 .md 文件，写上 frontmatter 的 <code>date</code> 和正文即可。</p>
+      </div>
+    )}
+  </div>
+</Base>
+
+<style>
+  .says-container { margin-top: 2rem; max-width: 760px; margin-inline: auto; }
+
+  /* 横幅 */
+  .says-banner {
+    position: relative; border-radius: var(--radius-xl); overflow: hidden;
+    margin-bottom: 2rem; min-height: 170px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .says-banner-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .says-banner-dim { position: absolute; inset: 0; background: linear-gradient(to bottom, oklch(0% 0 0 / 0.3), oklch(0% 0 0 / 0.55)); }
+  .says-banner-content { position: relative; z-index: 1; text-align: center; padding: 2rem; color: #fff; }
+  .says-banner-title {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 800; margin: 0 0 0.4rem;
+    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.4);
+  }
+  .says-banner-desc { margin: 0; font-size: 0.95rem; opacity: 0.9; text-shadow: 0 1px 8px oklch(0% 0 0 / 0.4); }
+
+  /* 时间线 */
+  .says-timeline { display: flex; flex-direction: column; gap: 1rem; }
+  .say-card { display: flex; gap: 0.9rem; padding: 1.1rem 1.2rem; }
+  .say-avatar { flex-shrink: 0; }
+  .say-avatar img {
+    width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--border); background: var(--surface);
+  }
+  .say-body { flex: 1; min-width: 0; }
+  .say-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .say-name { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+  .say-mood { font-size: 1.05rem; line-height: 1; }
+  .say-time { font-size: 0.74rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+  .say-text { font-size: 0.98rem; line-height: 1.75; color: var(--text-soft); }
+  .say-text :global(p) { margin: 0 0 0.5em; }
+  .say-text :global(p:last-child) { margin-bottom: 0; }
+  .say-text :global(a) { color: var(--primary-strong); }
+  .say-text :global(code) {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.88em;
+  }
+
+  /* 配图网格 */
+  .say-images { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.5rem; margin-top: 0.6rem; }
+  .say-img { display: block; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+  .say-img img { width: 100%; aspect-ratio: 1; object-fit: cover; transition: transform 0.4s ease; }
+  .say-img:hover img { transform: scale(1.05); }
+
+  .says-empty { text-align: center; padding: 3rem 2rem; }
+  .empty-emoji { font-size: 3rem; margin-bottom: 0.8rem; }
+  .says-empty h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+  .says-empty p { color: var(--text-faint); font-size: 0.9rem; margin: 0; }
+  .says-empty code {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em;
+  }
+
+  @media (max-width: 768px) {
+    .says-container { padding-inline: 0.75rem; }
+    .say-card { padding: 0.95rem 1rem; }
+  }
+</style>

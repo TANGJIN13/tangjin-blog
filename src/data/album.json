@@ -1,0 +1,44 @@
+[
+  {
+    "src": "/images/wallpapers/wallpaper-01.svg",
+    "title": "示例 · 晨光",
+    "date": "2026-10-01",
+    "location": "桂林",
+    "desc": "这是占位示例图。把你的真实照片放进 public/photos/ 目录，再把这里的 src 改成例如 /photos/xxx.jpg 即可。"
+  },
+  {
+    "src": "/images/wallpapers/wallpaper-02.svg",
+    "title": "示例 · 夜色",
+    "date": "2026-09-28",
+    "location": "校园",
+    "desc": "相册按这里的 date 倒序排列，最新的在最前。"
+  },
+  {
+    "src": "/images/wallpapers/wallpaper-03.svg",
+    "title": "示例 · 旅途",
+    "date": "2026-09-20",
+    "location": "路上",
+    "desc": "每条可写标题、日期、地点和一句话描述。"
+  },
+  {
+    "src": "/images/wallpapers/about-cover.svg",
+    "title": "示例 · 街角",
+    "date": "2026-09-12",
+    "location": "城市",
+    "desc": "点击任意一张可放大查看（灯箱）。"
+  },
+  {
+    "src": "/images/wallpapers/wallpaper-02.svg",
+    "title": "示例 · 雨后",
+    "date": "2026-08-30",
+    "location": "家",
+    "desc": "想增删照片，直接编辑 src/data/album.json。"
+  },
+  {
+    "src": "/images/wallpapers/wallpaper-03.svg",
+    "title": "示例 · 微光",
+    "date": "2026-08-15",
+    "location": "窗台",
+    "desc": "支持任意数量，布局会自动排成瀑布流。"
+  }
+]

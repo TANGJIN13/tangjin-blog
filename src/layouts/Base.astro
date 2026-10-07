@@ -12,6 +12,8 @@ interface Props {
   narrow?: boolean;
   /** 页面顶部是否有壁纸横幅（有则内容下沉，导航悬浮其上） */
   banner?: boolean;
+  /** 页面级结构化数据（如 BlogPosting），注入到 <head> */
+  jsonLd?: Record<string, unknown> | null;
 }
 
 const {
@@ -20,12 +22,26 @@ const {
   image = `${site.url}/images/wallpapers/wallpaper-01.svg`,
   narrow = false,
   banner = false,
+  jsonLd = null,
 } = Astro.props;
+
+// 全站统一的 WebSite 结构化数据（帮助搜索引擎理解站点）
+const websiteLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: site.title,
+  url: site.url,
+  description: site.description,
+  author: { '@type': 'Person', name: site.author },
+  inLanguage: site.lang,
+};
 
 const navItems = [
   { label: '首页', href: '/', icon: 'home' },
   { label: '归档', href: '/archive/', icon: 'archive' },
   { label: '分类', href: '/categories/', icon: 'folder' },
+  { label: '相册', href: '/album/', icon: 'photo' },
+  { label: '说说', href: '/says/', icon: 'comment' },
   { label: '友链', href: '/friends/', icon: 'link' },
   { label: '留言', href: '/guestbook/', icon: 'mail' },
   { label: '关于', href: '/about/', icon: 'person' },
@@ -59,6 +75,10 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+
+    <!-- 结构化数据：全站 WebSite + 页面级（如文章 BlogPosting） -->
+    <script type="application/ld+json" set:html={JSON.stringify(websiteLd)} />
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
     <!-- 客户端路由：页面切换不整页刷新，音乐持续播放 -->
     <ClientRouter />
@@ -139,6 +159,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
       <!-- 收起后的小按钮 -->
       <button class="music-float-mini" id="music-float-mini" title="展开播放器" aria-label="展开播放器">
         <Icon name="music" size="1.05rem" />
+        <span class="mini-eq" aria-hidden="true"><i></i><i></i><i></i></span>
       </button>
     </div>
 
@@ -630,6 +651,19 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   }
   [data-theme='dark'] .music-float-mini { background: oklch(20% 0.02 250 / 0.88); }
   .music-float-mini:hover { transform: scale(1.08); box-shadow: 0 6px 22px oklch(0% 0 0 / 0.18); }
+
+  /* 播放时收起按钮显示动态均衡器（替代静态音符图标） */
+  .music-float-mini .mini-eq { display: none; align-items: flex-end; gap: 2px; height: 16px; }
+  .music-float-mini .mini-eq i {
+    width: 3px; height: 5px; border-radius: 2px;
+    background: var(--primary); transform-origin: bottom;
+    animation: mini-eq 0.9s ease-in-out infinite;
+  }
+  .music-float-mini .mini-eq i:nth-child(2) { animation-delay: 0.2s; }
+  .music-float-mini .mini-eq i:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes mini-eq { 0%, 100% { height: 5px; } 50% { height: 15px; } }
+  .music-float.playing:not(.expanded) .music-float-mini .icon { display: none; }
+  .music-float.playing:not(.expanded) .music-float-mini .mini-eq { display: inline-flex; }
 
   /* 展开态：显示面板，隐藏小按钮 */
   .music-float.expanded .music-float-panel { display: block; }

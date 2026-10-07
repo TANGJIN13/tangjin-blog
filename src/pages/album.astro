@@ -1,0 +1,294 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import album from '../data/album.json';
+
+interface Photo {
+  src: string;
+  title?: string;
+  date?: string;
+  location?: string;
+  desc?: string;
+}
+
+// 按 date 倒序（没有 date 的排最后）
+const photos = [...(album as Photo[])].sort((a, b) => {
+  const da = a.date ? new Date(a.date).getTime() : 0;
+  const db = b.date ? new Date(b.date).getTime() : 0;
+  return db - da;
+});
+---
+
+<Base title="相册">
+  <div class="container album-container">
+    <!-- 顶部横幅 -->
+    <div class="album-banner">
+      <img class="album-banner-bg" src="/images/wallpapers/wallpaper-03.svg" alt="" aria-hidden="true" />
+      <div class="album-banner-dim" aria-hidden="true"></div>
+      <div class="album-banner-content">
+        <h1 class="album-banner-title"><Icon name="photo" size="1.4rem" /> 相册</h1>
+        <p class="album-banner-desc">记录生活里的光与瞬间 · 共 {photos.length} 张</p>
+      </div>
+    </div>
+
+    <!-- 照片墙（瀑布流） -->
+    {photos.length > 0 ? (
+      <div class="album-grid">
+        {photos.map((p, i) => (
+          <button
+            class="album-item onload-animation"
+            style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}
+            type="button"
+            data-index={i}
+            data-src={p.src}
+            data-title={p.title ?? ''}
+            data-date={p.date ?? ''}
+            data-location={p.location ?? ''}
+            data-desc={p.desc ?? ''}
+          >
+            <img class="album-img" src={p.src} alt={p.title ?? '照片'} loading="lazy" />
+            <span class="album-overlay">
+              {p.title && <span class="album-cap-title">{p.title}</span>}
+              {p.location && <span class="album-cap-loc"><Icon name="flag" size="0.78rem" />{p.location}</span>}
+            </span>
+          </button>
+        ))}
+      </div>
+    ) : (
+      <div class="album-empty card-base">
+        <div class="empty-emoji">🖼️</div>
+        <h3>相册还是空的</h3>
+        <p>把照片放进 <code>public/photos/</code> 并在 <code>src/data/album.json</code> 里登记即可。</p>
+      </div>
+    )}
+  </div>
+
+  <!-- 灯箱 -->
+  <div class="lightbox" id="lightbox" hidden>
+    <button class="lb-close" id="lb-close" type="button" aria-label="关闭"><Icon name="arrow_up" size="1.1rem" /></button>
+    <button class="lb-nav lb-prev" id="lb-prev" type="button" aria-label="上一张"><Icon name="prev" size="1.4rem" /></button>
+    <figure class="lb-figure">
+      <img class="lb-img" id="lb-img" src="" alt="" />
+      <figcaption class="lb-cap" id="lb-cap"></figcaption>
+    </figure>
+    <button class="lb-nav lb-next" id="lb-next" type="button" aria-label="下一张"><Icon name="next" size="1.4rem" /></button>
+  </div>
+</Base>
+
+<script>
+  // 灯箱逻辑：事件委托，兼容客户端路由换页
+  type PhotoMeta = { src: string; title: string; date: string; location: string; desc: string };
+  const grid = document.querySelector('.album-grid');
+  const lightbox = document.getElementById('lightbox');
+  const lbImg = document.getElementById('lb-img') as HTMLImageElement | null;
+  const lbCap = document.getElementById('lb-cap');
+  const items = grid ? Array.from(grid.querySelectorAll<HTMLElement>('.album-item')) : [];
+  let current = -1;
+
+  function render() {
+    if (!lbImg || !lbCap || current < 0 || current >= items.length) return;
+    const el = items[current];
+    const src = el.dataset.src || '';
+    const title = el.dataset.title || '';
+    const date = el.dataset.date || '';
+    const location = el.dataset.location || '';
+    const desc = el.dataset.desc || '';
+    lbImg.src = src;
+    lbImg.alt = title;
+    const meta: string[] = [];
+    if (title) meta.push(`<strong>${title}</strong>`);
+    if (date) meta.push(`<span class="lb-date">${date}</span>`);
+    if (location) meta.push(`<span class="lb-loc">📍 ${location}</span>`);
+    let html = meta.join(' · ');
+    if (desc) html += `<span class="lb-desc">${desc}</span>`;
+    lbCap.innerHTML = html;
+  }
+
+  function open(idx: number) {
+    if (!lightbox) return;
+    current = idx;
+    lightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+    render();
+  }
+  function close() {
+    if (!lightbox) return;
+    lightbox.hidden = true;
+    document.body.style.overflow = '';
+    if (lbImg) lbImg.src = '';
+  }
+  function step(d: number) {
+    if (items.length === 0) return;
+    current = (current + d + items.length) % items.length;
+    render();
+  }
+
+  grid?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('.album-item');
+    if (!btn) return;
+    open(Number(btn.dataset.index));
+  });
+  document.getElementById('lb-close')?.addEventListener('click', close);
+  document.getElementById('lb-prev')?.addEventListener('click', () => step(-1));
+  document.getElementById('lb-next')?.addEventListener('click', () => step(1));
+  lightbox?.addEventListener('click', (e) => {
+    if (e.target === lightbox) close();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (lightbox && !lightbox.hidden) {
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') step(-1);
+      else if (e.key === 'ArrowRight') step(1);
+    }
+  });
+</script>
+
+<style>
+  .album-container { margin-top: 2rem; }
+
+  /* 横幅 */
+  .album-banner {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .album-banner-bg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .album-banner-dim {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, oklch(0% 0 0 / 0.3), oklch(0% 0 0 / 0.55));
+  }
+  .album-banner-content {
+    position: relative; z-index: 1;
+    text-align: center; padding: 2rem; color: #fff;
+  }
+  .album-banner-title {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 800; margin: 0 0 0.5rem;
+    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.4);
+  }
+  .album-banner-desc {
+    margin: 0; font-size: 0.95rem; opacity: 0.9;
+    text-shadow: 0 1px 8px oklch(0% 0 0 / 0.4);
+  }
+
+  /* 瀑布流：CSS columns 自适应列数 */
+  .album-grid {
+    columns: 4 200px;
+    column-gap: 0.8rem;
+  }
+  .album-item {
+    display: block;
+    width: 100%;
+    margin: 0 0 0.8rem;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface);
+    cursor: pointer;
+    position: relative;
+    break-inside: avoid;
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 6px 18px oklch(0% 0 0 / 0.05);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
+  }
+  [data-theme='dark'] .album-item {
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 6px 18px oklch(0% 0 0 / 0.28);
+  }
+  .album-item:hover {
+    transform: translateY(-4px);
+    border-color: oklch(70% 0.14 250 / 0.5);
+    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 250 / 0.18);
+  }
+  .album-img {
+    width: 100%;
+    display: block;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .album-item:hover .album-img { transform: scale(1.05); }
+
+  /* 悬停浮层：标题 + 地点 */
+  .album-overlay {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 1.2rem 0.8rem 0.7rem;
+    display: flex; flex-direction: column; gap: 0.15rem;
+    background: linear-gradient(to top, oklch(0% 0 0 / 0.62), transparent);
+    color: #fff;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+  }
+  .album-item:hover .album-overlay { opacity: 1; transform: translateY(0); }
+  .album-cap-title { font-size: 0.9rem; font-weight: 700; text-shadow: 0 1px 6px oklch(0% 0 0 / 0.5); }
+  .album-cap-loc { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.74rem; opacity: 0.9; }
+
+  .album-empty { text-align: center; padding: 3rem 2rem; }
+  .empty-emoji { font-size: 3rem; margin-bottom: 0.8rem; }
+  .album-empty h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+  .album-empty p { color: var(--text-faint); font-size: 0.9rem; margin: 0; }
+  .album-empty code {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em;
+  }
+
+  /* ===== 灯箱 ===== */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 400;
+    display: flex; align-items: center; justify-content: center;
+    gap: 1rem; padding: 2rem;
+    background: oklch(10% 0.02 250 / 0.86);
+    backdrop-filter: blur(8px);
+    animation: lb-fade 0.2s ease both;
+  }
+  .lightbox[hidden] { display: none; }
+  @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+  .lb-figure {
+    margin: 0; max-width: min(1000px, 90vw); max-height: 86vh;
+    display: flex; flex-direction: column; align-items: center; gap: 0.8rem;
+  }
+  .lb-img {
+    max-width: 100%; max-height: 78vh;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px oklch(0% 0 0 / 0.5);
+    object-fit: contain;
+  }
+  .lb-cap {
+    color: #fff; text-align: center; font-size: 0.95rem; line-height: 1.7;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; justify-content: center; align-items: center;
+  }
+  .lb-cap strong { font-size: 1.05rem; }
+  .lb-cap .lb-date, .lb-cap .lb-loc { opacity: 0.85; font-size: 0.85rem; }
+  .lb-cap .lb-desc { flex-basis: 100%; opacity: 0.8; font-size: 0.85rem; max-width: 40rem; }
+
+  .lb-close, .lb-nav {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid oklch(100% 0 0 / 0.25);
+    background: oklch(100% 0 0 / 0.12);
+    color: #fff;
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: all 0.18s ease;
+  }
+  .lb-close { position: absolute; top: 1.5rem; right: 1.5rem; }
+  .lb-close :global(.icon) { transform: rotate(45deg); }
+  .lb-close:hover, .lb-nav:hover { background: oklch(100% 0 0 / 0.25); transform: scale(1.08); }
+
+  @media (max-width: 768px) {
+    .album-grid { columns: 2 140px; column-gap: 0.5rem; }
+    .album-item { margin-bottom: 0.5rem; }
+    .lightbox { padding: 1rem; gap: 0.4rem; }
+    .lb-close { top: 0.8rem; right: 0.8rem; }
+    .lb-nav { width: 38px; height: 38px; }
+  }
+</style>

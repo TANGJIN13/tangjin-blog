@@ -33,6 +33,21 @@ const minutes = readingTime(post.body);
 const wordCount = post.body.replace(/\s/g, '').length;
 const coverSrc = cover ?? '/images/post-placeholder.svg';
 
+// 结构化数据 BlogPosting（帮助搜索引擎收录与展示）
+const postLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  headline: title,
+  description,
+  datePublished: published.toISOString(),
+  dateModified: (updated && updated > published ? updated : published).toISOString(),
+  author: { '@type': 'Person', name: site.author },
+  publisher: { '@type': 'Organization', name: site.title },
+  mainEntityOfPage: { '@type': 'WebPage', '@id': `${site.url}/posts/${post.id}/` },
+  image: coverSrc.startsWith('http') ? coverSrc : `${site.url}${coverSrc}`,
+  keywords: tags.join(', '),
+};
+
 // 有封面就用封面当横幅图（单图不轮播），没有就用站点默认壁纸轮播
 const hasCover = Boolean(cover);
 const bannerImages = hasCover ? [coverSrc] : undefined;
@@ -43,6 +58,7 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   description={description}
   image={coverSrc.startsWith('http') ? coverSrc : `${site.url}${coverSrc}`}
   banner
+  jsonLd={postLd}
 >
   <!-- 阅读进度条 -->
   <div class="read-progress" id="read-progress" aria-hidden="true"></div>
