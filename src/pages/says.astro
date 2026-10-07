@@ -7,7 +7,10 @@ import { site } from '../site';
 
 // 取全部说说，按 date 倒序
 const raw = await getCollection('says');
-const says = raw.sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+// 过滤草稿：frontmatter 里 draft: true 的说说不会显示在页面上
+const says = raw
+  .filter((s) => !s.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (await render(s)).Content })));
 ---
 

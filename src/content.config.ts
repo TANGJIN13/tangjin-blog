@@ -48,6 +48,8 @@ const says = defineCollection({
       mood: z.string().optional(),
       // 配图（可选，相对 public 目录的路径数组）
       images: z.array(z.string()).default([]),
+      // 草稿：true 时不显示在说说页（写完记得改成 false 再推送）
+      draft: z.boolean().default(false),
     }),
 });
 
