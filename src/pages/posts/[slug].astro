@@ -5,6 +5,8 @@ import WallpaperBanner from '../../components/WallpaperBanner.astro';
 import GiscusComments from '../../components/GiscusComments.astro';
 import SakuraEffect from '../../components/SakuraEffect.astro';
 import Icon from '../../components/Icon.astro';
+import SidebarRight from '../../components/SidebarRight.astro';
+import TocCard from '../../components/TocCard.astro';
 import { getPublishedPosts, formatDate, readingTime } from '../../lib/posts';
 import { site } from '../../site';
 
@@ -116,8 +118,8 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
     </div>
   </WallpaperBanner>
 
-  <!-- 正文区 -->
-  <div class="post-layout">
+  <!-- 正文区：正文 + 右侧栏（文章页没有左栏） -->
+  <div class="post-shell">
     <!-- 主内容 -->
     <article class="post-main">
       <div class="post-body custom-md card-base">
@@ -184,6 +186,10 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
       </div>
     </article>
 
+    <!-- 右侧栏：目录放在最后并吸附在顶部，其它卡片滚走后仍然可见 -->
+    <SidebarRight>
+      <TocCard />
+    </SidebarRight>
   </div>
 </Base>
 
@@ -362,15 +368,7 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   .pb-sep { opacity: 0.45; }
 
   /* ============ 正文区 ============ */
-  /* 去掉右侧目录后：正文单栏，收窄到适合阅读的宽度并在页面居中 */
-  .post-layout {
-    margin-top: 2rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 1080px;
-    gap: 1.5rem;
-    align-items: start;
-  }
+  .post-main { min-width: 0; }
 
   .post-body { padding: 1.75rem 2rem; font-size: 1.02rem; }
 

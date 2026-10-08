@@ -1,0 +1,94 @@
+---
+// 文章目录：从正文的 h2 / h3 自动生成，滚动时高亮当前段落
+// 卡片本身 sticky 吸附在右栏顶部，其它卡片滚走后它仍然可见
+import Icon from './Icon.astro';
+---
+
+<div class="card-base widget-card toc-card onload-animation" id="toc-card" hidden style="animation-delay: 0.5s">
+  <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
+  <nav class="toc-nav" id="toc-nav" aria-label="文章目录"></nav>
+</div>
+
+<style>
+  .toc-card {
+    position: sticky;
+    top: calc(var(--navbar-height) + 1rem);
+  }
+  .toc-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    max-height: calc(100vh - var(--navbar-height) - 6rem);
+    overflow-y: auto;
+  }
+  /* 目录项是 JS 动态生成的，样式必须用 :global 才能命中 */
+  :global(.toc-item) {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-soft);
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none !important;
+    background: none !important;
+    border-left: 2px solid transparent;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  :global(.toc-item:hover) { color: var(--text); background: var(--surface-2) !important; }
+  :global(.toc-item.active) {
+    color: var(--primary-strong);
+    border-left-color: var(--primary);
+    font-weight: 500;
+  }
+  [data-theme='dark'] :global(.toc-item.active) { color: var(--primary-light); }
+  :global(.toc-level-3) { padding-left: 1.2rem; font-size: 0.78rem; }
+  /* 点击目录跳转时，标题不要被固定导航挡住 */
+  :global(.custom-md h2), :global(.custom-md h3) { scroll-margin-top: calc(var(--navbar-height) + 1.5rem); }
+</style>
+
+<script>
+  // 从正文的 h2 / h3 生成目录；客户端路由换页后会重新生成
+  function buildToc() {
+    const content = document.querySelector('.custom-md');
+    const tocNav = document.getElementById('toc-nav') as HTMLElement | null;
+    const card = document.getElementById('toc-card');
+    if (!content || !tocNav || !card || tocNav.dataset.built === '1') return;
+    tocNav.dataset.built = '1';
+
+    const headings = [...content.querySelectorAll('h2, h3')] as HTMLElement[];
+    // 正文还没有小标题时不显示目录卡片，避免出现一个空目录
+    if (headings.length === 0) { card.hidden = true; return; }
+    card.hidden = false;
+    tocNav.innerHTML = '';
+
+    headings.forEach((h, i) => {
+      h.id = h.id || `heading-${i}`;
+      const a = document.createElement('a');
+      a.className = 'toc-item toc-level-' + h.tagName[1];
+      a.href = `#${h.id}`;
+      a.textContent = h.textContent;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        history.replaceState(null, '', `#${h.id}`);
+      });
+      tocNav.appendChild(a);
+    });
+
+    // 当前段落高亮
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const id = (entry.target as HTMLElement).id;
+        tocNav.querySelectorAll('.toc-item').forEach((a) => a.classList.remove('active'));
+        tocNav.querySelector(`a[href="#${id}"]`)?.classList.add('active');
+      });
+    }, { rootMargin: '-96px 0px -70% 0px' });
+    headings.forEach((h) => observer.observe(h));
+  }
+
+  buildToc();
+  document.addEventListener('astro:page-load', buildToc);
+</script>

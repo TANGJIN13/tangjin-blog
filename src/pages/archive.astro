@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import { getPublishedPosts, formatDate, readingTime } from '../lib/posts';
 
 const posts = await getPublishedPosts();
@@ -17,7 +19,9 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
 ---
 
 <Base title="归档">
-  <div class="container">
+  <div class="page-shell">
+    <SidebarLeft />
+    <div class="page-main">
     <header class="page-head onload-animation">
       <h1><Icon name="archive" size="1.6rem" /> 归档</h1>
       <p>
@@ -64,6 +68,8 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
         </div>
       )
     }
+    </div>
+    <SidebarRight />
   </div>
 </Base>
 

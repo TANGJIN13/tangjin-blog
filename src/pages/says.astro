@@ -3,6 +3,8 @@ import { render } from 'astro:content';
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import { site } from '../site';
 
 // 取全部说说，按 date 倒序
@@ -15,7 +17,9 @@ const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (
 ---
 
 <Base title="说说">
-  <div class="container says-container">
+  <div class="page-shell">
+    <SidebarLeft />
+    <div class="page-main says-container">
     <!-- 顶部横幅 -->
     <div class="says-banner">
       <img class="says-banner-bg" src="/images/wallpapers/wallpaper-02.svg" alt="" aria-hidden="true" />
@@ -65,11 +69,13 @@ const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (
         <p>在 <code>src/content/says/</code> 下新建一个 .md 文件，写上 frontmatter 的 <code>date</code> 和正文即可。</p>
       </div>
     )}
+    </div>
+    <SidebarRight />
   </div>
 </Base>
 
 <style>
-  .says-container { margin-top: 2rem; max-width: 760px; margin-inline: auto; }
+  .says-container { min-width: 0; }
 
   /* 横幅 */
   .says-banner {

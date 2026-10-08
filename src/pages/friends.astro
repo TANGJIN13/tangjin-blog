@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import { site } from '../site';
 
 interface Friend {
@@ -16,7 +18,8 @@ const friends: Friend[] = [
 ---
 
 <Base title="友链">
-  <div class="post-layout">
+  <div class="page-shell">
+    <SidebarLeft />
     <article class="post-main">
       <header class="post-head">
         <div class="cover">
@@ -60,12 +63,12 @@ const friends: Friend[] = [
         </div>
       </div>
     </article>
+    <SidebarRight />
   </div>
 </Base>
 
 <style>
-  /* 去掉右侧目录栏后：单栏，收窄并在页面居中 */
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 1080px; gap: 1.5rem; align-items: start; }
+  .post-main { min-width: 0; }
   .post-head { margin-bottom: 2rem; }
   .cover img, .cover-placeholder { width: 100%; aspect-ratio: auto; height: clamp(180px, 24vw, 250px); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
   .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }

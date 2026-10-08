@@ -1,0 +1,119 @@
+---
+// 通用左侧栏：个人资料卡 + 主题切换（首页与各内页共用）
+import Icon from './Icon.astro';
+import ThemeToggle from './ThemeToggle.astro';
+import { site } from '../site';
+
+const path = Astro.url.pathname;
+
+const navItems = [
+  { label: '首页', href: '/', icon: 'home' },
+  { label: '归档', href: '/archive/', icon: 'archive' },
+  { label: '相册', href: '/album/', icon: 'photo' },
+  { label: '说说', href: '/says/', icon: 'comment' },
+  { label: '关于', href: '/about/', icon: 'person' },
+];
+
+const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+---
+
+<aside class="ref-sidebar-left">
+  <div class="card-base profile-card onload-animation">
+    <div class="avatar-ring">
+      <img class="profile-avatar" src={site.avatar} alt="头像" width="78" height="78" />
+    </div>
+    <h3 class="profile-name">{site.title}</h3>
+    <p class="profile-bio">Web 安全 / CTF / 生活趣事</p>
+    <nav class="profile-nav">
+      {navItems.map((it) => (
+        <a href={it.href} class:list={['nav-item', isActive(it.href) && 'active']}>
+          <Icon name={it.icon} size="1rem" />
+          <span>{it.label}</span>
+        </a>
+      ))}
+    </nav>
+  </div>
+
+  <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+    <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
+    <ThemeToggle />
+  </div>
+</aside>
+
+<style>
+  .profile-card {
+    text-align: center;
+    padding: 1.5rem 1rem 1.1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  /* 卡片顶部一条主色渐变装饰线 */
+  .profile-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 4px;
+    background: var(--gradient-primary);
+  }
+
+  .avatar-ring {
+    width: 84px; height: 84px;
+    margin: 0 auto 0.7rem;
+    border-radius: 50%;
+    padding: 3px;
+    background: var(--gradient-primary);
+    box-shadow: 0 6px 20px oklch(62% 0.14 250 / 0.35);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .profile-card:hover .avatar-ring { transform: rotate(8deg) scale(1.05); }
+  .profile-avatar {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--surface);
+    display: block;
+  }
+
+  .profile-name {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 0.25rem;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .profile-bio {
+    font-size: 0.78rem;
+    color: var(--text-faint);
+    margin: 0 0 0.9rem;
+    display: inline-block;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+  }
+  .profile-nav { display: flex; flex-direction: column; gap: 0.15rem; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.45rem 0.6rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+    position: relative;
+  }
+  .nav-item :global(.icon) { opacity: 0.8; transition: transform 0.18s ease; }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); transform: translateX(3px); }
+  .nav-item:hover :global(.icon) { transform: scale(1.12); }
+  .nav-item.active {
+    background: var(--primary-soft);
+    color: var(--primary-strong);
+    font-weight: 600;
+  }
+  [data-theme='dark'] .nav-item.active { color: var(--primary-light); }
+  .nav-item.active :global(.icon) { opacity: 1; }
+</style>

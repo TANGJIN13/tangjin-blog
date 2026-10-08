@@ -2,12 +2,14 @@
 import Base from '../layouts/Base.astro';
 import WalineComments from '../components/WalineComments.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 ---
 
 <Base title="留言板">
-  <div class="container post-container">
-    <div class="post-layout">
-      <article class="post-main">
+  <div class="page-shell">
+    <SidebarLeft />
+    <article class="post-main">
         <header class="post-head">
           <div class="cover">
             <div class="cover-placeholder guestbook-cover">
@@ -47,20 +49,13 @@ import Icon from '../components/Icon.astro';
           <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 留言</h3>
           <WalineComments />
         </div>
-      </article>
-    </div>
+    </article>
+    <SidebarRight />
   </div>
 </Base>
 
 <style>
-  .post-container { margin-top: 2rem; }
-  .post-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 1080px;
-    gap: 1.5rem;
-    align-items: start;
-  }
+  .post-main { min-width: 0; }
 
   .post-head { margin-bottom: 2rem; }
   .cover img, .cover-placeholder {

@@ -2,6 +2,8 @@
 import Base from '../layouts/Base.astro';
 import GiscusComments from '../components/GiscusComments.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import { getPublishedPosts } from '../lib/posts';
 import { profile } from '../data/profile';
 import { site } from '../site';
@@ -20,7 +22,8 @@ const stats = [
 ---
 
 <Base title="关于我">
-  <div class="post-layout">
+  <div class="page-shell">
+    <SidebarLeft />
     <article class="post-main">
       <!-- 顶部封面 -->
       <header class="post-head">
@@ -129,12 +132,12 @@ const stats = [
 
       <GiscusComments />
     </article>
+    <SidebarRight />
   </div>
 </Base>
 
 <style>
-  /* 去掉右侧目录栏后：正文单栏，收窄到适合阅读的宽度并在页面居中 */
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 1080px; gap: 1.5rem; align-items: start; }
+  .post-main { min-width: 0; }
   .post-head { margin-bottom: 1.75rem; }
   .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
   .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }

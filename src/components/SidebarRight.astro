@@ -1,0 +1,45 @@
+---
+// 通用右侧栏：搜索 / 日历 / 节假日 / 站点统计 / 热力图
+// 默认插槽在最后：文章页借此把「目录」放在最下面，它会 sticky 吸附、其他卡片滚走后仍然可见
+import Icon from './Icon.astro';
+import SearchWidget from './SearchWidget.astro';
+import CalendarWidget from './CalendarWidget.astro';
+import HolidayWidget from './HolidayWidget.astro';
+import HeatmapWidget from './HeatmapWidget.astro';
+import SiteStats from './SiteStats.astro';
+import { getPublishedPosts } from '../lib/posts';
+import { categories } from '../data/categories';
+
+const posts = await getPublishedPosts();
+const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
+---
+
+<aside class="ref-sidebar-right">
+  <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+    <h3 class="widget-title"><Icon name="search" size="1.05rem" /> 搜索</h3>
+    <SearchWidget />
+  </div>
+
+  <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
+    <h3 class="widget-title"><Icon name="calendar" size="1.05rem" /> 日历</h3>
+    <CalendarWidget />
+  </div>
+
+  <div class="card-base widget-card onload-animation" style="animation-delay: 0.3s">
+    <h3 class="widget-title"><Icon name="clock" size="1.05rem" /> 节假日</h3>
+    <HolidayWidget />
+  </div>
+
+  <div class="card-base widget-card onload-animation" style="animation-delay: 0.4s">
+    <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
+    <SiteStats
+      postsCount={posts.length}
+      categoriesCount={categories.length}
+      totalWords={totalWords}
+    />
+  </div>
+
+  <HeatmapWidget />
+
+  <slot />
+</aside>

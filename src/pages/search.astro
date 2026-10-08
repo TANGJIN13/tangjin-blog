@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import { getCollection } from 'astro:content';
 import { categories } from '../data/categories';
 
@@ -24,7 +26,8 @@ const catCounts = categories.map((c) => ({
 ---
 
 <Base title="搜索">
-  <div class="post-layout">
+  <div class="page-shell">
+    <SidebarLeft />
     <article class="post-main">
       <!-- 轻量头部：不再有大块蓝色 banner -->
       <header class="sp-hero">
@@ -106,6 +109,7 @@ const catCounts = categories.map((c) => ({
         <span>换个关键词，或点上面的分类筛选看看</span>
       </div>
     </article>
+    <SidebarRight />
   </div>
 </Base>
 
@@ -193,8 +197,7 @@ const catCounts = categories.map((c) => ({
 </script>
 
 <style>
-  /* 去掉右侧栏后：单栏，收窄并在页面居中 */
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 1080px; gap: 1.5rem; align-items: start; }
+  .post-main { min-width: 0; }
 
   /* ===== 头部（轻量，去掉大蓝块） ===== */
   .sp-hero {

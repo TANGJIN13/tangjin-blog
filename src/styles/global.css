@@ -155,6 +155,50 @@ code, pre, kbd { font-family: var(--font-mono); }
   margin-inline: auto;
 }
 
+/* ============ 页面外壳：统一的三栏 / 两栏布局 ============
+   .page-shell = 左栏 + 内容 + 右栏（首页与各内页）
+   .post-shell = 内容 + 右栏（文章页，没有左栏）
+   侧栏统一用 .ref-sidebar-left / .ref-sidebar-right
+   中间列可直接放 <article>，也可用 .page-main 包一层 */
+.page-shell,
+.post-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  width: 92%;
+  max-width: var(--page-width);
+  margin-inline: auto;
+  margin-top: 1.5rem;
+  padding-inline: 1rem;
+}
+/* 文章页没有左栏，缩掉一个侧栏宽度，让右栏与其它页面右对齐 */
+.post-shell { max-width: calc(var(--page-width) - var(--sidebar-width)); }
+
+.ref-sidebar-left,
+.ref-sidebar-right {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  /* 拉伸到行高：右栏最下面的目录才能吸附住、并且一直可见 */
+  align-self: stretch;
+}
+
+/* 中屏：只放得下左栏（文章页则只放右栏） */
+@media (min-width: 900px) {
+  .page-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+  .page-shell > .ref-sidebar-right { display: none; }
+  .post-shell { grid-template-columns: minmax(0, 1fr) var(--sidebar-width); }
+}
+
+/* 大屏：左右栏都出现 */
+@media (min-width: 1280px) {
+  .page-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--sidebar-width); }
+  .page-shell > .ref-sidebar-right { display: flex; }
+  .post-shell { grid-template-columns: minmax(0, 1fr) var(--sidebar-width); }
+}
+
 /* ============ Widget 系统 ============ */
 .card-base {
   background: var(--surface);
@@ -317,29 +361,37 @@ body.immersive-reading .site-footer {
   display: none !important;
 }
 body.immersive-reading .ref-layout,
-body.immersive-reading .post-layout {
+body.immersive-reading .post-layout,
+body.immersive-reading .page-shell,
+body.immersive-reading .post-shell {
   grid-template-columns: 1fr !important;
-  max-width: 760px;
+  max-width: 800px;
   margin-inline: auto;
 }
 
-/* ============ 手机响应式 ============ */
-@media (max-width: 768px) {
-  /* 手机端隐藏侧栏模块（个人卡/搜索/日历/统计），只保留文章主内容，回到原来的体验 */
+/* ============ 手机 / 平板响应式 ============ */
+/* 窄屏：侧栏全部收起，内容单栏铺满（左右栏在手机上放不下） */
+@media (max-width: 899px) {
   .ref-sidebar-left,
   .ref-sidebar-right {
     display: none !important;
   }
-  .ref-layout {
-    grid-template-columns: 1fr !important;
+  .page-shell,
+  .post-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
     gap: 0.75rem;
   }
   .container,
-  .post-layout {
+  .post-layout,
+  .page-shell,
+  .post-shell {
     width: 100% !important;
     max-width: 100% !important;
     padding-inline: 0.75rem;
   }
+}
+
+@media (max-width: 768px) {
   .wallpaper-wrapper {
     height: clamp(280px, 50vh, 400px) !important;
   }
@@ -355,7 +407,9 @@ body.immersive-reading .post-layout {
   .categories-grid { grid-template-columns: 1fr 1fr; }
 }
 
-@media (max-width: 1279px) and (min-width: 769px) {
-  .ref-sidebar-right { display: none !important; }
-  .ref-layout { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) !important; }
+/* 中屏 900–1279px：内页只显示左栏，文章页只显示右栏 */
+@media (max-width: 1279px) and (min-width: 900px) {
+  .page-shell > .ref-sidebar-right { display: none !important; }
+  .page-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) !important; }
+  .post-shell { grid-template-columns: minmax(0, 1fr) var(--sidebar-width) !important; }
 }

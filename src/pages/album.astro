@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import album from '../data/album.json';
 
 interface Photo {
@@ -20,7 +22,9 @@ const photos = [...(album as Photo[])].sort((a, b) => {
 ---
 
 <Base title="相册">
-  <div class="container album-container">
+  <div class="page-shell">
+    <SidebarLeft />
+    <div class="page-main album-container">
     <!-- 顶部横幅 -->
     <div class="album-banner">
       <img class="album-banner-bg" src="/images/wallpapers/wallpaper-03.svg" alt="" aria-hidden="true" />
@@ -61,6 +65,8 @@ const photos = [...(album as Photo[])].sort((a, b) => {
         <p>把照片放进 <code>public/photos/</code> 并在 <code>src/data/album.json</code> 里登记即可。</p>
       </div>
     )}
+    </div>
+    <SidebarRight />
   </div>
 
   <!-- 灯箱 -->
@@ -144,7 +150,7 @@ const photos = [...(album as Photo[])].sort((a, b) => {
 </script>
 
 <style>
-  .album-container { margin-top: 2rem; }
+  .album-container { min-width: 0; }
 
   /* 横幅 */
   .album-banner {

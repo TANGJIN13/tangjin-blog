@@ -1,6 +1,8 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
+import SidebarLeft from '../../components/SidebarLeft.astro';
+import SidebarRight from '../../components/SidebarRight.astro';
 import { getCollection } from 'astro:content';
 import { categories } from '../../data/categories';
 import { site } from '../../site';
@@ -16,7 +18,9 @@ const totalPosts = posts.length;
 ---
 
 <Base title="分类">
-  <div class="container post-container">
+  <div class="page-shell">
+    <SidebarLeft />
+    <div class="page-main">
     <!-- 顶部横幅 -->
     <div class="cat-banner">
       <img class="cat-banner-bg" src="/images/wallpapers/wallpaper-01.svg" alt="" aria-hidden="true" />
@@ -49,11 +53,13 @@ const totalPosts = posts.length;
         </div>
       </div>
     </div>
+    </div>
+    <SidebarRight />
   </div>
 </Base>
 
 <style>
-  .post-container { margin-top: 2rem; }
+  .cat-page { min-width: 0; }
 
   /* 横幅 */
   .cat-banner {
@@ -98,15 +104,8 @@ const totalPosts = posts.length;
     text-shadow: 0 1px 8px oklch(0% 0 0 / 0.4);
   }
 
-  /* 布局（去掉右侧栏后：单栏居中） */
-  .cat-page {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    max-width: 1080px;
-    margin-inline: auto;
-    gap: 1.5rem;
-    align-items: start;
-  }
+  /* 布局由全局 .page-shell 统一控制 */
+  .cat-page { display: block; }
 
   /* 分类卡片网格 */
   .cat-grid {

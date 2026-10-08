@@ -152,7 +152,7 @@ const catCounts = categories.map((c) => ({
     margin-top: 1.25rem;
   }
 
-  @media (min-width: 768px) {
+  @media (min-width: 900px) {
     .ref-layout { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
     .ref-sidebar-right { display: none; }
   }
@@ -431,9 +431,7 @@ const catCounts = categories.map((c) => ({
     .post-list { grid-template-columns: 1fr; }
   }
 
-  @media (max-width: 767px) {
-    .ref-sidebar-left, .ref-sidebar-right { flex-direction: row; flex-wrap: wrap; }
-    .ref-sidebar-left > *, .ref-sidebar-right > * { flex: 1; min-width: 200px; }
+  @media (max-width: 899px) {
     .entry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .entry-desc { display: none; }
   }

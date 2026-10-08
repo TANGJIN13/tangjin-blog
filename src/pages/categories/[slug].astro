@@ -2,6 +2,8 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
+import SidebarLeft from '../../components/SidebarLeft.astro';
+import SidebarRight from '../../components/SidebarRight.astro';
 import { categories } from '../../data/categories';
 import { pinToTop } from '../../lib/posts';
 import { site } from '../../site';
@@ -19,7 +21,9 @@ const posts = pinToTop(raw.sort((a, b) => b.data.published.valueOf() - a.data.pu
 ---
 
 <Base title={`${category.name} · 分类`}>
-  <div class="container post-container">
+  <div class="page-shell">
+    <SidebarLeft />
+    <div class="page-main">
     <div class="cat-layout">
       <article class="cat-main">
         <header class="cat-head">
@@ -57,11 +61,13 @@ const posts = pinToTop(raw.sort((a, b) => b.data.published.valueOf() - a.data.pu
         </div>
       </article>
     </div>
+    </div>
+    <SidebarRight />
   </div>
 </Base>
 
 <style>
-  .cat-layout { max-width: 720px; margin-inline: auto; }
+  .cat-layout { min-width: 0; }
   .cat-head { text-align: center; margin-bottom: 2.5rem; }
   .cat-cover { margin-bottom: 1rem; }
   .cat-cover-inner {
