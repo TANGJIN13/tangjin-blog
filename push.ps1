@@ -3,7 +3,7 @@
 #       powershell -NoProfile -ExecutionPolicy Bypass -File push.ps1 "提交说明"
 #
 # 为什么要自动 pull：
-#   你在 /admin/ 后台发的文章会直接提交到 GitHub，
+#   你在 GitHub 网页上直接改文件会提交到远程，
 #   本地如果不同步就推送会被拒绝（non-fast-forward）。
 
 param(
