@@ -334,11 +334,11 @@ const slides = single ? images.slice(0, 1) : images;
   }
   .cloud {
     position: absolute;
-    background: rgba(255, 255, 255, 0.55);
+    background: var(--bg);
     border-radius: 100px;
-    filter: blur(24px);
+    filter: blur(28px);
     will-change: transform;
-    opacity: 0.75;
+    opacity: 0.92;
   }
   .cloud::before,
   .cloud::after {
@@ -359,7 +359,7 @@ const slides = single ? images.slice(0, 1) : images;
     width: 300px; height: 75px;
     bottom: 50px; left: 25%;
     animation: drift-b 36s ease-in-out -8s infinite;
-    opacity: 0.55;
+    opacity: 0.72;
   }
   .cloud-2::before { width: 130px; height: 110px; top: -60px; left: 35px; }
   .cloud-2::after  { width: 90px;  height: 80px;  top: -40px; right: 30px; }
@@ -368,7 +368,7 @@ const slides = single ? images.slice(0, 1) : images;
     width: 180px; height: 50px;
     bottom: 20px; left: 55%;
     animation: drift-a 32s ease-in-out -16s infinite;
-    opacity: 0.45;
+    opacity: 0.68;
   }
   .cloud-3::before { width: 85px; height: 75px; top: -40px; left: 20px; }
   .cloud-3::after  { width: 65px; height: 55px; top: -30px; right: 15px; }
@@ -377,7 +377,7 @@ const slides = single ? images.slice(0, 1) : images;
     width: 260px; height: 65px;
     bottom: 40px; left: 75%;
     animation: drift-b 24s ease-in-out -22s infinite;
-    opacity: 0.5;
+    opacity: 0.7;
   }
   .cloud-4::before { width: 110px; height: 95px; top: -50px; left: 30px; }
   .cloud-4::after  { width: 75px;  height: 65px; top: -35px; right: 25px; }
