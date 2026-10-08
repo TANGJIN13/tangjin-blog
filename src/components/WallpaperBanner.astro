@@ -14,7 +14,7 @@ const {
     '/images/wallpapers/banner-nebula.jpg',
     '/images/wallpapers/banner-starry.jpg',
   ],
-  height = 'clamp(480px, 82vh, 860px)',
+  height = 'clamp(520px, 88vh, 920px)',
   /** 单图模式：不轮播（文章页用封面图时开启） */
   single = false,
 } = Astro.props;
@@ -227,13 +227,13 @@ const slides = single ? images.slice(0, 1) : images;
   .wp-scroll:hover .wp-mouse { border-color: oklch(100% 0 0 / 0.95); }
 
   .wp-title {
-    font-size: clamp(2.4rem, 6.5vw, 4.2rem);
-    font-weight: 400;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 700;
     margin: 0;
     color: #fff;
-    letter-spacing: 0.08em;
-    line-height: 1.4;
-    font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", var(--font-sans);
+    letter-spacing: 0.06em;
+    line-height: 1.35;
+    font-family: "Noto Serif SC", "Source Han Serif SC", var(--font-sans);
     text-shadow: 0 4px 30px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.5);
   }
 
@@ -254,11 +254,11 @@ const slides = single ? images.slice(0, 1) : images;
   }
   .wp-quote-sub {
     margin: 0.6rem 0 0;
-    font-size: clamp(0.95rem, 1.7vw, 1.15rem);
+    font-size: clamp(0.95rem, 1.6vw, 1.1rem);
     font-weight: 400;
     color: oklch(100% 0 0 / 0.88);
-    letter-spacing: 0.25em;
-    font-family: "ZCOOL XiaoWei", "Ma Shan Zheng", var(--font-sans);
+    letter-spacing: 0.3em;
+    font-family: "Noto Serif SC", "Source Han Serif SC", var(--font-sans);
     text-shadow: 0 1px 16px oklch(0% 0 0 / 0.6);
   }
   .wp-quote.active {
@@ -349,10 +349,10 @@ const slides = single ? images.slice(0, 1) : images;
     .wp-inner { gap: 0.5rem; }
     /* 手机端座右铭加大加粗，阴影更深保证在星空背景上清晰 */
     .wp-title {
-      font-size: clamp(2.3rem, 10.5vw, 3.4rem) !important;
-      font-weight: 400 !important;
-      letter-spacing: 0.06em !important;
-      font-family: "Ma Shan Zheng", "ZCOOL XiaoWei", var(--font-sans) !important;
+      font-size: clamp(2.2rem, 9.5vw, 3.2rem) !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.05em !important;
+      font-family: "Noto Serif SC", "Source Han Serif SC", var(--font-sans) !important;
       text-shadow: 0 4px 30px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.55) !important;
     }
     .wp-quote-sub {
