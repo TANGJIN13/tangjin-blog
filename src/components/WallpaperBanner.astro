@@ -336,9 +336,9 @@ const slides = single ? images.slice(0, 1) : images;
     right: 0;
     bottom: -1px;
     width: 100%;
-    height: 10vh;
-    min-height: 50px;
-    max-height: 150px;
+    height: 13vh;
+    min-height: 70px;
+    max-height: 170px;
     z-index: 6;
     pointer-events: none;
     overflow: visible;
@@ -375,17 +375,19 @@ const slides = single ? images.slice(0, 1) : images;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 30%;
+    height: 17%;
     z-index: 4;
     pointer-events: none;
+    /* 只在波浪正上方一小段柔化交界，不再拉出一条大色带 */
     background: linear-gradient(to bottom,
       transparent 0%,
-      transparent 35%,
+      transparent 55%,
+      color-mix(in srgb, var(--bg) 55%, transparent) 82%,
       var(--bg) 100%);
   }
 
   @media (max-width: 767px) {
-    .header-waves { height: 10vh; min-height: 50px; max-height: 110px; }
+    .header-waves { height: 13vh; min-height: 80px; max-height: 130px; }
     .wp-scroll { display: none; }
     .wp-inner { gap: 0.5rem; }
     /* 手机端座右铭加大加粗，阴影更深保证在星空背景上清晰 */
