@@ -29,6 +29,13 @@ export const site = {
    * 想改成实际的建站日，改这一行即可。
    */
   startDate: '2026-10-04',
+  /**
+   * 留言板评论服务（自建 Waline，部署在同域 /waline/ 下）。
+   * 读者无需登录任何账号，填个昵称就能留言。
+   */
+  waline: {
+    serverURL: '/waline/',
+  },
   footer: {
     since: 2026,
   },

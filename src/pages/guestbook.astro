@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import GiscusComments from '../components/GiscusComments.astro';
+import WalineComments from '../components/WalineComments.astro';
 import Icon from '../components/Icon.astro';
 ---
 
@@ -32,7 +32,7 @@ import Icon from '../components/Icon.astro';
             <ul>
               <li>文明发言，互相尊重</li>
               <li>禁止广告、违法内容</li>
-              <li>需要 GitHub 账号登录后留言</li>
+              <li>填写昵称即可留言，邮箱可以不填</li>
               <li>留言即表示同意公开展示</li>
             </ul>
           </div>
@@ -45,7 +45,7 @@ import Icon from '../components/Icon.astro';
 
         <div class="card-base comments-card">
           <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 留言</h3>
-          <GiscusComments />
+          <WalineComments />
         </div>
       </article>
 
@@ -54,8 +54,8 @@ import Icon from '../components/Icon.astro';
           <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 信息</h3>
           <div class="toc-nav">
             <span class="toc-item">
-              <Icon name="github" size="0.9rem" />
-              需要 GitHub 账号
+              <Icon name="person" size="0.9rem" />
+              无需登录，填昵称即可
             </span>
             <span class="toc-item">
               <Icon name="lock" size="0.9rem" />
