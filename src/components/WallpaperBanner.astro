@@ -44,15 +44,13 @@ const slides = single ? images.slice(0, 1) : images;
         <slot />
       ) : (
         <>
-          <!-- 站点名 —— 横幅大标题 -->
-          <h1 class="wp-title">{site.tabTitle}</h1>
-
-          <!-- 轮换句子 —— 句尾带闪烁光标，每隔几秒淡入换一句 -->
+          <!-- 轮换句子 —— 直接作为横幅文字，句尾带闪烁光标，每隔几秒淡入换一句 -->
           <div class="wp-quotes" id="wp-quotes" data-interval="6000">
             {site.mottos.map((m, i) => (
-              <p class:list={['wp-quote', { active: i === 0 }]}>
-                {m.text}{m.sub ? ' · ' + m.sub : ''}<span class="wp-caret" aria-hidden="true"></span>
-              </p>
+              <div class:list={['wp-quote', { active: i === 0 }]}>
+                <h1 class="wp-title">{m.text}<span class="wp-caret" aria-hidden="true"></span></h1>
+                {m.sub && <p class="wp-quote-sub">{m.sub}</p>}
+              </div>
             ))}
           </div>
 
@@ -237,8 +235,7 @@ const slides = single ? images.slice(0, 1) : images;
   .wp-scroll:hover .wp-mouse { border-color: oklch(100% 0 0 / 0.95); }
 
   .wp-title {
-    animation: wp-reveal 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
-    font-size: clamp(1.8rem, 4.4vw, 3.1rem);
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
     font-weight: 800;
     margin: 0;
     color: #fff;
@@ -251,17 +248,23 @@ const slides = single ? images.slice(0, 1) : images;
   .wp-quotes {
     display: grid;
     width: 100%;
-    animation: wp-reveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+    animation: wp-reveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
   }
   .wp-quote {
     grid-area: 1 / 1;
-    margin: 0;
-    font-size: clamp(0.82rem, 1.4vw, 1rem);
-    color: oklch(100% 0 0 / 0.85);
-    letter-spacing: 0.16em;
-    text-shadow: 0 1px 14px oklch(0% 0 0 / 0.55);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
     opacity: 0;
     pointer-events: none;
+  }
+  .wp-quote-sub {
+    margin: 0;
+    font-size: clamp(0.78rem, 1.3vw, 0.95rem);
+    color: oklch(100% 0 0 / 0.72);
+    letter-spacing: 0.22em;
+    text-shadow: 0 1px 14px oklch(0% 0 0 / 0.5);
   }
   .wp-quote.active {
     opacity: 1;
@@ -354,6 +357,6 @@ const slides = single ? images.slice(0, 1) : images;
     .wp-links { flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 0.3rem; }
     .wp-link { padding: 0.38rem 0.85rem; font-size: 0.8rem; }
     .wp-desc { font-size: 0.82rem; padding-inline: 0.5rem; }
-    .wp-quote { font-size: 0.8rem; letter-spacing: 0.1em; }
+    .wp-quote-sub { font-size: 0.75rem; letter-spacing: 0.14em; }
   }
 </style>
