@@ -129,18 +129,12 @@ const stats = [
 
       <GiscusComments />
     </article>
-
-    <aside class="post-toc">
-      <div class="card-base toc-card" id="toc-card">
-        <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
-        <nav class="toc-nav" id="toc-nav"></nav>
-      </div>
-    </aside>
   </div>
 </Base>
 
 <style>
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  /* 去掉右侧目录栏后：正文单栏，收窄到适合阅读的宽度并在页面居中 */
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 860px; gap: 1.5rem; align-items: start; }
   .post-head { margin-bottom: 1.75rem; }
   .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
   .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
@@ -417,9 +411,7 @@ const stats = [
   .deco-quote p { margin: 0; font-size: 1.02rem; }
 
   @media (max-width: 860px) {
-    .post-layout { grid-template-columns: minmax(0, 1fr); }
     .post-main { min-width: 0; }
-    .post-toc { display: none; }
     .about-cover { min-height: 220px; }
     .about-cover-content { padding: 1.5rem 1.2rem 1.2rem; }
     .id-card { padding: 1.1rem; }

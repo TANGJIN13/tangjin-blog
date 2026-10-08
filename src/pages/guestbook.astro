@@ -48,26 +48,6 @@ import Icon from '../components/Icon.astro';
           <WalineComments />
         </div>
       </article>
-
-      <aside class="post-toc">
-        <div class="card-base toc-card" id="toc-card">
-          <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 信息</h3>
-          <div class="toc-nav">
-            <span class="toc-item">
-              <Icon name="person" size="0.9rem" />
-              无需登录，填昵称即可
-            </span>
-            <span class="toc-item">
-              <Icon name="lock" size="0.9rem" />
-              留言公开展示
-            </span>
-            <span class="toc-item">
-              <Icon name="heart" size="0.9rem" />
-              文明交流
-            </span>
-          </div>
-        </div>
-      </aside>
     </div>
   </div>
 </Base>
@@ -76,7 +56,8 @@ import Icon from '../components/Icon.astro';
   .post-container { margin-top: 2rem; }
   .post-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 860px;
     gap: 1.5rem;
     align-items: start;
   }
@@ -181,19 +162,7 @@ import Icon from '../components/Icon.astro';
   }
   .guestbook-intro li { margin-bottom: 0.3rem; }
 
-  .post-toc { position: sticky; top: 88px; align-self: start; }
-  .toc-card { padding: 1rem; }
-  .toc-nav { display: flex; flex-direction: column; gap: 0.4rem; }
-  .toc-item {
-    font-size: 0.82rem; color: var(--text-soft);
-    padding: 0.4rem 0.5rem; border-radius: var(--radius-sm);
-    display: flex; align-items: center; gap: 0.4rem;
-  }
-  .toc-item:hover { background: var(--surface-2); }
-
   @media (max-width: 860px) {
-    .post-layout { grid-template-columns: minmax(0, 1fr); }
     .post-main { min-width: 0; }
-    .post-toc { display: none; }
   }
 </style>

@@ -60,21 +60,12 @@ const friends: Friend[] = [
         </div>
       </div>
     </article>
-
-    <aside class="post-toc">
-      <div class="card-base toc-card">
-        <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
-        <nav class="toc-nav">
-          <a class="toc-item toc-level-2" href="#friends-list">友链列表</a>
-          <a class="toc-item toc-level-2" href="#apply">申请友链</a>
-        </nav>
-      </div>
-    </aside>
   </div>
 </Base>
 
 <style>
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  /* 去掉右侧目录栏后：单栏，收窄并在页面居中 */
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 860px; gap: 1.5rem; align-items: start; }
   .post-head { margin-bottom: 2rem; }
   .cover img, .cover-placeholder { width: 100%; aspect-ratio: auto; height: clamp(180px, 24vw, 250px); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
   .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
@@ -155,12 +146,5 @@ const friends: Friend[] = [
   .friend-apply ul { margin: 0.5rem 0; padding-left: 1.2rem; }
   .friend-apply li { margin-bottom: 0.3rem; font-size: 0.9rem; }
 
-  .post-toc { position: sticky; top: 70px; align-self: start; }
-  .toc-card { padding: 1rem; }
-  .toc-nav { display: flex; flex-direction: column; gap: 0.2rem; }
-  .toc-item { font-size: 0.82rem; color: var(--text-soft); padding: 0.3rem 0.5rem; border-radius: var(--radius-sm); text-decoration: none !important; background: none !important; transition: all 0.15s ease; border-left: 2px solid transparent; }
-  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
-  .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
-
-  @media (max-width: 860px) { .post-layout { grid-template-columns: minmax(0, 1fr); } .post-main { min-width: 0; } .post-toc { display: none; } }
+  @media (max-width: 860px) { .post-main { min-width: 0; } }
 </style>

@@ -48,22 +48,6 @@ const totalPosts = posts.length;
           ))}
         </div>
       </div>
-
-      <!-- 侧栏：快速跳转（桌面端显示，手机端隐藏） -->
-      <aside class="cat-sidebar">
-        <div class="card-base cat-side-card">
-          <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 快速跳转</h3>
-          <nav class="cat-side-nav">
-            {categoryPosts.map((cat) => (
-              <a class="cat-side-item" href={`/categories/${cat.slug}/`}>
-                <Icon name={cat.icon || 'folder'} size="0.9rem" />
-                <span>{cat.name}</span>
-                <span class="cat-side-count">{cat.count}</span>
-              </a>
-            ))}
-          </nav>
-        </div>
-      </aside>
     </div>
   </div>
 </Base>
@@ -114,10 +98,12 @@ const totalPosts = posts.length;
     text-shadow: 0 1px 8px oklch(0% 0 0 / 0.4);
   }
 
-  /* 布局 */
+  /* 布局（去掉右侧栏后：单栏居中） */
   .cat-page {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 860px;
+    margin-inline: auto;
     gap: 1.5rem;
     align-items: start;
   }
@@ -154,27 +140,8 @@ const totalPosts = posts.length;
   .cat-card-count { font-size: 1.4rem; font-weight: 800; color: var(--primary); line-height: 1; }
   .cat-card-unit { font-size: 0.7rem; color: var(--text-faint); }
 
-  /* 侧栏 */
-  .cat-sidebar { position: sticky; top: 88px; }
-  .cat-side-card { padding: 1rem; }
-  .cat-side-nav { display: flex; flex-direction: column; gap: 0.15rem; }
-  .cat-side-item {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.4rem 0.6rem;
-    border-radius: var(--radius-sm);
-    font-size: 0.82rem;
-    color: var(--text-soft);
-    text-decoration: none !important;
-    transition: all 0.15s ease;
-  }
-  .cat-side-item:hover { background: var(--surface-2); color: var(--text); }
-  .cat-side-item span:nth-child(2) { flex: 1; }
-  .cat-side-count { color: var(--text-faint); font-size: 0.75rem; }
-
-  /* 手机端：隐藏侧栏，分类卡片单列 */
+  /* 手机端：分类卡片单列 */
   @media (max-width: 860px) {
-    .cat-page { grid-template-columns: 1fr; }
-    .cat-sidebar { display: none; }
     .cat-grid { grid-template-columns: 1fr; }
     .cat-banner { min-height: 150px; }
   }

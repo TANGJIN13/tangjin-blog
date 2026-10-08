@@ -52,20 +52,12 @@ const { tag, posts } = Astro.props;
         <a href="/archive/"><Icon name="archive" size="0.9rem" />全部归档</a>
       </nav>
     </article>
-
-    <aside class="post-toc">
-      <div class="card-base toc-card">
-        <h3 class="widget-title"><Icon name="tag" size="1.05rem" /> 全部标签</h3>
-        <div class="tg-all">
-          <a class="tg-all-link" href="/tags/">查看标签总览 →</a>
-        </div>
-      </div>
-    </aside>
   </div>
 </Base>
 
 <style>
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  /* 去掉右侧栏后：单栏，收窄并在页面居中 */
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 860px; gap: 1.5rem; align-items: start; }
 
   .tg-hero {
     display: flex;
@@ -129,13 +121,7 @@ const { tag, posts } = Astro.props;
   }
   .tg-back a:hover { color: var(--primary); border-color: oklch(70% 0.14 250 / 0.45); transform: translateY(-2px); }
 
-  .post-toc { position: sticky; top: 70px; align-self: start; }
-  .toc-card { padding: 1rem; }
-  .tg-all-link { font-size: 0.8rem; color: var(--primary); text-decoration: none !important; }
-
   @media (max-width: 860px) {
-    .post-layout { grid-template-columns: 1fr; }
-    .post-toc { display: none; }
     .tg-total { display: none; }
   }
 </style>

@@ -312,7 +312,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visibl
 /* ============ 沉浸阅读 ============ */
 body.immersive-reading .ref-sidebar-left,
 body.immersive-reading .ref-sidebar-right,
-body.immersive-reading .post-toc,
 body.immersive-reading .hero,
 body.immersive-reading .site-footer {
   display: none !important;

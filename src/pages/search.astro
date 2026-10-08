@@ -106,31 +106,6 @@ const catCounts = categories.map((c) => ({
         <span>换个关键词，或点上面的分类筛选看看</span>
       </div>
     </article>
-
-    <aside class="post-toc">
-      <div class="card-base toc-card">
-        <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 按分类浏览</h3>
-        <div class="cat-list">
-          {catCounts.map((c) => (
-            <a class="cat-row" href={`/categories/${c.slug}/`}>
-              <Icon name={c.icon || 'folder'} size="0.95rem" />
-              <span class="cat-row-name">{c.name}</span>
-              <span class="cat-row-count">{c.count}</span>
-            </a>
-          ))}
-        </div>
-      </div>
-
-      <div class="card-base toc-card">
-        <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 搜索技巧</h3>
-        <ul class="tips">
-          <li>按 <kbd>/</kbd> 直接聚焦搜索框</li>
-          <li>按 <kbd>Esc</kbd> 清空关键词</li>
-          <li>支持标题、描述、标签、分类名</li>
-          <li>点击分类胶囊可叠加筛选</li>
-        </ul>
-      </div>
-    </aside>
   </div>
 </Base>
 
@@ -218,7 +193,8 @@ const catCounts = categories.map((c) => ({
 </script>
 
 <style>
-  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1.5rem; }
+  /* 去掉右侧栏后：单栏，收窄并在页面居中 */
+  .post-layout { display: grid; grid-template-columns: minmax(0, 1fr); max-width: 860px; gap: 1.5rem; align-items: start; }
 
   /* ===== 头部（轻量，去掉大蓝块） ===== */
   .sp-hero {
@@ -423,45 +399,7 @@ const catCounts = categories.map((c) => ({
   .sp-empty p { margin: 0; font-size: 0.95rem; font-weight: 600; color: var(--text-soft); }
   .sp-empty span { font-size: 0.78rem; }
 
-  /* ===== 侧栏 ===== */
-  .post-toc { position: sticky; top: 70px; align-self: start; display: flex; flex-direction: column; gap: 0.75rem; }
-  .toc-card { padding: 1rem; }
-  .cat-list { display: flex; flex-direction: column; gap: 0.12rem; }
-  .cat-row {
-    display: flex; align-items: center; gap: 0.45rem;
-    padding: 0.38rem 0.5rem;
-    border-radius: var(--radius-sm);
-    color: var(--text-soft);
-    font-size: 0.82rem;
-    text-decoration: none !important;
-    transition: all 0.16s ease;
-  }
-  .cat-row :global(.icon) { color: var(--primary); opacity: 0.85; }
-  .cat-row:hover { background: var(--surface-2); color: var(--text); transform: translateX(3px); }
-  .cat-row-name { flex: 1; min-width: 0; }
-  .cat-row-count {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--text-faint);
-    background: var(--surface-2);
-    padding: 0 0.4rem;
-    border-radius: 999px;
-  }
-  .tips { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.3rem; }
-  .tips li { font-size: 0.78rem; color: var(--text-faint); line-height: 1.5; }
-  .tips kbd {
-    font-family: var(--font-mono);
-    font-size: 0.7rem;
-    padding: 0.05rem 0.35rem;
-    border-radius: 5px;
-    border: 1px solid var(--border);
-    background: var(--surface-2);
-    color: var(--text-soft);
-  }
-
   @media (max-width: 860px) {
-    .post-layout { grid-template-columns: 1fr; }
-    .post-toc { display: none; }
     .sp-bar { top: 56px; }
     .sp-total { display: none; }
   }
