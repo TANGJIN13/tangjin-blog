@@ -85,6 +85,10 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <script type="application/ld+json" set:html={JSON.stringify(websiteLd)} />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
+    <!-- 毛笔书法字体（马善政楷书 + 站酷小薇），用于横幅座右铭 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet" />
     <!-- 客户端路由：页面切换不整页刷新，音乐持续播放 -->
     <ClientRouter />
   </head>

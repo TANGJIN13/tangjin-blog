@@ -337,8 +337,11 @@ const catCounts = categories.map((c) => ({
   /* ===== 分类导航条（参照 c1everf0x.cn） ===== */
   .cat-card {
     padding: 0.75rem;
-    margin-top: 1.5rem;
+    /* 负 margin 把分类条拉到横幅波浪区上方，让壁纸填充分类条上面的空白 */
+    margin-top: -2.5rem;
     margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
   }
   .cat-bar-inner {
     display: flex;
