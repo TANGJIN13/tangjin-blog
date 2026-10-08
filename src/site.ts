@@ -26,7 +26,7 @@ export const site = {
   ],
 
   heroImage: '/images/hero.svg',
-  avatar: '/images/avatar.png',
+  avatar: '/images/avatar.png?v=2', // v2: 换黑猫头像后加版本参数破手机浏览器缓存
   /** 备案号 —— 显示在页脚，链接到工信部 */
   icp: '桂ICP备2026005024号-1',
   /**
