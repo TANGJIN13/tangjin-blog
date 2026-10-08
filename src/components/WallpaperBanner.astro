@@ -15,6 +15,7 @@ const {
     '/images/wallpapers/banner-starry.jpg',
   ],
   height = 'clamp(520px, 88vh, 920px)',
+  mobileHeight = 'clamp(320px, 65vh, 520px)',
   /** 单图模式：不轮播（文章页用封面图时开启） */
   single = false,
 } = Astro.props;
@@ -24,7 +25,7 @@ const hasSlot = Astro.slots.has('default');
 const slides = single ? images.slice(0, 1) : images;
 ---
 
-<div class="wallpaper-wrapper" style={`--wp-height: ${height}`} data-interval="7000">
+<div class="wallpaper-wrapper" style={`--wp-height: ${height}; --wp-mobile-height: ${mobileHeight}`} data-interval="7000">
   <!-- 轮播图片 -->
   <div class="wallpaper-images" id="wallpaper-images">
     {slides.map((src, i) => (
@@ -118,6 +119,9 @@ const slides = single ? images.slice(0, 1) : images;
     height: var(--wp-height);
     overflow: hidden;
     z-index: 0;
+  }
+  @media (max-width: 767px) {
+    .wallpaper-wrapper { height: var(--wp-mobile-height); }
   }
 
   /* 图片层 */
@@ -419,6 +423,16 @@ const slides = single ? images.slice(0, 1) : images;
       transparent 0%,
       transparent 50%,
       var(--bg) 100%);
+  }
+  @media (max-width: 767px) {
+    .wallpaper-gradient {
+      /* 手机端：渐变到白色，和白色分类条无缝衔接 */
+      background: linear-gradient(to bottom,
+        transparent 0%,
+        transparent 30%,
+        rgba(255, 255, 255, 0.8) 85%,
+        rgba(255, 255, 255, 1) 100%);
+    }
   }
 
   @media (max-width: 767px) {
