@@ -344,9 +344,11 @@ const catCounts = categories.map((c) => ({
     z-index: 2;
   }
   @media (max-width: 767px) {
-    /* 抵消 .ref-main 的 1.5rem gap，让分类条紧贴文章网格 */
-    .ref-main > .block:first-of-type { margin-bottom: -1.5rem; }
+    /* 手机端：ref-main gap 归零，分类条与首篇文章零间距贴紧；其余 block 用显式 margin 保留间隔 */
+    .ref-main { gap: 0 !important; }
     .cat-card { margin-bottom: 0 !important; }
+    .ref-main > .block:first-of-type { margin-bottom: 0; }
+    .ref-main > .block:nth-of-type(n+2) { margin-top: 1.5rem; }
   }
   .cat-bar-inner {
     display: flex;
