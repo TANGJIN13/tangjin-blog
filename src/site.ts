@@ -44,7 +44,7 @@ export const site = {
    *   - Bing：Webmaster Tools → 验证，取 msvalidate.01 的 content
    */
   verify: {
-    google: '',
+    google: 'cYpQxk3oM8jvwlu2tnr4CY0A9_UNELFV9zr5FibRGR4',
     baidu: '',
     bing: '',
   },
