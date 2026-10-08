@@ -53,14 +53,6 @@ const slides = single ? images.slice(0, 1) : images;
               </div>
             ))}
           </div>
-
-          <p class="wp-desc">{site.description}</p>
-
-          <div class="wp-links">
-            {site.links.map((l) => (
-              <a class="wp-link" href={l.href} target="_blank" rel="noopener">{l.label}</a>
-            ))}
-          </div>
         </>
       )}
     </div>
