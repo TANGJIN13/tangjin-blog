@@ -15,17 +15,17 @@ sudo systemctl is-active mariadb
 
 echo "==> 2. 允许 waline/umami 用户从 Docker 网段连接"
 mysql --protocol=socket -uroot -p"${DB_PASS}" <<'SQL'
-CREATE USER IF NOT EXISTS 'waline'@'%' IDENTIFIED BY 'waline_pass_2026';
+CREATE USER IF NOT EXISTS 'waline'@'%' IDENTIFIED BY 'CHANGE_ME_WALINE_DB_PASSWORD';
 GRANT ALL PRIVILEGES ON waline.* TO 'waline'@'%';
-CREATE USER IF NOT EXISTS 'umami'@'%' IDENTIFIED BY 'umami_pass_2026';
+CREATE USER IF NOT EXISTS 'umami'@'%' IDENTIFIED BY 'CHANGE_ME_UMAMI_DB_PASSWORD';
 GRANT ALL PRIVILEGES ON umami.* TO 'umami'@'%';
 FLUSH PRIVILEGES;
 SQL
 echo "   用户已放行"
 
 echo "==> 3. 验证容器网段能连 MariaDB"
-mysql -h 127.0.0.1 -uwaline -pwaline_pass_2026 -e "SELECT 'waline remote ok' AS s;" waline 2>&1 | tail -2
-mysql -h 127.0.0.1 -uumami -pumami_pass_2026 -e "SELECT 'umami remote ok' AS s;" umami 2>&1 | tail -2
+mysql -h 127.0.0.1 -uwaline -pCHANGE_ME_WALINE_DB_PASSWORD -e "SELECT 'waline remote ok' AS s;" waline 2>&1 | tail -2
+mysql -h 127.0.0.1 -uumami -pCHANGE_ME_UMAMI_DB_PASSWORD -e "SELECT 'umami remote ok' AS s;" umami 2>&1 | tail -2
 
 echo "==> 4. 修正 Waline 端口映射（容器内 8360）"
 sudo sed -i 's/8365:8365/8365:8360/' /opt/services/docker-compose.yml

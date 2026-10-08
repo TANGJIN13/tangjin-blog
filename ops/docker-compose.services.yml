@@ -10,7 +10,7 @@ services:
       - MYSQL_PORT=3306
       - MYSQL_DB=waline
       - MYSQL_USER=waline
-      - MYSQL_PASSWORD=waline_pass_2026
+      - MYSQL_PASSWORD=CHANGE_ME_WALINE_DB_PASSWORD
       - SITE_URL=https://tangjin.xyz
       - SECURE=false
     extra_hosts:
@@ -23,9 +23,9 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - DATABASE_URL=mysql://umami:umami_pass_2026@host.docker.internal:3306/umami
+      - DATABASE_URL=mysql://umami:CHANGE_ME_UMAMI_DB_PASSWORD@host.docker.internal:3306/umami
       - DATABASE_TYPE=mysql
-      - HASH_SALT=tangjin_blog_salt_2026
+      - HASH_SALT=CHANGE_ME_HASH_SALT
     command: ["npm", "run", "start-server"]
     extra_hosts:
       - "host.docker.internal:host-gateway"

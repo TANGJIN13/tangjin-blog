@@ -1,63 +1,103 @@
-# tangjin.xyz —— 我的个人博客
+# tangjin-blog
 
 [![构建并部署](https://github.com/TANGJIN13/tangjin-blog/actions/workflows/deploy.yml/badge.svg)](https://github.com/TANGJIN13/tangjin-blog/actions/workflows/deploy.yml)
 [![Astro](https://img.shields.io/badge/Astro-7.3-BC52EE?logo=astro&logoColor=white)](https://astro.build)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> 凡心所向，素履以往。生如逆旅，一苇以航。
+> 一个从零手搓的 **Astro 静态博客**：文章 / 说说 / 相册 / 归档 / 全文搜索 / 深浅主题 / 评论 / 音乐播放器，推送到 GitHub 即自动部署上线。
 >
-> 一个从零手搓的静态博客：记录 Web 安全 / CTF 方向的复现、踩坑与思考。
+> 它既是作者的个人站点源码，也当作一个可参考、可 Fork 的博客项目开源。
 
-**在线访问 👉 [https://tangjin.xyz](https://tangjin.xyz)**
+**在线预览 👉 [https://tangjin.xyz](https://tangjin.xyz)**
 
-📘 **使用指南（怎么写、怎么发、各功能怎么用）👉 [使用指南.md](使用指南.md)**
+📘 内容写作与功能使用手册：[使用指南.md](使用指南.md)
 
-![站点预览](docs/screenshot-home.png)
+![首页预览](docs/screenshot-home.png)
 
 ---
 
-## 这是什么
-
-这是我（[@TANGJIN13](https://github.com/TANGJIN13)，桂林电子科技大学 25 级网安学生）自己动手搭建的个人博客。没有使用现成主题，页面、组件、部署链路都是自己写的，算是一个"练手 + 自用"的项目。
-
-- 写作在 **Obsidian** 里完成，一条命令发布上线
-- 推送到 GitHub 后 **1~2 分钟自动部署**到腾讯云服务器
-- 所有数据（文章、评论）都在自己的仓库里，不依赖第三方平台
-
-## 功能特性
+## ✨ 特性
 
 | 模块 | 说明 |
 |---|---|
-| 首页 | 分类入口 + 文章卡片网格（16:9 封面 / 日期 / 分类 / 摘要 / 标签）+ 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏模块自动堆叠 |
-| 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享（复制链接 / 微博 / QQ 空间） |
+| 首页 | 分类入口 + 文章卡片网格（16:9 封面 / 日期 / 分类 / 摘要 / 标签）+ 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏自动堆叠 |
+| 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享 |
 | 说说 | `/says/` 短动态，按时间倒序，支持心情 emoji 与配图；草稿用 `draft: true` 暂不公开 |
 | 相册 | `/album/` 瀑布流照片墙，点击开大图灯箱（← / → 翻页、Esc 关闭） |
-| 关于页 | `/about/` 名片 + 自动统计（篇数 / 天数 / 字数）+ 技能卡 + 时间线，内容改 `src/data/profile.ts` |
-| 评论 | Giscus（GitHub Discussions 驱动，见下文） |
-| 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、歌词时间微调、失效音源自动跳过 |
+| 关于页 | `/about/` 名片 + 自动统计（篇数 / 天数 / 字数）+ 技能卡 + 时间线 |
+| 评论 | 文章页 / 关于页用 **Giscus**，留言板用自建 **Waline**（免登录匿名留言），见下文 |
+| 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、失效音源自动跳过 |
 | 主题 | 亮色 / 暗色 / 跟随系统，切换时底部提示当前模式，评论框主题同步 |
-| 特效 | 进入文章时樱花飘落约 10 秒（非全站常驻）、沉浸阅读模式 |
+| 特效 | 进入文章时樱花飘落约 10 秒、沉浸阅读模式 |
 | 归档 | 按年份竖向时间线展示，含总字数统计 |
 | 其他 | 归档 / 分类 / 标签 / 友链 / 留言板 / 全文搜索 / RSS / Sitemap |
-| 搜索引擎 | robots.txt + 自动 sitemap，部署后自动推送（百度主动推送 / IndexNow / 百度 JS 自动推送），详见 [SEO 文档](docs/SEO-搜索引擎提交.md) |
+| SEO | `robots.txt` + 自动 sitemap，部署后自动推送（百度主动推送 / IndexNow），详见 [SEO 文档](docs/SEO-搜索引擎提交.md) |
 
-## 技术栈
+## 🧱 技术栈
 
 | 层次 | 技术 |
 |---|---|
-| 框架 | Astro 7.3.5（Content Layer API） |
+| 框架 | Astro 7.3（Content Layer API） |
 | 语言 | TypeScript |
 | 样式 | 原生 CSS（oklch 色彩空间） |
 | 构建 | pnpm + Vite |
-| 评论 | Giscus + GitHub Discussions（[tangjin-blog-comments](https://github.com/TANGJIN13/tangjin-blog-comments)） |
-| 部署 | GitHub Actions → rsync → 腾讯云 Ubuntu 24.04 → Nginx |
+| 评论 | Giscus（GitHub Discussions）+ 自建 Waline |
+| 部署 | GitHub Actions → rsync → Nginx |
 
-## 目录结构
+## 🚀 快速开始
+
+环境要求：**Node.js ≥ 22**、**pnpm ≥ 11**
+
+```bash
+git clone https://github.com/TANGJIN13/tangjin-blog.git
+cd tangjin-blog
+pnpm install
+pnpm dev        # 开发服务器  http://localhost:4321
+pnpm build      # 构建到 dist/
+pnpm preview    # 本地预览构建结果
+```
+
+## ⚙️ 配置说明
+
+全站配置集中在少数几个文件里，改完重新构建即可生效：
+
+| 想改什么 | 改哪里 |
+|---|---|
+| 站点名 / 座右铭 / 备案号 / 社交链接 / 建站日期 / 评论服务地址 | [`src/site.ts`](src/site.ts) |
+| 关于页（自我介绍、技能、时间线、联系方式） | [`src/data/profile.ts`](src/data/profile.ts) |
+| 分类列表 | [`src/data/categories.ts`](src/data/categories.ts) |
+| 相册清单 | [`src/data/album.json`](src/data/album.json) |
+| 首页头像 / 壁纸 | `public/images/avatar.png`、`src/site.ts` 的 `heroImage` |
+| 文章 / 说说 | `src/content/posts/`、`src/content/says/` |
+
+## 💬 评论系统
+
+- **文章页 + 关于页 —— Giscus**：由 GitHub Discussions 驱动，读者用 GitHub 账号登录即可评论、点赞、回复。评论数据存在另一个仓库（[tangjin-blog-comments](https://github.com/TANGJIN13/tangjin-blog-comments)）的 Discussions 里，博客本身**零后端、零数据库**，按页面路径（pathname）自动匹配讨论串。组件见 [`src/components/GiscusComments.astro`](src/components/GiscusComments.astro)。
+- **留言板 —— 自建 Waline**：读者**无需登录**，填个昵称即可留言（邮箱选填）。前端随仓库自带（`src/vendor/waline.js|css`），服务端部署在同域 `/waline/` 下，地址在 `src/site.ts` 的 `waline.serverURL` 配置。组件见 [`src/components/WalineComments.astro`](src/components/WalineComments.astro)。
+
+## 🚢 部署（可选）
+
+默认工作流 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) 的链路是：
+
+```
+push main → GitHub Actions 构建 dist/ → rsync 同步到服务器 → Nginx 直接提供静态文件
+```
+
+想复刻这套全自动部署，需要：
+
+1. 一台装了 Nginx 的服务器，站点根目录如 `/var/www/blog`；
+2. 生成一对**部署专用** SSH 密钥，公钥写进服务器 `authorized_keys`，并**强烈建议**用
+   `command="/usr/bin/rrsync -wo /var/www/blog",restrict` 把它限制为「只能 rsync 写入站点目录」——这样即使密钥泄露也无法登录服务器；
+3. 仓库 **Settings → Secrets and variables → Actions** 添加 `SSH_PRIVATE_KEY`（部署私钥全文），并把 workflow 里的 `SSH_HOST` / `SSH_USER` / `DEPLOY_PATH` 改成你自己的值。
+
+> **不需要自动部署？** 直接删掉 `.github/workflows/deploy.yml`，手动 `pnpm build` 后把 `dist/` 传到任意静态托管即可（Vercel / Netlify / Cloudflare Pages / GitHub Pages）。
+
+## 📁 目录结构
 
 ```
 tangjin-blog/
-├── .github/workflows/deploy.yml   # 自动部署工作流（核心）
+├── .github/workflows/deploy.yml   # 自动部署工作流
 ├── public/                        # 静态资源（壁纸、头像、相册照片、音乐、兜底封面）
 ├── src/
 │   ├── site.ts                    # 站点配置（标题、座右铭、社交链接、备案号等）
@@ -70,29 +110,13 @@ tangjin-blog/
 │   └── styles/                    # 全局样式
 ├── docs/                          # 补充文档（SEO 提交、Obsidian 教程等）
 ├── 使用指南.md                     # 内容添加手册（怎么写、怎么发、去哪改）
-├── publish.cjs / publish.sh       # Obsidian 笔记一键发布脚本（老流程，应急用）
-├── deploy.ps1                     # 本地直传服务器脚本（应急用）
+├── ops/                           # 服务器运维脚本（Nginx / 部署密钥限制等）
 └── astro.config.mjs               # Astro 配置
 ```
 
-## 写作与发布
+## 📝 写作与发布
 
-完整图文手册见 [使用指南.md](使用指南.md)，下面给速览。
-
-### 日常用法：Obsidian + Templater + obsidian-git（默认全自动）
-
-博客仓库就放在我的 Obsidian 笔记库里，写作即发布：
-
-1. 在文件树里 **右键 `tangjin-blog/src/content/posts` → 新建笔记**（注意：必须在 `posts` 文件夹内新建，新建笔记的分类选择弹窗才会触发）。
-2. Templater 模板自动弹出「选分类」窗口，并让你填标题 / 摘要 / 标签，最后自动改名为 `日期-标题.md`。
-3. 正常写 Markdown。保存后 `obsidian-git` 每 2 分钟自动 commit、每 3 分钟自动 push 到 GitHub → 自动部署。
-4. 发**说说**：进 `src/content/says/` 右键新建，模板会自动填日期、问心情，并默认标成草稿（`draft: true`），写完把它改成 `false` 就公开。
-
-> **为什么「点新建笔记没弹窗」？** Obsidian 默认把新笔记建在**笔记库根目录**，而模板只在文件落在 `posts/` 时才触发。解决办法：① 如上在 `posts` 文件夹内右键新建；或 ② Obsidian 设置 → 文件与链接 → 新建笔记位置 → 指定到 `tangjin-blog/src/content/posts`。若改完仍不弹窗，彻底退出重开 Obsidian 即可。
-
-### 备用：直接写 Markdown / 手动发布
-
-在 `src/content/posts/` 新建 `.md`，frontmatter：
+完整图文手册见 [使用指南.md](使用指南.md)，这里给个速览。在 `src/content/posts/` 新建 `.md`：
 
 ```markdown
 ---
@@ -106,67 +130,12 @@ category: article      # essay / article / summary / tools 四选一
 正文用 Markdown 写。
 ```
 
-然后 `git push`，GitHub Actions 自动上线。仓库里还保留 `publish.sh` / `publish.cjs` 两个老脚本（批量搬笔记用），新流程已不需要。
+然后 `git push`，GitHub Actions 会自动构建并上线。
 
-> 站名 / 座右铭 / 备案号、**关于页内容**、分类、友链分别改哪个文件，见 [使用指南 §8](使用指南.md#8-想改站点信息去哪改)。
+## 📄 License
 
-## 评论系统
+[MIT](LICENSE) —— 代码可自由参考、修改、分发；**文章内容版权归作者所有**。
 
-评论由 [Giscus](https://giscus.app) 驱动，原理很妙：
+## 🙏 致谢
 
-- 每条评论实际是对应文章在 [tangjin-blog-comments](https://github.com/TANGJIN13/tangjin-blog-comments) 仓库 **Discussions** 里的一条讨论
-- 读者用 GitHub 账号登录即可评论、点赞、回复
-- 博客本身零后端、零数据库，评论数据全在 GitHub 上
-- 按页面路径（pathname）自动匹配讨论串
-- 文章页、关于页、留言板共用同一套组件，各自按自己的路径开串
-
-## 自动部署原理（GitHub Actions）
-
-整条链路：**`git push` → GitHub Actions 构建 → rsync 同步 → Nginx 生效**，全部免人工干预。
-
-```
-本地 push main 分支
-        │
-        ▼
-┌──────────────── GitHub Actions（ubuntu-latest）────────────────┐
-│  1. 检出代码（actions/checkout）                                │
-│  2. 安装 pnpm + Node.js 22，缓存依赖                            │
-│  3. pnpm install --frozen-lockfile                              │
-│  4. pnpm build        → 生成 dist/ 静态文件                     │
-│  5. 校验 dist/index.html 存在                                   │
-│  6. 把 Secret 里的私钥写入 ~/.ssh/deploy_key                    │
-│  7. rsync -rltpz --delete dist/ → 服务器:/                      │
-└────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-腾讯云服务器（49.232.251.198）
-  · SSH 登录后被强制执行 rrsync -wo /var/www/blog（只写、只允许 rsync）
-  · 文件落到 /var/www/blog，--delete 清理旧文件
-        │
-        ▼
-Nginx 直接提供静态文件 → https://tangjin.xyz 更新
-```
-
-几个设计细节：
-
-- **最小权限密钥**：部署用的 SSH 密钥在服务器 `authorized_keys` 里被限制为 `command="/usr/bin/rrsync -wo /var/www/blog",restrict`——这把钥匙**只能**通过 rsync 往站点目录写文件，不能执行任何 shell 命令、不能读取文件。即使 GitHub Secret 泄露，攻击者也无法登录服务器。
-- **rrsync 白名单**：rrsync 对 rsync 选项有安全白名单，`--chmod`、`--no-group` 等选项会被拒绝，因此部署命令只使用 `-rltpz --delete` 这类白名单内的选项。
-- **Secrets**：仓库只存一个机密 `SSH_PRIVATE_KEY`（部署私钥），服务器地址等非机密信息直接写在 workflow 里。
-- **串行部署**：workflow 配置了 `concurrency`，同一时间只跑一个部署，避免并发写坏站点目录。
-
-配置文件见 [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)。
-
-## 本地开发
-
-```bash
-git clone git@github.com:TANGJIN13/tangjin-blog.git
-cd tangjin-blog
-pnpm install
-pnpm dev        # 开发服务器
-pnpm build      # 构建到 dist/
-pnpm preview    # 预览构建结果
-```
-
-## 许可证
-
-MIT — 代码随便参考，内容（文章）归我所有。
+感谢 [Astro](https://astro.build)、[Waline](https://waline.js.org)、[Giscus](https://giscus.app) 以及所有开源项目。

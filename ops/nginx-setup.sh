@@ -17,7 +17,7 @@ fi
 sudo tee /etc/nginx/sites-available/blog > /dev/null <<'EOF'
 # 静态博客站点
 # 说明：
-#  - 未绑定域名时，直接用 http://49.232.251.198 访问（无 Host 或 IP 会命中 default_server）
+#  - 未绑定域名时，直接用 http://<你的服务器IP> 访问（无 Host 或 IP 会命中 default_server）
 #  - 域名 tangjin.xyz 解析到本机后，自动命中 server_name，无需改动
 server {
     listen 80 default_server;
