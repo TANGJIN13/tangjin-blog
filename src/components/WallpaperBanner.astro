@@ -228,12 +228,12 @@ const slides = single ? images.slice(0, 1) : images;
 
   .wp-title {
     font-size: clamp(2.4rem, 6vw, 4rem);
-    font-weight: 700;
+    font-weight: 600;
     margin: 0;
     color: #fff;
     letter-spacing: 0.06em;
     line-height: 1.35;
-    font-family: "Noto Serif SC", "Source Han Serif SC", var(--font-sans);
+    font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
     text-shadow: 0 4px 30px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.5);
   }
 
@@ -337,9 +337,10 @@ const slides = single ? images.slice(0, 1) : images;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 72px;
+    height: 150px;
     z-index: 4;
-    background: linear-gradient(oklch(0% 0 0 / 0), var(--bg));
+    /* 透明 -> 页面主色，柔和地把壁纸融进背景，不再生硬断线 */
+    background: linear-gradient(oklch(0% 0 0 / 0), oklch(95% 0.01 250 / 0.9) 100%);
     pointer-events: none;
   }
 
@@ -352,7 +353,7 @@ const slides = single ? images.slice(0, 1) : images;
       font-size: clamp(2.2rem, 9.5vw, 3.2rem) !important;
       font-weight: 700 !important;
       letter-spacing: 0.05em !important;
-      font-family: "Noto Serif SC", "Source Han Serif SC", var(--font-sans) !important;
+      font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif !important;
       text-shadow: 0 4px 30px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.55) !important;
     }
     .wp-quote-sub {

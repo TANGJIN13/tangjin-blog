@@ -85,10 +85,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <script type="application/ld+json" set:html={JSON.stringify(websiteLd)} />
     {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
-    <!-- 思源宋体：用于横幅座右铭，优雅舒适 -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet" />
+    <!-- 横幅座右铭使用系统楷体，不依赖外部字体服务，加载稳定 -->
     <!-- 客户端路由：页面切换不整页刷新，音乐持续播放 -->
     <ClientRouter />
   </head>
@@ -823,17 +820,21 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   .mobile-menu {
     display: none;
     position: fixed;
-    top: calc(var(--navbar-height) + 0.5rem);
-    left: 0.75rem;
+    top: calc(var(--navbar-height) + 0.4rem);
     right: 0.75rem;
+    width: max-content;
+    min-width: 13rem;
     z-index: 99;
-    background: var(--surface);
+    background: oklch(100% 0 0 / 0.82);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 8px 32px oklch(0% 0 0 / 0.15), 0 2px 8px oklch(0% 0 0 / 0.06);
+    box-shadow: 0 10px 40px oklch(0% 0 0 / 0.16), 0 2px 8px oklch(0% 0 0 / 0.06);
     max-height: calc(100vh - var(--navbar-height) - 3rem);
     overflow-y: auto;
-    transform: translateY(-8px) scale(0.98);
+    padding: 0.4rem;
+    transform: translateY(-8px) scale(0.97);
     opacity: 0;
     transform-origin: top right;
     transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
@@ -844,30 +845,29 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     opacity: 1;
   }
   [data-theme='dark'] .mobile-menu {
-    background: oklch(17% 0.02 250);
+    background: oklch(22% 0.02 250 / 0.88);
     border-color: oklch(100% 0 0 / 0.08);
   }
 
   .mobile-nav {
-    padding: 0.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.1rem;
   }
   .mobile-nav-item {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.7rem 0.9rem;
+    gap: 0.7rem;
+    padding: 0.55rem 0.75rem;
     border-radius: var(--radius-md);
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     font-weight: 500;
     color: var(--text-soft);
     text-decoration: none !important;
     transition: all 0.18s ease;
   }
   .mobile-nav-item:hover {
-    background: var(--surface-2);
+    background: oklch(95% 0.03 250);
     color: var(--text);
   }
   .mobile-nav-item[aria-current='page'] {
@@ -875,6 +875,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: var(--primary-soft);
     font-weight: 600;
   }
+  [data-theme='dark'] .mobile-nav-item:hover { background: oklch(28% 0.03 250); }
   .mobile-nav-item :global(.icon) { opacity: 0.85; }
 
   @media (max-width: 1023px) {
