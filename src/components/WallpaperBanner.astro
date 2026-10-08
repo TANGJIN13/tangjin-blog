@@ -68,23 +68,14 @@ const slides = single ? images.slice(0, 1) : images;
 
   <!-- 底部波浪 -->
   <div class="header-waves" aria-hidden="true">
-    <svg viewBox="0 0 1440 135" preserveAspectRatio="none">
-      <path d="M0,75 C240,135 480,15 720,55 C960,95 1200,25 1440,65 L1440,135 L0,135 Z"
-            fill="var(--bg)" opacity="0.45"/>
-      <path d="M0,95 C280,40 560,140 840,90 C1120,40 1300,120 1440,95 L1440,135 L0,135 Z"
-            fill="var(--bg)" opacity="0.75"/>
-      <path d="M0,115 C360,80 720,140 1080,110 C1260,95 1360,120 1440,115 L1440,135 L0,135 Z"
-            fill="var(--bg)"/>
+    <svg viewBox="0 0 1440 200" preserveAspectRatio="none">
+      <path d="M0,100 C320,60 560,160 880,80 C1120,20 1280,120 1440,90 L1440,200 L0,200 Z"
+            fill="rgba(255,255,255,0.18)"/>
+      <path d="M0,130 C240,100 480,170 720,120 C960,70 1200,150 1440,110 L1440,200 L0,200 Z"
+            fill="rgba(255,255,255,0.35)"/>
+      <path d="M0,160 C360,130 720,180 1080,140 C1260,120 1360,160 1440,150 L1440,200 L0,200 Z"
+            fill="rgba(255,255,255,0.55)"/>
     </svg>
-  </div>
-
-  <!-- 动态白云层：多层模糊云缓慢漂移，营造"云在动"的氛围 -->
-  <div class="cloud-motion" aria-hidden="true">
-    <span class="cloud cloud-a"></span>
-    <span class="cloud cloud-b"></span>
-    <span class="cloud cloud-c"></span>
-    <span class="cloud cloud-d"></span>
-    <span class="cloud cloud-e"></span>
   </div>
 
   <!-- 渐变淡出 -->
@@ -337,86 +328,44 @@ const slides = single ? images.slice(0, 1) : images;
     left: 0;
     right: 0;
     bottom: -1px;
-    height: 135px;
+    height: 180px;
     z-index: 3;
     pointer-events: none;
   }
   .header-waves svg { width: 100%; height: 100%; display: block; }
 
-  /* ===== 动态白云：多层柔光云缓慢漂移，越近越清晰越大，制造层次感 ===== */
-  .cloud-motion {
-    position: absolute;
-    left: 0; right: 0; bottom: 0;
-    height: 220px;
-    z-index: 3;
-    pointer-events: none;
-    overflow: hidden;
-  }
-  .cloud {
-    position: absolute;
-    bottom: -30px;
-    background: oklch(100% 0 0 / 0.9);
-    border-radius: 999px;
-    filter: blur(10px);
-    will-change: transform;
-  }
-  /* 用 box-shadow 圆堆出立体云朵轮廓 */
-  .cloud-a {
-    left: -8%; width: 320px; height: 100px;
-    box-shadow: 60px -40px 0 4px oklch(100% 0 0 / 0.9),
-                150px -65px 0 10px oklch(100% 0 0 / 0.9),
-                210px -25px 0 2px oklch(100% 0 0 / 0.85);
-    animation: clouddrift-a 24s ease-in-out infinite;
-  }
-  .cloud-b {
-    left: 22%; width: 460px; height: 130px;
-    box-shadow: 80px -55px 0 6px oklch(100% 0 0 / 0.85),
-                200px -85px 0 14px oklch(100% 0 0 / 0.85),
-                320px -40px 0 4px oklch(100% 0 0 / 0.8);
-    animation: clouddrift-b 32s ease-in-out -6s infinite;
-  }
-  .cloud-c {
-    left: 52%; width: 400px; height: 110px;
-    box-shadow: 70px -48px 0 5px oklch(100% 0 0 / 0.8),
-                180px -75px 0 12px oklch(100% 0 0 / 0.8),
-                260px -30px 0 3px oklch(100% 0 0 / 0.75);
-    animation: clouddrift-a 28s ease-in-out -13s infinite;
-  }
-  .cloud-d {
-    left: -18%; width: 260px; height: 85px;
-    box-shadow: 45px -30px 0 3px oklch(100% 0 0 / 0.85),
-                110px -52px 0 8px oklch(100% 0 0 / 0.85);
-    animation: clouddrift-b 22s ease-in-out -18s infinite;
-  }
-  .cloud-e {
-    left: 68%; width: 360px; height: 100px;
-    box-shadow: 60px -42px 0 4px oklch(100% 0 0 / 0.85),
-                150px -68px 0 10px oklch(100% 0 0 / 0.85);
-    animation: clouddrift-a 30s ease-in-out -24s infinite;
-  }
-
-  @keyframes clouddrift-a {
-    0%, 100% { transform: translate(-4%, 0); }
-    50%      { transform: translate(5%, -8px); }
-  }
-  @keyframes clouddrift-b {
-    0%, 100% { transform: translate(4%, -6px); }
-    50%      { transform: translate(-5%, 0); }
-  }
-
-  /* 渐变淡出 */
+  /* 渐变淡出：柔和过渡到页面背景 */
   .wallpaper-gradient {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 240px;
+    height: 320px;
     z-index: 4;
-    /* 底部直接平滑过渡到与页面背景同色的白云色(oklch 95% 0.01 250)，往下即同一颜色 */
-    background:
-      linear-gradient(oklch(0% 0 0 / 0.13), oklch(0% 0 0 / 0.04) 42%, oklch(0% 0 0 / 0) 60%),
-      linear-gradient(oklch(95% 0.01 250 / 0.15), oklch(95% 0.01 250 / 1) 100%);
     pointer-events: none;
+    /* 三层渐变叠加：上轻暗角 → 中透明 → 下白雾融合到页面背景 */
+    background:
+      linear-gradient(to bottom,
+        oklch(0% 0 0 / 0) 0%,
+        oklch(0% 0 0 / 0.06) 35%,
+        oklch(0% 0 0 / 0) 55%),
+      linear-gradient(to bottom,
+        oklch(100% 0 0 / 0) 0%,
+        oklch(100% 0 0 / 0.12) 45%,
+        oklch(100% 0 0 / 0.55) 75%,
+        oklch(100% 0 0 / 0.95) 100%);
+  }
+  [data-theme='dark'] .wallpaper-gradient {
+    background:
+      linear-gradient(to bottom,
+        oklch(0% 0 0 / 0) 0%,
+        oklch(0% 0 0 / 0.15) 35%,
+        oklch(0% 0 0 / 0) 55%),
+      linear-gradient(to bottom,
+        oklch(100% 0 0 / 0) 0%,
+        oklch(100% 0 0 / 0.06) 45%,
+        oklch(100% 0 0 / 0.28) 75%,
+        oklch(100% 0 0 / 0.85) 100%);
   }
 
   @media (max-width: 767px) {
