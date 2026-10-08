@@ -21,6 +21,7 @@ const OBSIDIAN_VAULT = process.env.OBSIDIAN_VAULT || '' ; // 可选：Obsidian v
 
 // ★ 博客的有效分类（与 src/data/categories.ts 保持一致）
 const CATEGORIES = [
+  { name: '随笔', slug: 'essay' },
   { name: '文章', slug: 'article' },
   { name: '年度总结', slug: 'summary' },
   { name: '工具使用', slug: 'tools' },

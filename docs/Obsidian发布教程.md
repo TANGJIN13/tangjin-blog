@@ -41,13 +41,13 @@ title: "<%= tp.file.title %>"
 description: "<%= tp.system.prompt('文章摘要') %>"
 published: "<%= tp.date.now('YYYY-MM-DD') %>"
 tags: [<%= tp.system.prompt('标签（逗号分隔）').split(',').map(t => '"' + t.trim() + '"').join(',') %>]
-category: <%= tp.system.suggester(['文章 article','年度总结 summary','工具使用 tools'], ['article','summary','tools']) %>
+category: <%= tp.system.suggester(['随笔 essay','文章 article','年度总结 summary','工具使用 tools'], ['essay','article','summary','tools']) %>
 ---
 
 <%
 const cat = await tp.system.suggester(
-  ['文章 article','年度总结 summary','工具使用 tools'],
-  ['article','summary','tools'],
+  ['随笔 essay','文章 article','年度总结 summary','工具使用 tools'],
+  ['essay','article','summary','tools'],
   true,
   '选择分类'
 );
@@ -79,7 +79,7 @@ title: "文章标题"
 description: "一句话摘要"
 published: 2026-10-05
 tags: ["Web安全"]
-category: article
+category: essay
 ---
 
 ## 正文
@@ -93,6 +93,7 @@ category: article
 
 | 想写什么 | category 填 |
 |---|---|
+| 日常、吐槽、感悟 | `essay` |
 | 技术文章、教程 | `article` |
 | 年终总结、回顾 | `summary` |
 | 软件推荐、配置 | `tools` |
@@ -146,7 +147,7 @@ title: "<%= tp.file.title %>"
 description: "<%= tp.system.prompt('文章摘要（一句话）') %>"
 published: "<%= tp.date.now('YYYY-MM-DD') %>"
 tags: [<%= tp.system.prompt('标签（逗号分隔，如 Web安全,CTF）').split(',').map(t => '"' + t.trim() + '"').join(',') %>]
-category: <%= await tp.system.suggester(['文章 article','年度总结 summary','工具使用 tools'], ['article','summary','tools'], true, '选择分类') %>
+category: <%= await tp.system.suggester(['随笔 essay','文章 article','年度总结 summary','工具使用 tools'], ['essay','article','summary','tools'], true, '选择分类') %>
 ---
 
 ## 概述
