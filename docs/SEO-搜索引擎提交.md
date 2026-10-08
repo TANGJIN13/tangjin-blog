@@ -22,6 +22,11 @@
 
 ## 二、你需要做的 4 件事（各一次）
 
+> **最省事的验证方式（推荐）**：百度 / Google / Bing 三家都支持「HTML 标记（meta）」验证。
+> 在平台拿到验证串后，填进 `src/site.ts` 的 `verify.google` / `verify.baidu` / `verify.bing`，
+> 提交部署即自动通过——不用往 `public/` 里丢任何文件。
+> 下面各平台步骤里提到的「HTML 文件」方式，都可以换成这种。
+
 ### 1. 百度搜索资源平台 —— 加站点 + 拿 token
 
 1. 打开 <https://ziyuan.baidu.com/>，用百度账号登录；

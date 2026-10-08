@@ -36,6 +36,18 @@ export const site = {
   waline: {
     serverURL: '/waline/',
   },
+  /**
+   * 搜索引擎站长平台的「站点归属验证」代码。
+   * 在各平台拿到验证串后填到对应字段，提交部署即自动通过验证（留空则不输出该标签）。
+   *   - Google：Search Console → 添加资源 → 「HTML 标记」，取 google-site-verification 的 content
+   *   - 百度：搜索资源平台 → 站点管理 → 「HTML标签验证」，取 baidu-site-verification 的 content
+   *   - Bing：Webmaster Tools → 验证，取 msvalidate.01 的 content
+   */
+  verify: {
+    google: '',
+    baidu: '',
+    bing: '',
+  },
   footer: {
     since: 2026,
   },
