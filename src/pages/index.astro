@@ -424,6 +424,14 @@ const catCounts = categories.map((c) => ({
     color: #fff;
     opacity: 0.9;
   }
+  /* 主页按钮激活态：实心蓝（兜底，确保盖过 .cat-pill-home 的灰底） */
+  .cat-pill-home.is-active {
+    background: var(--primary) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px -2px var(--primary-glow);
+  }
+  .cat-pill-home.is-active :global(.icon) { color: #fff !important; }
+
   /* 归档与分类之间的竖线分隔 */
   .cat-divider {
     width: 1px;
