@@ -1,7 +1,6 @@
 ---
 // 顶部壁纸横幅 —— 参照 c1everf0x.cn 的 #wallpaper-wrapper
 // 全宽 720px、多图轮播、底部波浪 + 渐变淡出
-import Icon from './Icon.astro';
 import { site } from '../site';
 
 interface Props {
@@ -63,9 +62,6 @@ const slides = single ? images.slice(0, 1) : images;
             {site.links.map((l) => (
               <a class="wp-link" href={l.href} target="_blank" rel="noopener">{l.label}</a>
             ))}
-            <a class="wp-link wp-link-primary" href="#main-content">
-              <Icon name="article" size="0.95rem" />读读文章
-            </a>
           </div>
         </>
       )}
@@ -234,20 +230,6 @@ const slides = single ? images.slice(0, 1) : images;
     text-shadow: 0 1px 10px oklch(0% 0 0 / 0.5);
   }
   .wp-scroll:hover .wp-mouse { border-color: oklch(100% 0 0 / 0.95); }
-
-  /* 主按钮：实心主色，引导去读文章 */
-  .wp-link-primary {
-    background: oklch(70% 0.14 250 / 0.92);
-    border-color: oklch(100% 0 0 / 0.35);
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-  .wp-link-primary:hover {
-    background: oklch(62% 0.16 250);
-    transform: translateY(-2px) scale(1.02);
-  }
 
   .wp-avatar {
     width: 96px; height: 96px;
