@@ -36,8 +36,12 @@ const serverURL = site.waline.serverURL;
     if (root.dataset.mounted === '1') return; // 已经初始化过
 
     const section = root.closest('.waline-container');
-    const serverURL = section?.getAttribute('data-server-url') || '/waline/';
+    const rawServerURL = section?.getAttribute('data-server-url') || '/waline/';
     const path = section?.getAttribute('data-path') || '/guestbook';
+
+    // Waline 会给「非绝对地址」自动补上 https://，所以这里先转成完整地址，
+    // 否则 "/waline/" 会被当成域名 "waline"，请求就发到不存在的 https://waline/ 去了。
+    const serverURL = new URL(rawServerURL, window.location.origin).href;
 
     // 从别的页面回到留言板时，先销毁上一个实例再重建
     if (instance) {
