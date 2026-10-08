@@ -171,8 +171,8 @@ const catCounts = categories.map((c) => ({
   }
 
   /* 主内容分区间距 */
-  .ref-main { display: flex; flex-direction: column; gap: 1.5rem; }
-  .block { scroll-margin-top: 80px; }
+  .ref-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+  .block { scroll-margin-top: 80px; min-width: 0; }
 
   /* 资料卡 */
   .profile-card {
@@ -315,6 +315,9 @@ const catCounts = categories.map((c) => ({
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
     overflow-x: auto;
     padding: 0.35rem 0.5rem;
     -webkit-overflow-scrolling: touch;
