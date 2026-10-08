@@ -1,3 +1,12 @@
+/* 钟齐流江毛笔草书（座右铭标题用，自托管子集 21KB） */
+@font-face {
+  font-family: 'Liu Jian Mao Cao';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/liujianmaocao.woff2') format('woff2');
+}
+
 /* ============================================================
    设计系统 —— 精确复刻 c1everf0x.cn 参照站
    ============================================================ */
@@ -81,8 +90,6 @@
 
 /* ============ 基础重置 ============ */
 *, *::before, *::after { box-sizing: border-box; }
-@import './fonts-zmx.css';
-
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; overflow-x: clip; }
 
 body {
