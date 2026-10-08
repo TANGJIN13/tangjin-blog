@@ -19,7 +19,7 @@ PUBLIC = ROOT / "public"
 SRC = PUBLIC / "images" / "avatar.png"
 
 # 改这个数字即可强制所有浏览器重新拉取图标
-VERSION = 2
+VERSION = 3
 
 # 圆形裁剪后再放大一点，让主体更充满
 ZOOM = 0.92
