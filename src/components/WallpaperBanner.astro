@@ -66,15 +66,7 @@ const slides = single ? images.slice(0, 1) : images;
     )}
   </div>
 
-  <!-- 底部波浪：单层柔和曲线，fill 用页面背景色，与内容自然衔接 -->
-  <div class="header-waves" aria-hidden="true">
-    <svg viewBox="0 0 1440 120" preserveAspectRatio="none">
-      <path d="M0,60 C240,20 480,100 720,60 C960,20 1200,90 1440,50 L1440,120 L0,120 Z"
-            fill="var(--bg)"/>
-    </svg>
-  </div>
-
-  <!-- 渐变淡出：极短的一层渐变，从透明过渡到页面背景色 -->
+  <!-- 渐变淡出：长过渡层，让壁纸底部自然消融到页面背景中 -->
   <div class="wallpaper-gradient" aria-hidden="true"></div>
 </div>
 
@@ -318,33 +310,18 @@ const slides = single ? images.slice(0, 1) : images;
     color: #fff;
   }
 
-  /* 波浪 */
-  .header-waves {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 10vh;
-    min-height: 48px;
-    max-height: 100px;
-    z-index: 2;
-    pointer-events: none;
-  }
-  .header-waves svg { width: 100%; height: 100%; display: block; }
-
-  /* 渐变淡出：从透明柔和过渡到页面背景色，与内容无缝衔接 */
+  /* 渐变淡出：长距离柔和过渡，让壁纸底部自然消融到页面背景 */
   .wallpaper-gradient {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 12vh;
-    min-height: 72px;
-    max-height: 120px;
+    height: 40%;
     z-index: 4;
     pointer-events: none;
     background: linear-gradient(to bottom,
       transparent 0%,
+      transparent 50%,
       var(--bg) 100%);
   }
 
