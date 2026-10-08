@@ -31,7 +31,7 @@ export const profile = {
    * 可以用 HTML（比如 <strong>加粗</strong>）。
    */
   intro: [
-    '你好，我是 <strong>tj</strong>。桂林电子科技大学 25 级网络安全专业，AWG社团的一员，目前主要往 <strong>Web 安全</strong>方向摸索,但现在还是一个只会点鼠标的猴子。',
+    '你好，我是 <strong>tj</strong>。桂林电子科技大学 25 级网络安全专业，安网阁社团的一员，目前主要往 <strong>Web 安全</strong>方向摸索,但现在还是一个只会点鼠标的猴子。',
     '这个站是我自己人机协同搭的，主要放两类东西：一是 CTF 打完之后的<strong>复现和复盘</strong>，二是学习路上踩过的坑。',
     '如果你也在学安全，或者对某篇文章有不同看法，欢迎在下面留言——我都会看。',
     '如果你想联系我，可以通过 <strong>2020556277@qq.com</strong> 或 <strong>GitHub</strong> 找到我。',
