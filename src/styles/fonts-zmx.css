@@ -1,8 +1,8 @@
-/* 志莽行书（毛笔行书子集，自托管，仅含座右铭字符） */
+/* 钟齐流江毛笔草书（飘逸潦草感，自托管子集） */
 @font-face {
-  font-family: 'Zhi Mang Xing';
+  font-family: 'Liu Jian Mao Cao';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('/fonts/zhimangxing.woff2') format('woff2');
+  src: url('/fonts/liujianmaocao.woff2') format('woff2');
 }
