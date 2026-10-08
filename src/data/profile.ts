@@ -31,8 +31,8 @@ export const profile = {
    * 可以用 HTML（比如 <strong>加粗</strong>）。
    */
   intro: [
-    '你好，我是 <strong>tj</strong>。桂林电子科技大学 25 级网络安全专业，目前主要往 <strong>Web 安全</strong>方向摸索。',
-    '这个站是我自己用 Astro 搭的，主要放两类东西：一是 CTF 打完之后的<strong>复现和复盘</strong>，二是学习路上踩过的坑。',
+    '你好，我是 <strong>tj</strong>。桂林电子科技大学 25 级网络安全专业，AWG社团的一员，目前主要往 <strong>Web 安全</strong>方向摸索,但现在还是一个只会点鼠标的猴子。',
+    '这个站是我自己人机协同搭的，主要放两类东西：一是 CTF 打完之后的<strong>复现和复盘</strong>，二是学习路上踩过的坑。',
     '如果你也在学安全，或者对某篇文章有不同看法，欢迎在下面留言——我都会看。',
     '如果你想联系我，可以通过 <strong>2020556277@qq.com</strong> 或 <strong>GitHub</strong> 找到我。',
   ],
@@ -46,7 +46,6 @@ export const profile = {
   /** 正在啃的 */
   learning: [
     { name: 'Web 安全', icon: 'lock', note: 'SQL 注入 / XSS / 文件上传' },
-    { name: 'CTF', icon: 'flag', note: 'Web 方向，边打边学' },
     { name: 'Python', icon: 'code', note: '写脚本、跑 PoC' },
     { name: 'Linux', icon: 'terminal', note: '日常环境' },
     { name: 'Docker', icon: 'monitor', note: '搭靶场用' },
@@ -64,7 +63,7 @@ export const profile = {
       icon: 'sparkle',
     },
     {
-      date: '2026',
+      date: '2025',
       title: '开始打 CTF',
       desc: '跟着队伍参加比赛，赛后把题目复现写下来。',
       icon: 'flag',
