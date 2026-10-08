@@ -351,9 +351,15 @@ const catCounts = categories.map((c) => ({
     z-index: 2;
   }
   @media (max-width: 767px) {
-    /* 手机端：ref-main gap 归零，分类条与首篇文章零间距贴紧；其余 block 用显式 margin 保留间隔 */
+    /* 手机端：分类条紧贴文章上方，零间距 */
     .ref-main { gap: 0 !important; }
-    .cat-card { margin-bottom: 0 !important; }
+    .cat-card {
+      margin-bottom: 0 !important;
+      border-radius: 0 !important;
+      border-left: none !important;
+      border-right: none !important;
+      border-top: none !important;
+    }
     .ref-main > .block:first-of-type { margin-bottom: 0; }
     .ref-main > .block:nth-of-type(n+2) { margin-top: 1.5rem; }
   }
