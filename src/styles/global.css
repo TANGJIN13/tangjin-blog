@@ -307,15 +307,21 @@ body::before {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(58rem 34rem at 12% -8%,  oklch(70% 0.14 250 / 0.16), transparent 60%),
-    radial-gradient(46rem 30rem at 92% 6%,   oklch(72% 0.15 300 / 0.13), transparent 62%),
-    radial-gradient(52rem 38rem at 68% 92%,  oklch(74% 0.13 190 / 0.12), transparent 62%);
+    /* 顶部：紫色星云，从横幅往下延伸 */
+    radial-gradient(60rem 40rem at 15% -10%,  oklch(68% 0.16 290 / 0.18), transparent 62%),
+    /* 右上：品红星云 */
+    radial-gradient(50rem 36rem at 95% 0%,    oklch(70% 0.17 320 / 0.15), transparent 60%),
+    /* 中部：青色星雾 */
+    radial-gradient(55rem 40rem at 50% 40%,   oklch(76% 0.12 200 / 0.10), transparent 65%),
+    /* 底部：蓝紫色深空 */
+    radial-gradient(65rem 45rem at 50% 105%,  oklch(62% 0.14 260 / 0.16), transparent 60%);
 }
 [data-theme='dark'] body::before {
   background:
-    radial-gradient(58rem 34rem at 12% -8%,  oklch(55% 0.16 250 / 0.22), transparent 60%),
-    radial-gradient(46rem 30rem at 92% 6%,   oklch(55% 0.17 300 / 0.18), transparent 62%),
-    radial-gradient(52rem 38rem at 68% 92%,  oklch(50% 0.14 190 / 0.16), transparent 62%);
+    radial-gradient(60rem 40rem at 15% -10%,  oklch(52% 0.18 290 / 0.28), transparent 62%),
+    radial-gradient(50rem 36rem at 95% 0%,    oklch(54% 0.19 320 / 0.24), transparent 60%),
+    radial-gradient(55rem 40rem at 50% 40%,   oklch(58% 0.14 200 / 0.16), transparent 65%),
+    radial-gradient(65rem 45rem at 50% 105%,  oklch(48% 0.16 260 / 0.26), transparent 60%);
 }
 
 /* ============ 统一的卡片质感：微阴影 + 悬停上浮 ============ */
