@@ -479,6 +479,18 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: oklch(14% 0.015 250 / 0.75);
   }
 
+  /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上（参照 c1everf0x.cn） */
+  body.has-banner .top-row:not(.scrolled) {
+    background: oklch(100% 0 0 / 0.14);
+    backdrop-filter: blur(10px) saturate(150%);
+    -webkit-backdrop-filter: blur(10px) saturate(150%);
+    border-bottom: 1px solid oklch(100% 0 0 / 0.12);
+  }
+  [data-theme='dark'] body.has-banner .top-row:not(.scrolled) {
+    background: oklch(0% 0 0 / 0.22);
+    border-bottom-color: oklch(100% 0 0 / 0.08);
+  }
+
   .container-fluid {
     width: 92%;
     max-width: var(--page-width);

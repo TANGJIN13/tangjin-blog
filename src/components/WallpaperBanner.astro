@@ -10,11 +10,11 @@ interface Props {
 
 const {
   images = [
-    '/images/wallpapers/wallpaper-01.svg',
-    '/images/wallpapers/wallpaper-02.svg',
-    '/images/wallpapers/wallpaper-03.svg',
+    '/images/wallpapers/banner-cosmic.jpg',
+    '/images/wallpapers/banner-nebula.jpg',
+    '/images/wallpapers/banner-starry.jpg',
   ],
-  height = 'clamp(440px, 78vh, 780px)',
+  height = 'clamp(480px, 82vh, 860px)',
   /** 单图模式：不轮播（文章页用封面图时开启） */
   single = false,
 } = Astro.props;
@@ -150,10 +150,10 @@ const slides = single ? images.slice(0, 1) : images;
     inset: 0;
     background:
       linear-gradient(180deg,
-        oklch(0% 0 0 / 0.30) 0%,
-        oklch(0% 0 0 / 0.18) 35%,
-        oklch(0% 0 0 / 0.28) 70%,
-        oklch(0% 0 0 / 0.10) 100%);
+        oklch(0% 0 0 / 0.35) 0%,
+        oklch(0% 0 0 / 0.22) 30%,
+        oklch(0% 0 0 / 0.30) 65%,
+        oklch(0% 0 0 / 0.18) 100%);
     z-index: 1;
   }
 
@@ -235,13 +235,13 @@ const slides = single ? images.slice(0, 1) : images;
   .wp-scroll:hover .wp-mouse { border-color: oklch(100% 0 0 / 0.95); }
 
   .wp-title {
-    font-size: clamp(1.6rem, 4vw, 2.8rem);
-    font-weight: 800;
+    font-size: clamp(2rem, 5.5vw, 3.6rem);
+    font-weight: 900;
     margin: 0;
     color: #fff;
-    letter-spacing: 0.02em;
-    line-height: 1.35;
-    text-shadow: 0 2px 30px oklch(0% 0 0 / 0.55);
+    letter-spacing: 0.03em;
+    line-height: 1.25;
+    text-shadow: 0 3px 40px oklch(0% 0 0 / 0.65), 0 1px 4px oklch(0% 0 0 / 0.5);
   }
 
   /* ===== 句子轮换：同格堆叠，逐句淡入浮现 / 淡出上移 ===== */
@@ -260,11 +260,11 @@ const slides = single ? images.slice(0, 1) : images;
     pointer-events: none;
   }
   .wp-quote-sub {
-    margin: 0;
-    font-size: clamp(0.78rem, 1.3vw, 0.95rem);
-    color: oklch(100% 0 0 / 0.72);
-    letter-spacing: 0.22em;
-    text-shadow: 0 1px 14px oklch(0% 0 0 / 0.5);
+    margin: 0.3rem 0 0;
+    font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+    color: oklch(100% 0 0 / 0.82);
+    letter-spacing: 0.18em;
+    text-shadow: 0 1px 16px oklch(0% 0 0 / 0.6);
   }
   .wp-quote.active {
     opacity: 1;
@@ -298,10 +298,10 @@ const slides = single ? images.slice(0, 1) : images;
 
   .wp-desc {
     margin: 0;
-    max-width: 34rem;
-    font-size: clamp(0.85rem, 1.4vw, 1rem);
-    color: oklch(100% 0 0 / 0.88);
-    text-shadow: 0 1px 12px oklch(0% 0 0 / 0.55);
+    max-width: 36rem;
+    font-size: clamp(0.88rem, 1.5vw, 1.02rem);
+    color: oklch(100% 0 0 / 0.9);
+    text-shadow: 0 1px 14px oklch(0% 0 0 / 0.6);
   }
 
   .wp-links { display: flex; gap: 0.5rem; margin-top: 0.2rem; }
