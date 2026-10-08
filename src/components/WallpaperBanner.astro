@@ -338,12 +338,12 @@ const slides = single ? images.slice(0, 1) : images;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 240px;
+    height: 300px;
     z-index: 4;
-    /* 透明 -> 蓝紫星云色，与下方 body 星云背景同色系，底边不再灰白撞色 */
+    /* 双层：上部压暗保证文字可读，下部从星云色平滑过渡到不透明的页面背景色(oklch 95%)，彻底消除底部色带 */
     background:
-      linear-gradient(oklch(0% 0 0 / 0.2), oklch(0% 0 0 / 0.06) 40%, oklch(0% 0 0 / 0) 58%),
-      linear-gradient(oklch(62% 0.14 260 / 0.05), oklch(62% 0.14 260 / 0.14) 68%, oklch(62% 0.14 260 / 0.26) 100%);
+      linear-gradient(oklch(0% 0 0 / 0.16), oklch(0% 0 0 / 0.05) 38%, oklch(0% 0 0 / 0) 60%),
+      linear-gradient(oklch(62% 0.14 260 / 0.1) 0%, oklch(70% 0.12 200 / 0.28) 46%, oklch(95% 0.01 250 / 1) 100%);
     pointer-events: none;
   }
 
