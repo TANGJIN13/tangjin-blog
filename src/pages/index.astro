@@ -55,11 +55,30 @@ const catCounts = categories.map((c) => ({
           <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
           <ThemeToggle />
         </div>
+
+        <!-- 分类列表（竖向排列，模仿 c1everf0x.cn 侧边栏） -->
+        <div class="card-base widget-card cat-widget onload-animation" style="animation-delay: 0.15s">
+          <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 分类</h3>
+          <div class="cat-list" id="cat-list" data-collapsed="5">
+            {catCounts.map((c, i) => (
+              <a class="cat-row" href={`/categories/${c.slug}/`} data-index={i}>
+                <span class="cat-row-name">{c.name}</span>
+                <span class="cat-row-count">{c.count}</span>
+              </a>
+            ))}
+          </div>
+          {catCounts.length > 5 && (
+            <button class="cat-toggle" id="cat-toggle" type="button">
+              <span class="cat-toggle-text">更多</span>
+              <Icon name="arrow_down" size="0.8rem" />
+            </button>
+          )}
+        </div>
       </aside>
 
       <!-- 主内容 -->
       <main class="ref-main" id="main-content" aria-label="文章列表">
-        <!-- 分类导航：白色卡片 + 首页圆形按钮 + 归档 + 分隔线 + 可横向滚动的分类 -->
+        <!-- 快捷导航条：首页 + 归档 -->
         <section class="block onload-animation">
           <div class="cat-card card-base" id="category-bar">
             <div class="cat-bar-inner">
@@ -68,21 +87,6 @@ const catCounts = categories.map((c) => ({
               </a>
               <a class="cat-pill" href="/archive/">
                 归档<span class="pill-count">{posts.length}</span>
-              </a>
-              <span class="cat-divider" aria-hidden="true"></span>
-              <div class="cat-scroll-area">
-                <div class="cat-scroll-fade cat-scroll-fade-left" aria-hidden="true"></div>
-                <div class="cat-scroll">
-                  {catCounts.map((c) => (
-                    <a class="cat-pill" href={`/categories/${c.slug}/`}>
-                      {c.name}<span class="pill-count">{c.count}</span>
-                    </a>
-                  ))}
-                </div>
-                <div class="cat-scroll-fade cat-scroll-fade-right" aria-hidden="true"></div>
-              </div>
-              <a class="cat-pill cat-more" href="/categories/" aria-label="查看全部分类">
-                更多<Icon name="arrow_right" size="0.85rem" />
               </a>
             </div>
           </div>
@@ -507,11 +511,96 @@ const catCounts = categories.map((c) => ({
   }
   .cloud-tag:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
 
+  /* ===== 左侧栏分类列表（模仿 c1everf0x.cn 侧边栏分类） ===== */
+  .cat-widget { padding: 0.75rem 0.8rem 0.6rem; }
+  .cat-list {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+  }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    text-decoration: none !important;
+    transition: background 0.15s ease, color 0.15s ease, padding 0.15s ease;
+    position: relative;
+  }
+  .cat-row:hover {
+    background: var(--surface-2);
+    color: var(--primary-strong);
+    padding-left: 0.65rem;
+  }
+  [data-theme='dark'] .cat-row:hover { color: var(--primary-light); }
+  .cat-row-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-align: left;
+  }
+  .cat-row-count {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.08rem 0.5rem;
+    border-radius: 999px;
+    background: oklch(95% 0.025 var(--hue));
+    color: var(--btn-content);
+    flex-shrink: 0;
+    min-width: 1.5rem;
+    text-align: center;
+    margin-left: 0.5rem;
+  }
+  [data-theme='dark'] .cat-row-count {
+    background: var(--primary);
+    color: var(--deep-text);
+  }
+  /* 折叠：超过 5 条时隐藏 */
+  .cat-list.is-collapsed .cat-row:nth-child(n+6) { display: none; }
+  /* 展开/收起按钮 */
+  .cat-toggle {
+    width: 100%;
+    margin-top: 0.3rem;
+    padding: 0.3rem 0.5rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-faint);
+    font-size: 0.72rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .cat-toggle:hover { color: var(--primary); background: var(--surface-2); }
+  .cat-toggle.is-open .cat-toggle-text::after { content: '收起'; }
+  .cat-toggle:not(.is-open) .cat-toggle-text::after { content: '更多'; }
+
   /* 首页文章网格：固定两列（一行两篇），窄屏回退单列 */
   .post-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 
   @media (max-width: 640px) {
     .post-list { grid-template-columns: 1fr; }
   }
-
 </style>
+
+<script>
+  // 左侧栏分类折叠/展开
+  (function () {
+    const list = document.getElementById('cat-list');
+    const btn = document.getElementById('cat-toggle');
+    if (!list || !btn) return;
+    list.classList.add('is-collapsed');
+    btn.addEventListener('click', () => {
+      list.classList.toggle('is-collapsed');
+      btn.classList.toggle('is-open');
+    });
+  })();
+</script>
