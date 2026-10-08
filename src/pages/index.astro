@@ -88,10 +88,6 @@ const catCounts = categories.map((c) => ({
         <!-- 文章网格（统一卡片样式） -->
         {ordered.length > 0 && (
           <section class="block">
-            <div class="section-head">
-              <h2 class="section-title"><Icon name="book" size="1.1rem" /> 最新文章</h2>
-              <a class="section-more" href="/archive/">全部归档 →</a>
-            </div>
             <div class="post-list">
               {ordered.map((p, i) => (
                 <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
@@ -341,6 +337,7 @@ const catCounts = categories.map((c) => ({
   /* ===== 分类导航条（参照 c1everf0x.cn） ===== */
   .cat-card {
     padding: 0.75rem;
+    margin-top: 1.5rem;
     margin-bottom: 1rem;
   }
   .cat-bar-inner {
