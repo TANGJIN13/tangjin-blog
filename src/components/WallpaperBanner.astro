@@ -340,12 +340,12 @@ const slides = single ? images.slice(0, 1) : images;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 300px;
+    height: 240px;
     z-index: 4;
-    /* 双层：上部压暗保证文字可读，下部从星云色平滑过渡到不透明的页面背景色(oklch 95%)，彻底消除底部色带 */
+    /* 底部直接平滑过渡到与页面背景同色的白云色(oklch 95% 0.01 250)，往下即同一颜色 */
     background:
-      linear-gradient(oklch(0% 0 0 / 0.16), oklch(0% 0 0 / 0.05) 38%, oklch(0% 0 0 / 0) 60%),
-      linear-gradient(oklch(62% 0.14 260 / 0.1) 0%, oklch(70% 0.12 200 / 0.28) 46%, oklch(95% 0.01 250 / 1) 100%);
+      linear-gradient(oklch(0% 0 0 / 0.13), oklch(0% 0 0 / 0.04) 42%, oklch(0% 0 0 / 0) 60%),
+      linear-gradient(oklch(95% 0.01 250 / 0.15), oklch(95% 0.01 250 / 1) 100%);
     pointer-events: none;
   }
 
