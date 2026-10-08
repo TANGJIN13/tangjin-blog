@@ -364,7 +364,7 @@ const catCounts = categories.map((c) => ({
     padding: 0.375rem 1rem;
     border-radius: 9999px;
     border: none;
-    background: transparent;
+    background: var(--surface-2);
     color: var(--text-soft);
     font-size: 0.875rem;
     font-weight: 500;
@@ -373,9 +373,10 @@ const catCounts = categories.map((c) => ({
     transition: background 0.15s ease-out, color 0.15s ease-out;
   }
   .cat-pill:hover {
-    background: var(--surface-2);
-    color: var(--text);
+    background: color-mix(in srgb, var(--primary) 12%, var(--surface-2));
+    color: var(--primary-strong);
   }
+  [data-theme='dark'] .cat-pill:hover { color: var(--primary-light); }
   .cat-pill.is-active {
     background: var(--primary);
     color: #fff;
