@@ -233,7 +233,8 @@ const slides = single ? images.slice(0, 1) : images;
     color: #fff;
     letter-spacing: 0.06em;
     line-height: 1.35;
-    font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif;
+    font-family: "Songti SC", "STSong", "SimSun", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+    font-weight: 500;
     text-shadow: 0 4px 30px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.5);
   }
 
@@ -337,10 +338,12 @@ const slides = single ? images.slice(0, 1) : images;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 150px;
+    height: 240px;
     z-index: 4;
-    /* 透明 -> 页面主色，柔和地把壁纸融进背景，不再生硬断线 */
-    background: linear-gradient(oklch(0% 0 0 / 0), oklch(95% 0.01 250 / 0.9) 100%);
+    /* 透明 -> 蓝紫星云色，与下方 body 星云背景同色系，底边不再灰白撞色 */
+    background:
+      linear-gradient(oklch(0% 0 0 / 0.2), oklch(0% 0 0 / 0.06) 40%, oklch(0% 0 0 / 0) 58%),
+      linear-gradient(oklch(62% 0.14 260 / 0.05), oklch(62% 0.14 260 / 0.14) 68%, oklch(62% 0.14 260 / 0.26) 100%);
     pointer-events: none;
   }
 
@@ -353,7 +356,8 @@ const slides = single ? images.slice(0, 1) : images;
       font-size: clamp(2.2rem, 9.5vw, 3.2rem) !important;
       font-weight: 700 !important;
       letter-spacing: 0.05em !important;
-      font-family: "Kaiti SC", "STKaiti", "KaiTi", "楷体", serif !important;
+      font-family: "Songti SC", "STSong", "SimSun", "Source Han Serif SC", "Noto Serif CJK SC", serif !important;
+      font-weight: 600 !important;
       text-shadow: 0 4px 30px oklch(0% 0 0 / 0.7), 0 2px 6px oklch(0% 0 0 / 0.55) !important;
     }
     .wp-quote-sub {

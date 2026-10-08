@@ -343,6 +343,10 @@ const catCounts = categories.map((c) => ({
     position: relative;
     z-index: 2;
   }
+  @media (max-width: 767px) {
+    /* 抵消 .ref-main 的 1.5rem gap，让分类条紧贴文章网格 */
+    .ref-main > .block:first-of-type { margin-bottom: -1.25rem; }
+  }
   .cat-bar-inner {
     display: flex;
     align-items: center;
