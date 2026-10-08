@@ -199,6 +199,11 @@ code, pre, kbd { font-family: var(--font-mono); }
   .post-shell { grid-template-columns: minmax(0, 1fr) var(--sidebar-width); }
 }
 
+/* 说说页：不要右栏，中间内容顺势加宽（宽度接近文章页） */
+@media (min-width: 1280px) {
+  .page-shell.says-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+}
+
 /* ============ Widget 系统 ============ */
 .card-base {
   background: var(--surface);

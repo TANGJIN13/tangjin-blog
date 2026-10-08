@@ -4,7 +4,6 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
-import SidebarRight from '../components/SidebarRight.astro';
 import { site } from '../site';
 
 // 取全部说说，按 date 倒序
@@ -17,7 +16,7 @@ const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (
 ---
 
 <Base title="说说">
-  <div class="page-shell">
+  <div class="page-shell says-shell">
     <SidebarLeft />
     <div class="page-main says-container">
     <!-- 顶部横幅 -->
@@ -70,7 +69,6 @@ const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (
       </div>
     )}
     </div>
-    <SidebarRight />
   </div>
 </Base>
 
