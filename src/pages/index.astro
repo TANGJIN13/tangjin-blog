@@ -343,13 +343,10 @@ const catCounts = categories.map((c) => ({
 
   /* ===== 分类导航条（参照 c1everf0x.cn） ===== */
   .cat-card {
-    padding: 0.6rem 0.75rem;
-    border-radius: 1.25rem;
-    /* 贴在横幅底部、紧贴文章上方，减少下方空隙 */
+    padding: 0.75rem;
+    border-radius: 1rem;
     margin-top: 0;
-    margin-bottom: 0.25rem;
-    position: relative;
-    z-index: 2;
+    margin-bottom: 1rem;
   }
   @media (max-width: 767px) {
     /* 手机端：分类条紧贴文章上方，零间距，白色背景融入渐变 */
@@ -363,7 +360,23 @@ const catCounts = categories.map((c) => ({
       background: #fff !important;
       box-shadow: none !important;
     }
-    .cat-pill { background: #f5f5f5 !important; }
+    .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+    padding: 0.375rem 1rem;
+    border-radius: 9999px;
+    border: 1px solid color-mix(in srgb, var(--btn-content) 12%, transparent);
+    background: color-mix(in srgb, var(--btn-content) 6%, transparent);
+    color: var(--btn-content);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none !important;
+    white-space: nowrap;
+    transition: background 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out;
+  }
     [data-theme='dark'] .cat-card { background: #1a1a1a !important; }
     [data-theme='dark'] .cat-pill { background: #2a2a2a !important; }
     .ref-main > .block:first-of-type { margin-bottom: 0; }
@@ -376,11 +389,11 @@ const catCounts = categories.map((c) => ({
   }
   /* 首页：宽椭圆图标按钮，激活时主色实心 */
   .cat-pill-home {
-    width: 2.4rem;
-    height: 2.4rem;
-    padding: 0;
-    border-radius: 0.85rem;
+    padding: 0.375rem 0.75rem;
     flex-shrink: 0;
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    border-color: transparent;
   }
   .cat-pill {
     display: inline-flex;
@@ -399,25 +412,27 @@ const catCounts = categories.map((c) => ({
     transition: background 0.15s ease-out, color 0.15s ease-out;
   }
   .cat-pill:hover {
-    background: color-mix(in srgb, var(--primary) 12%, var(--surface-2));
-    color: var(--primary-strong);
+    color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 15%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 25%, transparent);
   }
   [data-theme='dark'] .cat-pill:hover { color: var(--primary-light); }
   .cat-pill.is-active {
     background: var(--primary);
     color: #fff;
+    border-color: transparent;
   }
   .cat-pill.is-active:hover { opacity: 0.9; background: var(--primary); }
   .cat-pill.is-active :global(.icon) { color: #fff; }
   /* 数量徽标 */
   .pill-count {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 600;
     line-height: 1;
-    padding: 0.12rem 0.4rem;
+    padding: 0.05rem 0.35rem;
     border-radius: 9999px;
-    background: oklch(92% 0.01 250 / 0.7);
-    color: var(--text-faint);
+    background: color-mix(in srgb, var(--btn-content) 10%, transparent);
+    opacity: 0.5;
   }
   .cat-pill.is-active .pill-count {
     background: rgba(255, 255, 255, 0.2);
@@ -436,19 +451,12 @@ const catCounts = categories.map((c) => ({
   .cat-divider {
     width: 1px;
     align-self: stretch;
-    background: var(--border);
-    opacity: 0.6;
+    background: rgba(0, 0, 0, 0.08);
+    opacity: 0.5;
     flex-shrink: 0;
   }
-  /* 更多按钮 —— 末尾固定，点击跳转分类页 */
-  .cat-more {
-    margin-left: auto;
-    color: var(--primary-strong) !important;
-    background: var(--primary-soft) !important;
-  }
-  .cat-more:hover { background: var(--primary) !important; color: #fff !important; }
-  [data-theme='dark'] .cat-more { color: var(--primary-light) !important; }
-  [data-theme='dark'] .cat-more:hover { color: #fff !important; }
+  /* 更多按钮：普通 pill 样式，末尾固定 */
+  .cat-more { margin-left: auto; }
 
     /* 可横向滚动的分类区 */
   .cat-scroll-area {
@@ -468,9 +476,6 @@ const catCounts = categories.map((c) => ({
 
   /* 手机端药丸更紧凑 */
   @media (max-width: 767px) {
-    .cat-pill { padding: 0.38rem 0.72rem; font-size: 0.8rem; gap: 0.3rem; }
-    .cat-pill-home { width: 2.1rem; height: 2.1rem; border-radius: 0.75rem; }
-    .pill-count { font-size: 0.65rem; padding: 0.1rem 0.32rem; }
   }
   /* 左右渐隐遮罩 */
   .cat-scroll-fade {

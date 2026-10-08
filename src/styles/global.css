@@ -434,3 +434,11 @@ body.immersive-reading .post-shell {
   .page-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) !important; }
   .post-shell { grid-template-columns: minmax(0, 1fr) var(--sidebar-width) !important; }
 }
+
+/* ===== 一比一参照 Firefly：移动端根字号 14px（<768px），桌面 16px ===== */
+html { font-size: 14px; }
+@media (min-width: 768px) { html { font-size: 16px; } }
+
+/* 分类条 pill 文字色（Firefly variables.styl，hue=250） */
+:root { --btn-content: oklch(0.55 0.12 250); }
+[data-theme='dark'] { --btn-content: oklch(0.75 0.1 250); }
