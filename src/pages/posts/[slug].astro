@@ -184,47 +184,10 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
       </div>
     </article>
 
-    <!-- 右侧 TOC -->
-    <aside class="post-toc">
-      <div class="card-base toc-card" id="toc-card">
-        <h3 class="widget-title"><Icon name="article" size="1.05rem" /> 目录</h3>
-        <nav class="toc-nav" id="toc-nav"></nav>
-      </div>
-    </aside>
   </div>
 </Base>
 
 <script>
-  // 自动生成目录
-  const content = document.querySelector('.custom-md');
-  const tocNav = document.getElementById('toc-nav');
-  if (content && tocNav) {
-    const headings = content.querySelectorAll('h2, h3');
-    headings.forEach((h, i) => {
-      h.id = h.id || `heading-${i}`;
-      const a = document.createElement('a');
-      a.className = 'toc-item toc-level-' + h.tagName[1];
-      a.href = `#${h.id}`;
-      a.textContent = h.textContent;
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        h.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-      tocNav.appendChild(a);
-    });
-
-    // 滚动高亮
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          tocNav.querySelectorAll('.toc-item').forEach(a => a.classList.remove('active'));
-          tocNav.querySelector(`a[href="#${entry.target.id}"]`)?.classList.add('active');
-        }
-      });
-    }, { rootMargin: '-80px 0px -70% 0px' });
-    headings.forEach(h => observer.observe(h));
-  }
-
   // 分享功能
   const shareToggle = document.getElementById('share-toggle');
   const sharePanel = document.getElementById('share-panel');
@@ -399,10 +362,12 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   .pb-sep { opacity: 0.45; }
 
   /* ============ 正文区 ============ */
+  /* 去掉右侧目录后：正文单栏，收窄到适合阅读的宽度并在页面居中 */
   .post-layout {
     margin-top: 2rem;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 860px;
     gap: 1.5rem;
     align-items: start;
   }
@@ -553,24 +518,8 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
     border-radius: var(--radius-lg); margin: 1.2rem auto; box-shadow: var(--shadow);
   }
 
-  /* ============ TOC ============ */
-  .post-toc { position: sticky; top: 88px; align-self: start; }
-  .toc-card { padding: 1rem; position: relative; }
-  .toc-nav { display: flex; flex-direction: column; gap: 0.25rem; }
-  .toc-item {
-    font-size: 0.82rem; color: var(--text-soft);
-    padding: 0.3rem 0.5rem; border-radius: var(--radius-sm);
-    text-decoration: none !important; background: none !important;
-    transition: all 0.15s ease; border-left: 2px solid transparent;
-  }
-  .toc-item:hover { color: var(--text); background: var(--surface-2) !important; }
-  .toc-item.active { color: var(--primary-strong); border-left-color: var(--primary); font-weight: 500; }
-  .toc-level-3 { padding-left: 1.2rem; font-size: 0.78rem; }
-
   /* ============ 响应式 ============ */
   @media (max-width: 860px) {
-    .post-layout { grid-template-columns: 1fr; }
-    .post-toc { display: none; }
     .post-body { padding: 1.8rem 1.4rem; }
     .post-foot { flex-direction: column; align-items: flex-start; gap: 0.8rem; }
     .post-banner { padding-inline: 1rem; }
