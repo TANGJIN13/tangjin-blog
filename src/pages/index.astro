@@ -363,6 +363,11 @@ const catCounts = categories.map((c) => ({
     margin-top: 0;
     margin-bottom: 1rem;
   }
+  /* 手机端：分类条下移一点、贴近文章 */
+  @media (max-width: 767px) { /* cat-nudge-mobile */
+    .cat-card { margin-top: 0.75rem; margin-bottom: 0.375rem; }
+  }
+
   .cat-bar-inner {
     display: flex;
     align-items: center;
