@@ -422,6 +422,13 @@ const catCounts = categories.map((c) => ({
     scroll-behavior: smooth;
   }
   .cat-scroll::-webkit-scrollbar { display: none; }
+
+  /* 手机端药丸更紧凑 */
+  @media (max-width: 767px) {
+    .cat-pill { padding: 0.3rem 0.6rem; font-size: 0.8rem; gap: 0.25rem; }
+    .cat-pill-home { width: 2.2rem; height: 1.8rem; }
+    .pill-count { font-size: 0.65rem; padding: 0.04rem 0.3rem; }
+  }
   /* 左右渐隐遮罩 */
   .cat-scroll-fade {
     position: absolute;

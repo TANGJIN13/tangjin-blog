@@ -316,6 +316,16 @@ body::before {
     /* 底部：蓝紫色深空 */
     radial-gradient(65rem 45rem at 50% 105%,  oklch(62% 0.14 260 / 0.16), transparent 60%);
 }
+/* 手机端：星云半径缩小但浓度加强，让背景延伸在小屏上也明显 */
+@media (max-width: 767px) {
+  body::before {
+    background:
+      radial-gradient(32rem 22rem at 15% -8%,  oklch(66% 0.18 290 / 0.28), transparent 60%),
+      radial-gradient(28rem 20rem at 90% 2%,   oklch(68% 0.19 320 / 0.24), transparent 58%),
+      radial-gradient(30rem 22rem at 50% 45%,  oklch(74% 0.14 200 / 0.16), transparent 62%),
+      radial-gradient(34rem 24rem at 50% 108%, oklch(60% 0.16 260 / 0.26), transparent 58%);
+  }
+}
 [data-theme='dark'] body::before {
   background:
     radial-gradient(60rem 40rem at 15% -10%,  oklch(52% 0.18 290 / 0.28), transparent 62%),
