@@ -363,9 +363,14 @@ const catCounts = categories.map((c) => ({
     margin-top: 0;
     margin-bottom: 1rem;
   }
-  /* 手机端：整个分类条下移贴近文章 */
+  /* 手机端：整个分类条下移贴近文章 + 整体变窄 */
   @media (max-width: 767px) {
-    .cat-card { margin-top: 1.25rem; margin-bottom: 0; }
+    .cat-card { margin-top: 1.25rem; margin-bottom: 0; padding: 0.4rem 0.5rem; }
+    .cat-bar-inner { gap: 0.3rem; }
+    .cat-pill { padding: 0.2rem 0.7rem; font-size: 0.78rem; gap: 0.25rem; }
+    .cat-pill-home { padding: 0.2rem 0.5rem; }
+    .pill-count { font-size: 0.62rem; }
+    .cat-divider { height: 1.1rem; }
     .ref-main > section:has(#category-bar) { margin-bottom: 0; }
     .ref-main > section:has(#category-bar) + section { margin-top: -1rem; }
   }
