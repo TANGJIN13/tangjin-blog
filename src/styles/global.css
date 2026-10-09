@@ -8,7 +8,7 @@
 }
 
 /* ============================================================
-   设计系统 —— 精确复刻 c1everf0x.cn 参照站
+   设计系统 —— 配色（oklch）、圆角、阴影、间距与断点
    ============================================================ */
 :root {
   /* 颜色 —— 从参照站计算样式提取 */
@@ -454,11 +454,11 @@ body.immersive-reading .post-shell > * { grid-column: 1 !important; }
   .post-shell { grid-template-columns: minmax(0, 1fr) var(--post-aside) !important; }
 }
 
-/* ===== 一比一参照 Firefly：移动端根字号 14px（<768px），桌面 16px ===== */
+/* ===== 根字号：移动端 14px（<768px）、桌面 16px ===== */
 html { font-size: 14px; }
 @media (min-width: 768px) { html { font-size: 16px; } }
 
-/* 分类条 pill 文字色（Firefly variables.styl，hue=250） */
+/* 分类条 pill 文字色（hue=250） */
 :root { --btn-content: oklch(0.55 0.12 250); }
 [data-theme='dark'] { --btn-content: oklch(0.75 0.1 250); }
 

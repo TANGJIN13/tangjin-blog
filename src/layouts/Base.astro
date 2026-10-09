@@ -16,7 +16,7 @@ interface Props {
   banner?: boolean;
   /**
    * 内页统一横幅：由 Base 直接渲染「同一套轮播壁纸 + 页面标题」
-   * （参照 Firefly：首页大图 80vh，内页同一张壁纸压到 35vh，电脑端才显示）
+   * （首页大图，内页同一套轮播壁纸压到 35vh，电脑端才显示）
    */
   pageBanner?: boolean;
   bannerTitle?: string;
@@ -513,7 +513,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: oklch(14% 0.015 250 / 0.75);
   }
 
-  /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上（参照 c1everf0x.cn） */
+  /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上 */
   body.has-banner .top-row:not(.scrolled) {
     background: oklch(100% 0 0 / 0.14);
     backdrop-filter: blur(10px) saturate(150%);
@@ -657,7 +657,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   .main-layout { padding-block: 1.5rem; padding-top: calc(var(--navbar-height) + 1.5rem); }
   body.has-banner .main-layout { padding-top: 0; }
 
-  /* ===== 内页横幅上的标题（Firefly 风格：白字压在壁纸上） ===== */
+  /* ===== 内页横幅上的标题（白字压在壁纸上） ===== */
   .wp-page-head {
     display: flex;
     flex-direction: column;

@@ -30,7 +30,7 @@
 | 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、失效音源自动跳过 |
 | 主题 | 亮色 / 暗色 / 跟随系统，切换时底部提示当前模式，评论框主题同步 |
 | 特效 | 进入文章时樱花飘落约 10 秒、沉浸阅读模式 |
-| 全站横幅 | 同一套轮播壁纸出现在每个页面：首页大图（88vh），内页压到 35vh 并把页面标题压在壁纸上（电脑端；手机端内页自动隐藏，避免多滑一屏） | |
+| 全站壁纸横幅 | 多张壁纸自动轮播（每隔几秒淡入切换，换页接着上一张继续）。**每个页面顶部都有**：首页大图（88vh），内页压到 35vh 并把页面标题压在壁纸上（电脑端；手机端内页自动隐藏，避免多滑一屏） | |
 | 资源库 | `/downloads/` 文件下载页：文件放 `public/files/`、在 `src/data/downloads.json` 登记一条即可，大小 / 日期 / 图标自动生成，支持外部网盘链接 |
 | 搜索 | `/search/` 全文搜索：文章（标题 / 描述 / 标签 / 分类）+ 资源库文件都能搜到，资源条目点击直接下载 |
 | 归档 | 按年份竖向时间线展示，含总字数统计 |
@@ -73,6 +73,7 @@ pnpm preview    # 本地预览构建结果
 | 相册清单 | [`src/data/album.json`](src/data/album.json) |
 | 资源库（可下载的工具 / 资料） | 清单 [`src/data/downloads.json`](src/data/downloads.json)，文件本体放 `public/files/` |
 | 首页头像 / 壁纸 | `public/images/avatar.png`、`src/site.ts` 的 `heroImage` |
+| 顶部轮播壁纸（换图在这里） | 图片放 `public/images/wallpapers/`，列表写在 [`src/components/WallpaperBanner.astro`](src/components/WallpaperBanner.astro) 顶部的 `images` 数组 |
 | 文章 / 说说 | `src/content/posts/`、`src/content/says/` |
 
 ## 💬 评论系统
