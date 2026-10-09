@@ -92,6 +92,22 @@ const slides = single ? images.slice(0, 1) : images;
   <div class="wallpaper-gradient" aria-hidden="true"></div>
 </div>
 
+<!-- 切页前先把「上次那张壁纸」设为可见：在首屏绘制前执行，避免导航瞬间闪回第一张 -->
+<script is:inline>
+  (function () {
+    try {
+      var KEY = 'tj-wp-idx';
+      var raw = sessionStorage.getItem(KEY);
+      var idx = raw === null ? 0 : (parseInt(raw, 10) || 0);
+      var slides = document.querySelectorAll('.wp-slide');
+      if (slides.length > 1) {
+        for (var i = 0; i < slides.length; i++) slides[i].classList.remove('active');
+        slides[idx % slides.length].classList.add('active');
+      }
+    } catch (e) {}
+  })();
+</script>
+
 <script>
   // 横幅是否真的可见 → 决定导航栏走「透明悬浮在壁纸上」还是普通实心样式
   // （内页横幅在手机上被隐藏，这时必须把 has-banner 摘掉，否则白字导航 + 内容钻到导航条底下）
@@ -104,8 +120,25 @@ const slides = single ? images.slice(0, 1) : images;
   // 轮播 / 座右铭的定时器：每次（重新）初始化前先清掉旧的，避免换页后越转越快
   let slideTimer = null;
   let quoteTimer = null;
-  // 记住换到第几张：切到别的页面时接着上一张继续，不会每次都从第一张重新开始
-  let slideIdx = 0;
+
+  // 当前壁纸 / 座右铭序号都存在 sessionStorage 里：换页、刷新都不会清零，
+  // 所以导航到别的页面时壁纸会「接着上一张」继续轮播，而不是每次都从第一张重新开始。
+  const WP_IDX_KEY = 'tj-wp-idx';
+  const WP_QUOTE_KEY = 'tj-wp-quote';
+  function getWpIdx() {
+    try { const v = parseInt(sessionStorage.getItem(WP_IDX_KEY) || '0', 10); return isNaN(v) ? 0 : v; }
+    catch (e) { return window.__wpIdx || 0; }
+  }
+  function setWpIdx(v) {
+    try { sessionStorage.setItem(WP_IDX_KEY, String(v)); } catch (e) { window.__wpIdx = v; }
+  }
+  function getWpQuote() {
+    try { const v = parseInt(sessionStorage.getItem(WP_QUOTE_KEY) || '0', 10); return isNaN(v) ? 0 : v; }
+    catch (e) { return window.__wpQuote || 0; }
+  }
+  function setWpQuote(v) {
+    try { sessionStorage.setItem(WP_QUOTE_KEY, String(v)); } catch (e) { window.__wpQuote = v; }
+  }
 
   function startRotations() {
     clearInterval(slideTimer);
@@ -116,13 +149,16 @@ const slides = single ? images.slice(0, 1) : images;
     const slides = Array.from(document.querySelectorAll('.wp-slide'));
     if (wrap && slides.length > 1) {
       const interval = parseInt(wrap.dataset.interval || '7000', 10);
+      let slideIdx = getWpIdx() % slides.length;
       slides.forEach((s) => s.classList.remove('active'));
-      slides[slideIdx % slides.length].classList.add('active');
+      slides[slideIdx].classList.add('active');
       slideTimer = setInterval(() => {
-        slides[slideIdx % slides.length].classList.remove('active');
+        slides[slideIdx].classList.remove('active');
         slideIdx = (slideIdx + 1) % slides.length;
         slides[slideIdx].classList.add('active');
+        setWpIdx(slideIdx);
       }, interval);
+      setWpIdx(slideIdx);
     }
 
     // 座右铭轮换：淡入浮现 → 停留几秒 → 淡出，再换下一句
@@ -131,7 +167,9 @@ const slides = single ? images.slice(0, 1) : images;
       const quotes = Array.from(quoteWrap.querySelectorAll('.wp-quote'));
       if (quotes.length > 1) {
         const quoteInterval = parseInt(quoteWrap.dataset.interval || '6000', 10);
-        let qi = Math.max(0, quotes.findIndex((q) => q.classList.contains('active')));
+        let qi = getWpQuote() % quotes.length;
+        quotes.forEach((q) => q.classList.remove('active', 'leaving'));
+        quotes[qi].classList.add('active');
         quoteTimer = setInterval(() => {
           const cur = quotes[qi];
           cur.classList.remove('active');
@@ -139,12 +177,14 @@ const slides = single ? images.slice(0, 1) : images;
           setTimeout(() => cur.classList.remove('leaving'), 700);
           qi = (qi + 1) % quotes.length;
           quotes[qi].classList.add('active');
+          setWpQuote(qi);
         }, quoteInterval);
+        setWpQuote(qi);
       }
     }
   }
 
-  // 换页（View Transitions）不会重新执行本脚本，所以两个入口都要：首屏跑一次 + 每次换页重启
+  // 首屏跑一次 + 每次换页（View Transitions）重启。序号走 sessionStorage，无论脚本是否重新执行都能续上
   function refresh() {
     syncBannerMode();
     startRotations();
