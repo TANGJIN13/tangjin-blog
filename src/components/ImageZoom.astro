@@ -1,0 +1,121 @@
+---
+/**
+ * 文章配图点击放大（Lightbox）
+ * - 任何位于正文里的图片（.post-body img / .post-main img）点击后铺满查看
+ * - 再看不清时点一下切换到 1:1 原始尺寸，可以拖动滚动条看全图
+ * - 事件用「委托 + 一次性绑定」，配合 <ClientRouter /> 换页也只绑一次
+ */
+---
+
+<div class="img-lightbox" id="img-lightbox" aria-hidden="true">
+  <button class="ilb-close" type="button" aria-label="关闭图片">×</button>
+  <div class="ilb-stage">
+    <img class="ilb-img" alt="" />
+  </div>
+  <div class="ilb-bar">
+    <span class="ilb-cap"></span>
+    <span class="ilb-tip">点击图片切换 1:1 / 适应窗口 · Esc 或点空白处关闭</span>
+  </div>
+</div>
+
+<script>
+  // 覆盖层：优先复用页面上已渲染的那个，缺失时自动补建（换页后也一定找得到）
+  function getBox() {
+    let el = document.getElementById('img-lightbox');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'img-lightbox';
+      el.className = 'img-lightbox';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML =
+        '<button class="ilb-close" type="button" aria-label="关闭图片">×</button>' +
+        '<div class="ilb-stage"><img class="ilb-img" alt="" /></div>' +
+        '<div class="ilb-bar"><span class="ilb-cap"></span>' +
+        '<span class="ilb-tip">点击图片切换 1:1 / 适应窗口 · Esc 或点空白处关闭</span></div>';
+      document.body.appendChild(el);
+    }
+    return el;
+  }
+
+  function lockScroll(on) {
+    if (on) {
+      const gap = window.innerWidth - document.documentElement.clientWidth;
+      if (gap > 0) document.body.style.paddingRight = gap + 'px';
+      document.body.classList.add('ilb-lock');
+    } else {
+      document.body.classList.remove('ilb-lock');
+      document.body.style.paddingRight = '';
+    }
+  }
+
+  function open(src, alt) {
+    const box = getBox();
+    const big = box.querySelector('.ilb-img');
+    const cap = box.querySelector('.ilb-cap');
+    big.src = src;
+    big.alt = alt || '';
+    cap.textContent = alt || '图片';
+    box.classList.remove('is-zoomed');
+    box.classList.add('is-open');
+    box.setAttribute('aria-hidden', 'false');
+    lockScroll(true);
+  }
+
+  function close() {
+    const box = document.getElementById('img-lightbox');
+    if (!box) return;
+    box.classList.remove('is-open', 'is-zoomed');
+    box.setAttribute('aria-hidden', 'true');
+    const img = box.querySelector('.ilb-img');
+    if (img) img.removeAttribute('src');
+    lockScroll(false);
+  }
+
+  function toggleZoom(box) {
+    box.classList.toggle('is-zoomed');
+    if (box.classList.contains('is-zoomed')) {
+      // 放大后把视口挪到图片中心，从这里开始来回拖动
+      const stage = box.querySelector('.ilb-stage');
+      if (stage) {
+        stage.scrollLeft = (stage.scrollWidth - stage.clientWidth) / 2;
+        stage.scrollTop = (stage.scrollHeight - stage.clientHeight) / 2;
+      }
+    }
+  }
+
+  function onClick(e) {
+    const t = e.target;
+    if (!t || !t.closest) return;
+
+    // 先处理覆盖层内部的点击
+    const inBox = t.closest('#img-lightbox');
+    if (inBox) {
+      if (t.closest('.ilb-close')) { close(); return; }
+      if (t.classList.contains('ilb-img')) { toggleZoom(inBox); return; }
+      // 点到大图以外的空白（含 stage 本身）就关闭
+      close();
+      return;
+    }
+
+    // 正文里的图片：点开放大（外面还套着链接时别顺手跳转）
+    const img = t.closest('.post-body img, .post-main img');
+    if (img) {
+      e.preventDefault();
+      open(img.currentSrc || img.src, img.alt);
+    }
+  }
+
+  function onKey(e) {
+    if (e.key === 'Escape') close();
+  }
+
+  // 只绑一次（window 上的标记不会因为模块重新执行而丢失）
+  const w = window;
+  if (!w.__imgZoomBound) {
+    w.__imgZoomBound = true;
+    document.addEventListener('click', onClick);
+    document.addEventListener('keydown', onKey);
+  }
+  // 换页后隐藏上一次可能残留的覆盖层
+  document.addEventListener('astro:before-swap', close);
+</script>

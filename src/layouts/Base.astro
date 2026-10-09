@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { site } from '../site';
 import Icon from '../components/Icon.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
+import ImageZoom from '../components/ImageZoom.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -178,6 +179,9 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     </div>
 
     </main>
+
+    <!-- 图片放大查看层：正文里的图点击后全屏观看 -->
+    <ImageZoom />
 
     <!-- 页脚 -->
     <footer class="site-footer">

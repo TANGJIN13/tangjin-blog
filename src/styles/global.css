@@ -459,3 +459,93 @@ html { font-size: 14px; }
 /* 分类条 pill 文字色（Firefly variables.styl，hue=250） */
 :root { --btn-content: oklch(0.55 0.12 250); }
 [data-theme='dark'] { --btn-content: oklch(0.75 0.1 250); }
+
+/* ============ 图片点击放大查看（Lightbox） ============ */
+.post-body img,
+.post-main .custom-md :global(img) { cursor: zoom-in; }
+
+body.ilb-lock { overflow: hidden; }
+
+.img-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: none;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 3.4rem 1.25rem 0.9rem;
+  background: oklch(10% 0.02 250 / 0.93);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+.img-lightbox.is-open { display: flex; opacity: 1; }
+
+.ilb-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.ilb-stage::-webkit-scrollbar { width: 8px; height: 8px; }
+.ilb-stage::-webkit-scrollbar-track { background: transparent; }
+.ilb-stage::-webkit-scrollbar-thumb { background: oklch(100% 0 0 / 0.32); border-radius: 999px; }
+
+.ilb-img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 24px 70px oklch(0% 0 0 / 0.55);
+  cursor: zoom-out;
+  transition: transform 0.2s ease;
+}
+/* 1:1 原始尺寸：不受容器限制，拖动滚动条看全图 */
+.img-lightbox.is-zoomed .ilb-stage { align-items: flex-start; justify-content: flex-start; }
+.img-lightbox.is-zoomed .ilb-img { max-width: none; max-height: none; cursor: zoom-in; }
+
+.ilb-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: oklch(100% 0 0 / 0.86);
+  font-size: 0.8rem;
+}
+.ilb-cap { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+.ilb-tip { opacity: 0.55; white-space: nowrap; }
+
+.ilb-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 1.1rem;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid oklch(100% 0 0 / 0.25);
+  background: oklch(100% 0 0 / 0.12);
+  color: #fff;
+  font-size: 1.35rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+.ilb-close:hover { background: oklch(100% 0 0 / 0.26); transform: rotate(90deg); }
+
+@media (max-width: 640px) {
+  .img-lightbox { padding: 3.2rem 0.6rem 0.6rem; }
+  .ilb-tip { display: none; }
+  .ilb-cap { max-width: 100%; }
+}
