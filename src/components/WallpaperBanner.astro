@@ -6,9 +6,12 @@ import { site } from '../site';
 interface Props {
   images?: string[];
   height?: string;
+  /** 是否在手机 / 平板上也显示（内页横幅建议 false：小屏放它会多滑一屏） */
+  mobile?: boolean;
 }
 
 const {
+  mobile = true,
   images = [
     '/images/wallpapers/banner-cosmic.jpg',
     '/images/wallpapers/banner-nebula.jpg',
@@ -28,7 +31,7 @@ const hasSlot = Astro.slots.has('default');
 const slides = single ? images.slice(0, 1) : images;
 ---
 
-<div class="wallpaper-wrapper" style={`--wp-height: ${height}; --wp-mobile-height: ${mobileHeight}`} data-interval="7000">
+<div class:list={['wallpaper-wrapper', { 'wp-desktop-only': !mobile }]} style={`--wp-height: ${height}; --wp-mobile-height: ${mobileHeight}`} data-interval="7000">
   <!-- 轮播图片 -->
   <div class="wallpaper-images" id="wallpaper-images">
     {slides.map((src, i) => (
@@ -90,6 +93,17 @@ const slides = single ? images.slice(0, 1) : images;
 </div>
 
 <script>
+  // 横幅是否真的可见 → 决定导航栏走「透明悬浮在壁纸上」还是普通实心样式
+  // （内页横幅在手机上被隐藏，这时必须把 has-banner 摘掉，否则白字导航 + 内容钻到导航条底下）
+  function syncBannerMode() {
+    const w = document.querySelector('.wallpaper-wrapper');
+    const visible = !!w && w.getBoundingClientRect().height > 0 && getComputedStyle(w).display !== 'none';
+    document.body.classList.toggle('has-banner', visible);
+  }
+  syncBannerMode();
+  window.addEventListener('resize', syncBannerMode);
+  document.addEventListener('astro:page-load', syncBannerMode);
+
   // 壁纸轮播
   const wrap = document.querySelector('.wallpaper-wrapper');
   const slides = document.querySelectorAll('.wp-slide');
@@ -132,6 +146,10 @@ const slides = single ? images.slice(0, 1) : images;
   }
   @media (max-width: 767px) {
     .wallpaper-wrapper { height: var(--wp-mobile-height); }
+  }
+  /* 内页横幅：小屏直接隐藏（手机上标题仍在内容区，不额外占一屏） */
+  @media (max-width: 1023px) {
+    .wallpaper-wrapper.wp-desktop-only { display: none !important; }
   }
 
   /* 图片层 */

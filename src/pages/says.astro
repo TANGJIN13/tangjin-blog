@@ -15,12 +15,18 @@ const says = raw
 const rendered = await Promise.all(says.map(async (s) => ({ entry: s, Content: (await render(s)).Content })));
 ---
 
-<Base title="说说">
+<Base
+  title="说说"
+  pageBanner
+  bannerIcon="comment"
+  bannerTitle="说说"
+  bannerDesc="一些零碎的想法与瞬间"
+>
   <div class="page-shell says-shell">
     <SidebarLeft />
     <div class="page-main says-container">
-    <!-- 顶部横幅 -->
-    <div class="says-banner">
+    <!-- 手机端用的紧凑标题（电脑端由统一壁纸横幅承载标题） -->
+    <div class="says-banner hide-with-banner">
       <img class="says-banner-bg" src="/images/wallpapers/wallpaper-02.svg" alt="" aria-hidden="true" />
       <div class="says-banner-dim" aria-hidden="true"></div>
       <div class="says-banner-content">

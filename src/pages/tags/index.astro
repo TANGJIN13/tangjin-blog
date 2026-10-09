@@ -10,11 +10,18 @@ const tags = await getTags();
 const max = Math.max(...tags.map((t) => t.count), 1);
 ---
 
-<Base title="标签" description="按标签浏览全部文章">
+<Base
+  title="标签"
+  description="按标签浏览全部文章"
+  pageBanner
+  bannerIcon="tag"
+  bannerTitle="标签"
+  bannerDesc={`共 ${tags.length} 个标签`}
+>
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
-      <header class="tg-hero">
+      <header class="tg-hero hide-with-banner">
         <span class="tg-hero-icon"><Icon name="tag" size="1.5rem" /></span>
         <div>
           <p class="tg-kicker">浏览方式</p>

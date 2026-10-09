@@ -21,12 +21,18 @@ const stats = [
 ];
 ---
 
-<Base title="关于我">
+<Base
+  title="关于我"
+  pageBanner
+  bannerIcon="person"
+  bannerTitle="关于我"
+  bannerDesc={profile.headline}
+>
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
       <!-- 顶部封面 -->
-      <header class="post-head">
+      <header class="post-head hide-with-banner">
         <div class="cover">
           <div class="cover-placeholder about-cover">
             <img class="about-cover-img" src="/images/wallpapers/about-cover.jpg" alt="" aria-hidden="true" />

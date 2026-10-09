@@ -20,13 +20,19 @@ const raw = await getCollection('posts', (p) => !p.data.draft && (p.data.categor
 const posts = pinToTop(raw.sort((a, b) => b.data.published.valueOf() - a.data.published.valueOf()));
 ---
 
-<Base title={`${category.name} · 分类`}>
+<Base
+  title={`${category.name} · 分类`}
+  pageBanner
+  bannerIcon={category.icon || 'folder'}
+  bannerTitle={category.name}
+  bannerDesc={`${category.description || '该分类下的文章'} · 共 ${posts.length} 篇`}
+>
   <div class="page-shell">
     <SidebarLeft />
     <div class="page-main">
     <div class="cat-layout">
       <article class="cat-main">
-        <header class="cat-head">
+        <header class="cat-head hide-with-banner">
           <div class="cat-cover">
             <div class="cat-cover-inner">
               <Icon name={category.icon || 'folder'} size="2rem" />

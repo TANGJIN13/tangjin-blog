@@ -18,11 +18,17 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
 const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 0);
 ---
 
-<Base title="归档">
+<Base
+  title="归档"
+  pageBanner
+  bannerIcon="archive"
+  bannerTitle="归档"
+  bannerDesc={`共 ${posts.length} 篇文章 · 约 ${(totalWords / 10000).toFixed(1)} 万字`}
+>
   <div class="page-shell">
     <SidebarLeft />
     <div class="page-main">
-    <header class="page-head onload-animation">
+    <header class="page-head onload-animation hide-with-banner">
       <h1><Icon name="archive" size="1.6rem" /> 归档</h1>
       <p>
         共 <strong>{posts.length}</strong> 篇文章 · 约 <strong>{(totalWords / 10000).toFixed(1)}</strong> 万字，按时间倒序

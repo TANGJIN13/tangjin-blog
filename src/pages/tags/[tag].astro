@@ -29,11 +29,18 @@ interface Props {
 const { tag, posts } = Astro.props;
 ---
 
-<Base title={`#${tag}`} description={`标签「${tag}」下的全部文章`}>
+<Base
+  title={`#${tag}`}
+  description={`标签「${tag}」下的全部文章`}
+  pageBanner
+  bannerIcon="tag"
+  bannerTitle={`#${tag}`}
+  bannerDesc={`共 ${posts.length} 篇文章`}
+>
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
-      <header class="tg-hero">
+      <header class="tg-hero hide-with-banner">
         <span class="tg-hero-icon">
           <Icon name="tag" size="1.5rem" />
         </span>

@@ -45,12 +45,18 @@ const RESOURCE_CAT = 'resource';
 const totalCount = postData.length + resourceData.length;
 ---
 
-<Base title="搜索">
+<Base
+  title="搜索"
+  pageBanner
+  bannerIcon="search"
+  bannerTitle="搜索"
+  bannerDesc="搜文章标题 / 描述 / 标签，也能搜到资源库里的文件与工具"
+>
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
       <!-- 轻量头部：不再有大块蓝色 banner -->
-      <header class="sp-hero">
+      <header class="sp-hero hide-with-banner">
         <span class="sp-hero-icon">
           <Icon name="search" size="1.5rem" />
         </span>

@@ -550,3 +550,10 @@ body.ilb-lock { overflow: hidden; }
   .ilb-tip { display: none; }
   .ilb-cap { max-width: 100%; }
 }
+
+/* ============ 内页统一壁纸横幅 ============
+   电脑端每个页面顶部都有和首页同一套轮播壁纸，标题直接压在壁纸上；
+   内容区里重复的标题头就隐藏掉（手机端没有横幅，标题照常显示） */
+@media (min-width: 1024px) {
+  .hide-with-banner { display: none !important; }
+}

@@ -6,11 +6,17 @@ import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
 ---
 
-<Base title="留言板">
+<Base
+  title="留言板"
+  pageBanner
+  bannerIcon="mail"
+  bannerTitle="留言板"
+  bannerDesc="说点什么吧，你的每一条留言我都会看到"
+>
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
-        <header class="post-head">
+        <header class="post-head hide-with-banner">
           <div class="cover">
             <div class="cover-placeholder guestbook-cover">
               <!-- 壁纸背景 -->

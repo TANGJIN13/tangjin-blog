@@ -4,6 +4,7 @@ import { site } from '../site';
 import Icon from '../components/Icon.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
 import ImageZoom from '../components/ImageZoom.astro';
+import WallpaperBanner from '../components/WallpaperBanner.astro';
 import { ClientRouter } from 'astro:transitions';
 
 interface Props {
@@ -13,6 +14,14 @@ interface Props {
   narrow?: boolean;
   /** 页面顶部是否有壁纸横幅（有则内容下沉，导航悬浮其上） */
   banner?: boolean;
+  /**
+   * 内页统一横幅：由 Base 直接渲染「同一套轮播壁纸 + 页面标题」
+   * （参照 Firefly：首页大图 80vh，内页同一张壁纸压到 35vh，电脑端才显示）
+   */
+  pageBanner?: boolean;
+  bannerTitle?: string;
+  bannerDesc?: string;
+  bannerIcon?: string;
   /** 页面级结构化数据（如 BlogPosting），注入到 <head> */
   jsonLd?: Record<string, unknown> | null;
 }
@@ -23,8 +32,15 @@ const {
   image = `${site.url}/images/wallpapers/wallpaper-01.svg`,
   narrow = false,
   banner = false,
+  pageBanner = false,
+  bannerTitle,
+  bannerDesc,
+  bannerIcon,
   jsonLd = null,
 } = Astro.props;
+
+// 有任一横幅 → 导航栏悬浮在壁纸上（透明 → 滚动后变实）
+const hasBanner = banner || pageBanner;
 
 // 全站统一的 WebSite 结构化数据（帮助搜索引擎理解站点）
 const websiteLd = {
@@ -91,7 +107,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <!-- 客户端路由：页面切换不整页刷新，音乐持续播放 -->
     <ClientRouter />
   </head>
-  <body class:list={[{ 'has-banner': banner }]}>
+  <body class:list={[{ 'has-banner': hasBanner }]}>
     <!-- 阅读进度条 -->
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 
@@ -138,6 +154,18 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
 
     <!-- 主内容 -->
     <main class="main-layout">
+      <!-- 内页统一横幅：和首页同一套轮播壁纸，压到 35vh，只在电脑端出现 -->
+      {pageBanner && (
+        <WallpaperBanner height="clamp(240px, 35vh, 420px)" mobile={false}>
+          <div class="wp-page-head">
+            {bannerIcon && (
+              <span class="wp-page-icon"><Icon name={bannerIcon} size="1.35rem" /></span>
+            )}
+            <h1 class="wp-page-title">{bannerTitle ?? title ?? site.title}</h1>
+            {bannerDesc && <p class="wp-page-desc">{bannerDesc}</p>}
+          </div>
+        </WallpaperBanner>
+      )}
       <slot />
 
       <!-- 浮动控制 -->
@@ -628,6 +656,49 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   /* 导航栏固定，无壁纸时内容需下沉让出导航高度 */
   .main-layout { padding-block: 1.5rem; padding-top: calc(var(--navbar-height) + 1.5rem); }
   body.has-banner .main-layout { padding-top: 0; }
+
+  /* ===== 内页横幅上的标题（Firefly 风格：白字压在壁纸上） ===== */
+  .wp-page-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+    animation: wp-page-reveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+  }
+  @keyframes wp-page-reveal {
+    from { opacity: 0; transform: translateY(22px); filter: blur(8px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  .wp-page-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    color: #fff;
+    background: oklch(100% 0 0 / 0.16);
+    border: 1px solid oklch(100% 0 0 / 0.28);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin-bottom: 0.15rem;
+  }
+  .wp-page-title {
+    margin: 0;
+    font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: #fff;
+    line-height: 1.2;
+    text-shadow: 0 4px 26px oklch(0% 0 0 / 0.55);
+  }
+  .wp-page-desc {
+    margin: 0;
+    max-width: 34rem;
+    font-size: clamp(0.86rem, 1.3vw, 1rem);
+    color: oklch(100% 0 0 / 0.9);
+    text-shadow: 0 1px 12px oklch(0% 0 0 / 0.5);
+    line-height: 1.6;
+  }
 
   /* ============ 页脚 ============ */
   .site-footer {

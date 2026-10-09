@@ -12,12 +12,19 @@ import { downloads as files } from '../lib/downloads';
  */
 ---
 
-<Base title="资源库" description="站长整理的学习资料、工具脚本与实用资源，都可以在这里下载。">
+<Base
+  title="资源库"
+  description="站长整理的学习资料、工具脚本与实用资源，都可以在这里下载。"
+  pageBanner
+  bannerIcon="folder"
+  bannerTitle="资源库"
+  bannerDesc={`整理的学习资料 / 工具脚本 · 共 ${files.length} 个文件`}
+>
   <div class="page-shell">
     <SidebarLeft />
     <div class="page-main dl-container">
-      <!-- 顶部横幅 -->
-      <div class="dl-banner">
+      <!-- 手机端用的紧凑标题（电脑端由统一壁纸横幅承载标题） -->
+      <div class="dl-banner hide-with-banner">
         <img class="dl-banner-bg" src="/images/wallpapers/wallpaper-03.svg" alt="" aria-hidden="true" />
         <div class="dl-banner-dim" aria-hidden="true"></div>
         <div class="dl-banner-content">
