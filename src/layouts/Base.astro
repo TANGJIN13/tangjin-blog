@@ -42,6 +42,7 @@ const navItems = [
   { label: '分类', href: '/categories/', icon: 'folder' },
   { label: '相册', href: '/album/', icon: 'photo' },
   { label: '说说', href: '/says/', icon: 'comment' },
+  { label: '下载', href: '/downloads/', icon: 'download' },
   { label: '友链', href: '/friends/', icon: 'link' },
   { label: '留言', href: '/guestbook/', icon: 'mail' },
   { label: '关于', href: '/about/', icon: 'person' },
@@ -581,6 +582,13 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     font-weight: 600;
   }
   [data-theme='dark'] .nav-item[aria-current='page'] { color: var(--primary-light); }
+
+  /* 中等宽度 1024–1279px：导航项缩进一点，保证 9 个入口也不会挤出去 */
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .nav { gap: 0; }
+    .nav-item { padding: 0.4rem 0.45rem 0.5rem; font-size: 0.85rem; gap: 0.25rem; }
+    .nav-item::after { left: 0.45rem; right: 0.45rem; }
+  }
 
   /* 壁纸页面上方导航为白色 */
   body.has-banner .top-row:not(.scrolled) .nav-item { color: oklch(100% 0 0 / 0.88); }

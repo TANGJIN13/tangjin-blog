@@ -1,0 +1,10 @@
+[
+  {
+    "name": "示例资源包",
+    "file": "/files/sample-pack.zip",
+    "desc": "这是一个演示用的示例文件，用来看看下载页长什么样。把 public/files/ 里的 sample-pack.zip 换成你自己的文件、再改掉这一条即可。",
+    "date": "2026-10-09",
+    "version": "v1.0",
+    "tags": ["示例"]
+  }
+]

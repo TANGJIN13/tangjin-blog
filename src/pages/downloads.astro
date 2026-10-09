@@ -1,0 +1,312 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
+import { existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import raw from '../data/downloads.json';
+
+/**
+ * 下载页：文件放 public/files/ 下，在 src/data/downloads.json 里登记。
+ * 本地文件会在构建时自动读取大小与修改时间；file 写成 https:// 开头则是外部链接。
+ */
+interface RawItem {
+  name: string;
+  file: string;
+  desc?: string;
+  date?: string;
+  version?: string;
+  tags?: string[];
+}
+
+const isExternal = (f: string) => /^https?:\/\//i.test(f);
+
+const extOf = (f: string) => (f.split('?')[0].split('.').pop() || '').toLowerCase();
+
+/** 按扩展名挑一个图标 */
+function iconFor(ext: string): string {
+  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+  if (['pdf', 'doc', 'docx', 'md', 'txt', 'epub'].includes(ext)) return 'file';
+  if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'psd'].includes(ext)) return 'image';
+  if (['mp3', 'wav', 'flac', 'ogg', 'm4a'].includes(ext)) return 'music';
+  if (['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext)) return 'play_circle';
+  if (['exe', 'msi', 'apk', 'dmg', 'iso'].includes(ext)) return 'cube';
+  if (['js', 'ts', 'json', 'py', 'sh', 'go', 'rs', 'java', 'c', 'cpp'].includes(ext)) return 'code';
+  return 'download';
+}
+
+function fmtSize(bytes: number): string {
+  if (!bytes) return '';
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(1)} KB`;
+  const mb = kb / 1024;
+  if (mb < 1024) return `${mb.toFixed(2)} MB`;
+  return `${(mb / 1024).toFixed(2)} GB`;
+}
+
+const files = (raw as RawItem[]).map((it) => {
+  const external = isExternal(it.file);
+  const base = it.file.split('/').pop() || it.file;
+  let size = '';
+  let missing = false;
+  let autoDate = '';
+
+  if (!external) {
+    // 本地文件：构建时直接读磁盘，自动得到大小与最后修改时间
+    const localPath = join(process.cwd(), 'public', it.file.replace(/^\//, ''));
+    if (existsSync(localPath)) {
+      const st = statSync(localPath);
+      size = fmtSize(st.size);
+      autoDate = st.mtime.toISOString().slice(0, 10);
+    } else {
+      missing = true;
+    }
+  }
+
+  return {
+    ...it,
+    external,
+    base,
+    size,
+    missing,
+    ext: extOf(it.file),
+    icon: iconFor(extOf(it.file)),
+    date: it.date ?? autoDate,
+  };
+});
+---
+
+<Base title="下载" description="站长整理的可用资源、工具与资料，都可以从这里下载。">
+  <div class="page-shell">
+    <SidebarLeft />
+    <div class="page-main dl-container">
+      <!-- 顶部横幅 -->
+      <div class="dl-banner">
+        <img class="dl-banner-bg" src="/images/wallpapers/wallpaper-03.svg" alt="" aria-hidden="true" />
+        <div class="dl-banner-dim" aria-hidden="true"></div>
+        <div class="dl-banner-content">
+          <h1 class="dl-banner-title"><Icon name="download" size="1.4rem" /> 下载</h1>
+          <p class="dl-banner-desc">整理的学习资料 / 工具脚本 · 共 {files.length} 个文件</p>
+        </div>
+      </div>
+
+      {files.length > 0 ? (
+        <div class="dl-grid">
+          {files.map((f, i) => (
+            <a
+              class="dl-card onload-animation"
+              style={`animation-delay: ${Math.min(i, 8) * 0.05}s`}
+              href={f.file}
+              download={f.external ? undefined : f.base}
+              target={f.external ? '_blank' : undefined}
+              rel={f.external ? 'noopener noreferrer' : undefined}
+            >
+              <div class="dl-top">
+                <span class="dl-icon"><Icon name={f.icon} size="1.35rem" /></span>
+                <div class="dl-head">
+                  <h3 class="dl-name">{f.name}</h3>
+                  <span class="dl-file">{f.base}</span>
+                </div>
+              </div>
+
+              {f.desc && <p class="dl-desc">{f.desc}</p>}
+
+              <div class="dl-tags">
+                {f.version && <span class="dl-chip ver">{f.version}</span>}
+                {f.tags?.map((t) => <span class="dl-chip">#{t}</span>)}
+                {f.external && <span class="dl-chip ext"><Icon name="external" size="0.7rem" />外部链接</span>}
+                {f.missing && <span class="dl-chip warn">文件缺失</span>}
+              </div>
+
+              <div class="dl-foot">
+                <span class="dl-meta">
+                  {f.size && <span class="dl-meta-item"><Icon name="file" size="0.78rem" />{f.size}</span>}
+                  {f.date && <span class="dl-meta-item"><Icon name="calendar" size="0.78rem" />{f.date}</span>}
+                  {f.ext && <span class="dl-meta-item ext-name">{f.ext.toUpperCase()}</span>}
+                </span>
+                <span class="dl-btn">
+                  <Icon name="download" size="0.85rem" />下载
+                </span>
+              </div>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <div class="dl-empty card-base">
+          <div class="empty-emoji">📦</div>
+          <h3>还没有可下载的文件</h3>
+          <p>把文件放进 <code>public/files/</code>，再到 <code>src/data/downloads.json</code> 里登记一条即可。</p>
+        </div>
+      )}
+
+      <div class="dl-note card-base">
+        <p><strong>怎么用？</strong>把要分享的文件丢进 <code>public/files/</code> 目录 → 在 <code>src/data/downloads.json</code> 里加一行 <code>{`{ "name": "文件名", "file": "/files/xxx.zip", "desc": "一句话说明" }`}</code> → 保存推送，一分钟后这个页面就更新了。</p>
+        <p class="dl-note-sub">文件大小和日期会自动读取，不用手填。超过 50MB 的文件建议放网盘，把 <code>file</code> 写成网盘链接即可（会显示「外部链接」）。</p>
+      </div>
+    </div>
+    <SidebarRight />
+  </div>
+</Base>
+
+<style>
+  .dl-container { min-width: 0; }
+
+  /* ===== 横幅 ===== */
+  .dl-banner {
+    position: relative;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .dl-banner-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .dl-banner-dim { position: absolute; inset: 0; background: linear-gradient(to bottom, oklch(0% 0 0 / 0.3), oklch(0% 0 0 / 0.55)); }
+  .dl-banner-content { position: relative; z-index: 1; text-align: center; padding: 2rem; color: #fff; }
+  .dl-banner-title {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 800; margin: 0 0 0.5rem;
+    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.4);
+  }
+  .dl-banner-desc { margin: 0; font-size: 0.95rem; opacity: 0.9; text-shadow: 0 1px 8px oklch(0% 0 0 / 0.4); }
+
+  /* ===== 卡片网格 ===== */
+  .dl-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+    gap: 0.9rem;
+  }
+
+  .dl-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem 1.1rem 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 6px 18px oklch(0% 0 0 / 0.05);
+    text-decoration: none !important;
+    transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.26s ease, border-color 0.26s ease;
+  }
+  [data-theme='dark'] .dl-card {
+    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 6px 18px oklch(0% 0 0 / 0.28);
+  }
+  .dl-card:hover {
+    transform: translateY(-4px);
+    border-color: oklch(70% 0.14 250 / 0.5);
+    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 250 / 0.18);
+  }
+
+  .dl-top { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+  .dl-icon {
+    flex-shrink: 0;
+    width: 38px; height: 38px;
+    border-radius: var(--radius-md);
+    display: grid; place-items: center;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+  }
+  .dl-head { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+  .dl-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .dl-file {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .dl-desc {
+    margin: 0;
+    font-size: 0.83rem;
+    line-height: 1.65;
+    color: var(--text-soft);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .dl-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  .dl-chip {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-faint);
+    border: 1px solid var(--border);
+  }
+  .dl-chip.ver { color: var(--primary-strong); background: var(--primary-soft); border-color: transparent; }
+  .dl-chip.ext { color: var(--primary-strong); }
+  .dl-chip.warn { color: oklch(55% 0.19 25); background: oklch(95% 0.05 25); border-color: transparent; }
+
+  .dl-foot {
+    margin-top: auto;
+    padding-top: 0.55rem;
+    border-top: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  }
+  .dl-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.1rem 0.5rem; font-size: 0.74rem; color: var(--text-faint); }
+  .dl-meta-item { display: inline-flex; align-items: center; gap: 0.2rem; }
+  .dl-meta-item.ext-name {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 0.02rem 0.3rem;
+    border-radius: 0.25rem;
+    background: var(--surface-2);
+  }
+  .dl-btn {
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    font-size: 0.78rem; font-weight: 600;
+    padding: 0.3rem 0.85rem;
+    border-radius: 999px;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .dl-card:hover .dl-btn { transform: translateY(-1px); box-shadow: 0 6px 16px oklch(62% 0.13 250 / 0.35); }
+
+  /* ===== 空状态 / 说明 ===== */
+  .dl-empty { text-align: center; padding: 3rem 2rem; }
+  .empty-emoji { font-size: 3rem; margin-bottom: 0.8rem; }
+  .dl-empty h3 { margin: 0 0 0.5rem; font-size: 1.2rem; }
+  .dl-empty p { color: var(--text-faint); font-size: 0.9rem; margin: 0; }
+  .dl-empty code, .dl-note code {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 0.3rem; padding: 0.08em 0.35em; font-size: 0.86em;
+    font-family: var(--font-mono);
+  }
+
+  .dl-note {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.8;
+    color: var(--text-soft);
+  }
+  .dl-note p { margin: 0; }
+  .dl-note strong { color: var(--text); }
+  .dl-note-sub { margin-top: 0.35rem !important; font-size: 0.8rem; color: var(--text-faint); }
+
+  @media (max-width: 768px) {
+    .dl-grid { grid-template-columns: 1fr; }
+    .dl-banner { min-height: 160px; }
+  }
+</style>
