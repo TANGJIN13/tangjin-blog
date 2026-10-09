@@ -66,17 +66,17 @@ const totalCount = postData.length + resourceData.length;
         <span class="sp-bar-icon"><Icon name="search" size="1.05rem" /></span>
         <input
           type="text"
-          id="search-input"
+          id="page-search-input"
           class="sp-input"
           placeholder="输入关键词…（按 / 快速聚焦）"
           autocomplete="off"
         />
-        <button type="button" class="sp-clear" id="search-clear" title="清空" aria-label="清空">
+        <button type="button" class="sp-clear" id="page-search-clear" title="清空" aria-label="清空">
           <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
             <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm5 13.6L15.6 17 12 13.4 8.4 17 7 15.6 10.6 12 7 8.4 8.4 7 12 10.6 15.6 7 17 8.4 13.4 12z" />
           </svg>
         </button>
-        <span class="sp-count" id="search-count">{totalCount} 条</span>
+        <span class="sp-count" id="page-search-count">{totalCount} 条</span>
       </div>
 
       <!-- 分类筛选（最后一个「资源库」筛的是 downloads.json 里登记的文件） -->
@@ -98,7 +98,7 @@ const totalCount = postData.length + resourceData.length;
       </div>
 
       <!-- 结果 -->
-      <div class="sp-results" id="search-results">
+      <div class="sp-results" id="page-search-results">
         {postData.map((p, i) => {
           const cat = catOf(p.category);
           return (
@@ -174,9 +174,11 @@ const totalCount = postData.length + resourceData.length;
 </Base>
 
 <script>
-  const input = document.getElementById('search-input');
-  const clearBtn = document.getElementById('search-clear');
-  const count = document.getElementById('search-count');
+  // 注意：id 都带 page- 前缀 —— 侧栏那个小搜索框也用过 /search-input/ 这类通用 id，
+  // 撞车时会把整个结果列表的 innerHTML 冲掉（踩过一次）
+  const input = document.getElementById('page-search-input');
+  const clearBtn = document.getElementById('page-search-clear');
+  const count = document.getElementById('page-search-count');
   const chips = document.getElementById('sp-chips');
   const empty = document.getElementById('sp-empty');
   const items = [...document.querySelectorAll('.sp-item')];

@@ -22,7 +22,7 @@
 | 模块 | 说明 |
 |---|---|
 | 首页 | 分类入口 + 文章卡片网格（16:9 封面 / 日期 / 分类 / 摘要 / 标签）+ 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏自动堆叠 |
-| 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享 |
+| 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享；配图点击放大（再点一下切 1:1 原始尺寸，可拖动看细节） |
 | 说说 | `/says/` 短动态，按时间倒序，支持心情 emoji 与配图；草稿用 `draft: true` 暂不公开 |
 | 相册 | `/album/` 瀑布流照片墙，点击开大图灯箱（← / → 翻页、Esc 关闭） |
 | 关于页 | `/about/` 名片 + 自动统计（篇数 / 天数 / 字数）+ 技能卡 + 时间线 |
@@ -30,8 +30,10 @@
 | 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、失效音源自动跳过 |
 | 主题 | 亮色 / 暗色 / 跟随系统，切换时底部提示当前模式，评论框主题同步 |
 | 特效 | 进入文章时樱花飘落约 10 秒、沉浸阅读模式 |
+| 资源库 | `/downloads/` 文件下载页：文件放 `public/files/`、在 `src/data/downloads.json` 登记一条即可，大小 / 日期 / 图标自动生成，支持外部网盘链接 |
+| 搜索 | `/search/` 全文搜索：文章（标题 / 描述 / 标签 / 分类）+ 资源库文件都能搜到，资源条目点击直接下载 |
 | 归档 | 按年份竖向时间线展示，含总字数统计 |
-| 其他 | 归档 / 分类 / 标签 / 友链 / 留言板 / 全文搜索 / RSS / Sitemap |
+| 其他 | 归档 / 分类 / 标签 / 友链 / 留言板 / RSS / Sitemap |
 | SEO | `robots.txt` + 自动 sitemap，部署后自动推送（百度主动推送 / IndexNow），详见 [SEO 文档](docs/SEO-搜索引擎提交.md) |
 
 ## 🧱 技术栈
@@ -68,6 +70,7 @@ pnpm preview    # 本地预览构建结果
 | 关于页（自我介绍、技能、时间线、联系方式） | [`src/data/profile.ts`](src/data/profile.ts) |
 | 分类列表 | [`src/data/categories.ts`](src/data/categories.ts) |
 | 相册清单 | [`src/data/album.json`](src/data/album.json) |
+| 资源库（可下载的工具 / 资料） | 清单 [`src/data/downloads.json`](src/data/downloads.json)，文件本体放 `public/files/` |
 | 首页头像 / 壁纸 | `public/images/avatar.png`、`src/site.ts` 的 `heroImage` |
 | 文章 / 说说 | `src/content/posts/`、`src/content/says/` |
 
@@ -101,7 +104,7 @@ tangjin-blog/
 ├── public/                        # 静态资源（壁纸、头像、相册照片、音乐、兜底封面）
 ├── src/
 │   ├── site.ts                    # 站点配置（标题、座右铭、社交链接、备案号等）
-│   ├── data/                      # 站点数据（关于页资料 / 分类 / 相册清单）
+│   ├── data/                      # 站点数据（关于页资料 / 分类 / 相册清单 / 资源库清单）
 │   ├── content/posts/             # 文章 Markdown（配图也放同目录）
 │   ├── content/says/              # 说说 Markdown
 │   ├── pages/                     # 页面路由（首页 / 文章 / 归档 / 说说 / 相册 / 关于 / 留言板…）
@@ -131,6 +134,19 @@ category: article      # essay / article / summary / tools 四选一
 ```
 
 然后 `git push`，GitHub Actions 会自动构建并上线。
+
+## 📦 分享文件（资源库）
+
+想给访客提供可下载的工具 / 资料：
+
+1. 把文件放进 `public/files/`（超过 50MB 建议放网盘，走外链）；
+2. 在 [`src/data/downloads.json`](src/data/downloads.json) 里加一条：
+
+```json
+{ "name": "工具名", "file": "/files/xxx.zip", "desc": "一句话说明", "tags": ["安全"] }
+```
+
+3. 保存推送，一分钟内 `/downloads/` 页面更新，大小 / 日期 / 图标自动生成，`/search/` 搜索页也能直接搜到并点击下载。
 
 ## 📄 License
 

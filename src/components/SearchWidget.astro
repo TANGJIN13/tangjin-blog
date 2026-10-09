@@ -7,19 +7,20 @@ import Icon from './Icon.astro';
     <Icon name="search" size="0.9rem" />
     <input
       class="search-input"
-      id="search-input"
+      id="sw-search-input"
       type="text"
       placeholder="搜索文章..."
       autocomplete="off"
     />
   </div>
-  <div class="search-results" id="search-results"></div>
+  <div class="search-results" id="sw-search-results"></div>
 </div>
 
 <script>
   (() => {
-    const input = document.getElementById('search-input');
-    const results = document.getElementById('search-results');
+    // id 带 sw- 前缀：页面级的 /search 页面也用 search-input 这类通用 id，撞车会互相冲掉内容
+    const input = document.getElementById('sw-search-input');
+    const results = document.getElementById('sw-search-results');
     if (!input || !results) return;
 
     // 获取文章数据（从页面中抓取）
