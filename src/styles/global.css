@@ -63,7 +63,8 @@
   /* 布局 —— 参照站为 110rem(1760px) */
   --page-width: 110rem;
   --sidebar-width: 17.5rem;
-  --post-aside: 15rem; /* 文章页两侧占位列更窄，把宽度让给正文 */
+  --post-aside: 15rem;   /* 文章页右侧「目录」列宽 */
+  --post-gutter: 4.5rem; /* 文章页左侧没有组件，只留很窄的装饰留白，其余宽度全部给正文 */
   --navbar-height: 72px;
 
   color-scheme: light;
@@ -206,9 +207,10 @@ code, pre, kbd { font-family: var(--font-mono); }
 @media (min-width: 1280px) {
   .page-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--sidebar-width); }
   .page-shell > .ref-sidebar-right { display: flex; }
-  /* 文章页：左占位列 + 正文 + 目录列。占位列宽度 = 目录列宽度 → 正文正好落在视口正中 */
-  .post-shell { grid-template-columns: var(--post-aside) minmax(0, 1fr) var(--post-aside); }
-  .post-shell > .post-main { grid-column: 2; }
+  /* 文章页：左侧只留一条窄缝（左栏本来就是空的），正文顺势吃掉这部分宽度；
+     右栏仍然给目录。正文再加一个上限，超宽屏才不会拉出过长的行宽 */
+  .post-shell { grid-template-columns: var(--post-gutter) minmax(0, 1fr) var(--post-aside); }
+  .post-shell > .post-main { grid-column: 2; max-width: 60rem; margin-inline: auto; width: 100%; }
   .post-shell > .ref-sidebar-right { grid-column: 3; }
 }
 
