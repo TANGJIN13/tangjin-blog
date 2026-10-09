@@ -181,8 +181,8 @@ code, pre, kbd { font-family: var(--font-mono); }
   margin-top: 1.5rem;
   padding-inline: 1rem;
 }
-/* 文章页没有左栏，缩掉一个侧栏宽度，让右栏与其它页面右对齐 */
-.post-shell { max-width: calc(var(--page-width) - var(--sidebar-width)); }
+/* 文章页：左侧留一列占位（宽度 = 右栏），正文因此落在视口中线；宽度与其它页面一致，右栏仍然右对齐 */
+.post-shell { max-width: var(--page-width); }
 
 .ref-sidebar-left,
 .ref-sidebar-right {
@@ -205,7 +205,10 @@ code, pre, kbd { font-family: var(--font-mono); }
 @media (min-width: 1280px) {
   .page-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--sidebar-width); }
   .page-shell > .ref-sidebar-right { display: flex; }
-  .post-shell { grid-template-columns: minmax(0, 1fr) var(--sidebar-width); }
+  /* 文章页：左占位列 + 正文 + 右栏。占位列宽度 = 右栏宽度 → 正文正好落在视口正中 */
+  .post-shell { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) var(--sidebar-width); }
+  .post-shell > .post-main { grid-column: 2; }
+  .post-shell > .ref-sidebar-right { grid-column: 3; }
 }
 
 /* 说说页：不要右栏，中间内容顺势加宽（宽度接近文章页） */
@@ -398,6 +401,8 @@ body.immersive-reading .post-shell {
   max-width: 800px;
   margin-inline: auto;
 }
+/* 沉浸阅读切成单列：清掉文章页的三列放置，避免生成隐式列 */
+body.immersive-reading .post-shell > * { grid-column: 1 !important; }
 
 /* ============ 手机 / 平板响应式 ============ */
 /* 窄屏：侧栏全部收起，内容单栏铺满（左右栏在手机上放不下） */
