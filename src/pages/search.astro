@@ -5,6 +5,7 @@ import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
 import { getCollection } from 'astro:content';
 import { categories } from '../data/categories';
+import { downloads } from '../lib/downloads';
 
 const posts = await getCollection('posts');
 const postData = posts
@@ -18,11 +19,30 @@ const postData = posts
   }))
   .sort((a, b) => b.published.valueOf() - a.published.valueOf());
 
+// 资源库里的文件/工具也进搜索：按名称、描述、文件名、标签匹配
+const resourceData = downloads.map((f) => ({
+  id: f.file,
+  title: f.name,
+  description: f.desc,
+  tags: f.tags,
+  file: f.file,
+  base: f.base,
+  ext: f.ext,
+  icon: f.icon,
+  size: f.size,
+  version: f.version,
+  date: f.date,
+  external: f.external,
+}));
+
 const catOf = (slug) => categories.find((c) => c.slug === slug);
 const catCounts = categories.map((c) => ({
   ...c,
   count: postData.filter((p) => p.category === c.slug).length,
 }));
+
+const RESOURCE_CAT = 'resource';
+const totalCount = postData.length + resourceData.length;
 ---
 
 <Base title="搜索">
@@ -36,9 +56,9 @@ const catCounts = categories.map((c) => ({
         </span>
         <div>
           <h1 class="sp-title">搜索</h1>
-          <p class="sp-sub">搜索文章标题、描述、标签，也可按分类筛选</p>
+          <p class="sp-sub">搜文章标题 / 描述 / 标签，也能搜到资源库里的文件与工具</p>
         </div>
-        <span class="sp-total">{postData.length} 篇</span>
+        <span class="sp-total">{totalCount} 条</span>
       </header>
 
       <!-- 搜索栏（吸顶） -->
@@ -56,14 +76,14 @@ const catCounts = categories.map((c) => ({
             <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm5 13.6L15.6 17 12 13.4 8.4 17 7 15.6 10.6 12 7 8.4 8.4 7 12 10.6 15.6 7 17 8.4 13.4 12z" />
           </svg>
         </button>
-        <span class="sp-count" id="search-count">{postData.length} 篇</span>
+        <span class="sp-count" id="search-count">{totalCount} 条</span>
       </div>
 
-      <!-- 分类筛选 -->
+      <!-- 分类筛选（最后一个「资源库」筛的是 downloads.json 里登记的文件） -->
       <div class="sp-chips" id="sp-chips">
         <button type="button" class="sp-chip active" data-cat="">
-          <Icon name="article" size="0.85rem" />全部
-          <em>{postData.length}</em>
+          <Icon name="archive" size="0.85rem" />全部
+          <em>{totalCount}</em>
         </button>
         {catCounts.map((c) => (
           <button type="button" class="sp-chip" data-cat={c.slug}>
@@ -71,6 +91,10 @@ const catCounts = categories.map((c) => ({
             <em>{c.count}</em>
           </button>
         ))}
+        <button type="button" class="sp-chip" data-cat={RESOURCE_CAT}>
+          <Icon name="folder" size="0.85rem" />资源库
+          <em>{resourceData.length}</em>
+        </button>
       </div>
 
       <!-- 结果 -->
@@ -101,12 +125,48 @@ const catCounts = categories.map((c) => ({
             </a>
           );
         })}
+
+        {/* 资源库：public/files/ 下上传的文件与工具也能被搜到，点一下直接下载 */}
+        {resourceData.map((f, i) => (
+          <a
+            class="sp-item sp-item-file onload-animation"
+            href={f.file}
+            download={f.external ? undefined : f.base}
+            target={f.external ? '_blank' : undefined}
+            rel={f.external ? 'noopener noreferrer' : undefined}
+            style={`animation-delay: ${Math.min(i, 10) * 0.035}s`}
+            data-category={RESOURCE_CAT}
+            data-search={`${f.title} ${f.description} ${f.base} ${f.tags.join(' ')} 资源库 下载 ${f.ext}`}
+          >
+            <div class="sp-item-top">
+              <span class="sp-cat sp-cat-file">
+                <Icon name="folder" size="0.78rem" />资源库
+              </span>
+              <span class="sp-file-badge">
+                <Icon name={f.icon} size="0.78rem" />{f.ext.toUpperCase()}
+              </span>
+              {f.date && <time class="sp-date">{f.date}</time>}
+            </div>
+            <h3 class="sp-item-title" data-text={f.title}>{f.title}</h3>
+            {f.description && <p class="sp-item-desc" data-text={f.description}>{f.description}</p>}
+            <div class="sp-tags sp-tags-file">
+              {f.version && <span class="sp-tag ver">{f.version}</span>}
+              {f.tags.map((t) => <span class="sp-tag">#{t}</span>)}
+              <span class="sp-file-name">{f.base}</span>
+              <span class="sp-tag dl">
+                <Icon name={f.external ? 'external' : 'download'} size="0.72rem" />
+                {f.external ? '外部链接' : '点击下载'}
+                {f.size && ` · ${f.size}`}
+              </span>
+            </div>
+          </a>
+        ))}
       </div>
 
       <div class="sp-empty" id="sp-empty">
         <Icon name="search" size="2rem" />
-        <p>没有匹配的文章</p>
-        <span>换个关键词，或点上面的分类筛选看看</span>
+        <p>没有匹配的结果</p>
+        <span>换个关键词，或点上面的分类 / 资源库筛选看看</span>
       </div>
     </article>
     <SidebarRight />
@@ -153,7 +213,7 @@ const catCounts = categories.map((c) => ({
       highlight(el.querySelector('.sp-item-title'), q);
       highlight(el.querySelector('.sp-item-desc'), q);
     });
-    count.textContent = q || activeCat ? `${visible} 篇匹配` : `${items.length} 篇`;
+    count.textContent = q || activeCat ? `${visible} 条匹配` : `${items.length} 条`;
     clearBtn.classList.toggle('show', !!q);
     empty.classList.toggle('show', visible === 0);
   }
@@ -392,7 +452,49 @@ const catCounts = categories.map((c) => ({
     background: var(--surface-2);
     border: 1px solid var(--border-light);
     color: var(--text-faint);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
   }
+
+  /* ===== 资源库条目 ===== */
+  .sp-cat-file {
+    color: oklch(52% 0.15 150);
+    background: oklch(96% 0.05 150);
+    border-color: oklch(80% 0.1 150 / 0.5);
+  }
+  [data-theme='dark'] .sp-cat-file {
+    color: oklch(80% 0.13 150);
+    background: oklch(30% 0.06 150);
+  }
+  .sp-file-badge {
+    display: inline-flex; align-items: center; gap: 0.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 0.3rem;
+    background: var(--surface-2);
+    color: var(--text-faint);
+  }
+  .sp-tags-file { align-items: center; gap: 0.3rem; margin-top: 0.45rem; }
+  .sp-tags-file .sp-tag.ver { color: var(--primary-strong); background: var(--primary-soft); border-color: transparent; }
+  .sp-file-name {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-faint);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+  }
+  .sp-tags-file .sp-tag.dl {
+    margin-left: auto;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border-color: transparent;
+    font-weight: 600;
+  }
+  [data-theme='dark'] .sp-tags-file .sp-tag.dl { color: var(--primary-light); }
 
   /* ===== 空状态 ===== */
   .sp-empty,

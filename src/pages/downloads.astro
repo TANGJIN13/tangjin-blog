@@ -3,78 +3,13 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
-import { existsSync, statSync } from 'node:fs';
-import { join } from 'node:path';
-import raw from '../data/downloads.json';
+import { downloads as files } from '../lib/downloads';
 
 /**
  * 下载页：文件放 public/files/ 下，在 src/data/downloads.json 里登记。
  * 本地文件会在构建时自动读取大小与修改时间；file 写成 https:// 开头则是外部链接。
+ * （大小 / 日期 / 图标的计算统一在 src/lib/downloads.ts，搜索页也用同一份数据）
  */
-interface RawItem {
-  name: string;
-  file: string;
-  desc?: string;
-  date?: string;
-  version?: string;
-  tags?: string[];
-}
-
-const isExternal = (f: string) => /^https?:\/\//i.test(f);
-
-const extOf = (f: string) => (f.split('?')[0].split('.').pop() || '').toLowerCase();
-
-/** 按扩展名挑一个图标 */
-function iconFor(ext: string): string {
-  if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
-  if (['pdf', 'doc', 'docx', 'md', 'txt', 'epub'].includes(ext)) return 'file';
-  if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'psd'].includes(ext)) return 'image';
-  if (['mp3', 'wav', 'flac', 'ogg', 'm4a'].includes(ext)) return 'music';
-  if (['mp4', 'mkv', 'avi', 'mov', 'webm'].includes(ext)) return 'play_circle';
-  if (['exe', 'msi', 'apk', 'dmg', 'iso'].includes(ext)) return 'cube';
-  if (['js', 'ts', 'json', 'py', 'sh', 'go', 'rs', 'java', 'c', 'cpp'].includes(ext)) return 'code';
-  return 'download';
-}
-
-function fmtSize(bytes: number): string {
-  if (!bytes) return '';
-  const kb = bytes / 1024;
-  if (kb < 1024) return `${kb.toFixed(1)} KB`;
-  const mb = kb / 1024;
-  if (mb < 1024) return `${mb.toFixed(2)} MB`;
-  return `${(mb / 1024).toFixed(2)} GB`;
-}
-
-const files = (raw as RawItem[]).map((it) => {
-  const external = isExternal(it.file);
-  const base = it.file.split('/').pop() || it.file;
-  let size = '';
-  let missing = false;
-  let autoDate = '';
-
-  if (!external) {
-    // 本地文件：构建时直接读磁盘，自动得到大小与最后修改时间
-    const localPath = join(process.cwd(), 'public', it.file.replace(/^\//, ''));
-    if (existsSync(localPath)) {
-      const st = statSync(localPath);
-      size = fmtSize(st.size);
-      autoDate = st.mtime.toISOString().slice(0, 10);
-    } else {
-      missing = true;
-    }
-  }
-
-  return {
-    ...it,
-    external,
-    base,
-    size,
-    missing,
-    ext: extOf(it.file),
-    icon: iconFor(extOf(it.file)),
-    date: it.date ?? autoDate,
-  };
-});
 ---
 
 <Base title="资源库" description="站长整理的学习资料、工具脚本与实用资源，都可以在这里下载。">
