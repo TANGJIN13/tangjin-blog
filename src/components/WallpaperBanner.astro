@@ -35,7 +35,9 @@ const slides = single ? images.slice(0, 1) : images;
   <!-- 轮播图片 -->
   <div class="wallpaper-images" id="wallpaper-images">
     {slides.map((src, i) => (
-      <div class:list={['wp-slide', { active: i === 0 }]} data-index={i}>
+      /* 多图轮播：默认不激活任何一张，交给前端按 sessionStorage 定位「续上的那张」，
+         避免换页瞬间闪出第一张壁纸；单图（文章封面）则立即激活，保证首屏可见 */
+      <div class:list={['wp-slide', { active: single ? i === 0 : false }]} data-index={i}>
         <img src={src} alt={`壁纸 ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
       </div>
     ))}
