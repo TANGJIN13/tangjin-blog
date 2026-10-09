@@ -463,8 +463,7 @@ html { font-size: 14px; }
 [data-theme='dark'] { --btn-content: oklch(0.75 0.1 250); }
 
 /* ============ 图片点击放大查看（Lightbox） ============ */
-.post-body img,
-.post-main .custom-md :global(img) { cursor: zoom-in; }
+.post-body img { cursor: zoom-in; }
 
 body.ilb-lock { overflow: hidden; }
 
@@ -476,7 +475,7 @@ body.ilb-lock { overflow: hidden; }
   flex-direction: column;
   gap: 0.7rem;
   padding: 3.4rem 1.25rem 0.9rem;
-  background: oklch(10% 0.02 250 / 0.93);
+  background: oklch(10% 0.02 250 / 0.96);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   opacity: 0;
