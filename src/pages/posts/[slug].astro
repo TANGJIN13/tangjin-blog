@@ -5,7 +5,6 @@ import WallpaperBanner from '../../components/WallpaperBanner.astro';
 import GiscusComments from '../../components/GiscusComments.astro';
 import SakuraEffect from '../../components/SakuraEffect.astro';
 import Icon from '../../components/Icon.astro';
-import SidebarRight from '../../components/SidebarRight.astro';
 import TocCard from '../../components/TocCard.astro';
 import { getPublishedPosts, formatDate, readingTime } from '../../lib/posts';
 import { site } from '../../site';
@@ -186,10 +185,10 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
       </div>
     </article>
 
-    <!-- 右侧栏：目录放在最后并吸附在顶部，其它卡片滚走后仍然可见 -->
-    <SidebarRight>
+    <!-- 右侧只保留目录（搜索/日历/统计等组件只在其它页面出现），吸附在顶部 -->
+    <aside class="ref-sidebar-right post-toc-col">
       <TocCard />
-    </SidebarRight>
+    </aside>
   </div>
 </Base>
 
@@ -371,6 +370,17 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   .post-main { min-width: 0; }
 
   .post-body { padding: 1.75rem 2rem; font-size: 1.02rem; }
+
+  /* 长串字母/数字/哈希（如 JWT）自动折行，不再横向溢出卡片 */
+  .custom-md { overflow-wrap: break-word; }
+  .custom-md :global(p),
+  .custom-md :global(li),
+  .custom-md :global(td),
+  .custom-md :global(h1),
+  .custom-md :global(h2),
+  .custom-md :global(h3),
+  .custom-md :global(h4) { overflow-wrap: anywhere; }
+  .custom-md :global(:not(pre) > code) { overflow-wrap: anywhere; }
 
   .post-foot {
     margin-top: 1.25rem;
