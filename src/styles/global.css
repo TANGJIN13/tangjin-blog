@@ -105,7 +105,9 @@ body {
   overflow-x: clip;
 }
 
-img, svg, video { display: block; max-width: 100%; }
+/* height:auto 必须写：<img> 上的 width/height 属性会被当作 CSS 尺寸提示，
+   只给 max-width:100% 的话高度会被锁死成属性值，图片被横向压扁变形 */
+img, svg, video { display: block; max-width: 100%; height: auto; }
 
 a {
   color: var(--text);

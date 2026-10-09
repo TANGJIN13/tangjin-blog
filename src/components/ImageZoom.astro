@@ -109,13 +109,20 @@
     if (e.key === 'Escape') close();
   }
 
-  // 只绑一次（window 上的标记不会因为模块重新执行而丢失）
+  // 换页后：给正文图片加提示 title，并隐藏上一次可能残留的覆盖层
+  function refresh() {
+    document.querySelectorAll('.post-body img, .post-main img').forEach((i) => {
+      if (!i.title) i.title = '点击放大查看';
+    });
+  }
+
   const w = window;
   if (!w.__imgZoomBound) {
     w.__imgZoomBound = true;
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
   }
-  // 换页后隐藏上一次可能残留的覆盖层
+  refresh();
+  document.addEventListener('astro:page-load', refresh);
   document.addEventListener('astro:before-swap', close);
 </script>
