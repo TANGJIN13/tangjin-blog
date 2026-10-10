@@ -605,8 +605,15 @@ const catCounts = categories.map((c) => ({
   .cat-toggle.is-open .cat-toggle-text::after { content: '收起'; }
   .cat-toggle:not(.is-open) .cat-toggle-text::after { content: '更多'; }
 
-  /* 首页文章网格：固定两列（一行两篇），窄屏回退单列 */
-  .post-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  /* 首页文章网格：固定两列（一行两篇），窄屏回退单列
+     grid-auto-rows: 1fr —— 让【所有行】都取同一高度（按内容最多的那张算），
+     这样无论有没有摘要、摘要长短、电脑端还是手机端单列，卡片都完全等高 */
+  .post-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 1rem;
+  }
 
   /* 分页包装层是网格的直接子项：内部再套一层 grid，让卡片撑满包装层，
      否则等高拉伸断在包装层上——没写摘要的矮卡片底部会对不齐 */
