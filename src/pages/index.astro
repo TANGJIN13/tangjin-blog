@@ -608,6 +608,10 @@ const catCounts = categories.map((c) => ({
   /* 首页文章网格：固定两列（一行两篇），窄屏回退单列 */
   .post-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 
+  /* 分页包装层是网格的直接子项：内部再套一层 grid，让卡片撑满包装层，
+     否则等高拉伸断在包装层上——没写摘要的矮卡片底部会对不齐 */
+  .post-list .paginate-item { display: grid; }
+
   @media (max-width: 640px) {
     .post-list { grid-template-columns: 1fr; }
   }
