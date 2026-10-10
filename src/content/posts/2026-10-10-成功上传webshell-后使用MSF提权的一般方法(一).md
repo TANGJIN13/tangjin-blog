@@ -1,5 +1,5 @@
 ---
-title: 成功上传webshell 后使用MSF提权的一般方(一)
+title: 成功上传webshell 后使用MSF提权的一般方法(一)
 description: ""
 published: 2026-10-10T23:22:45
 category: article
