@@ -13,12 +13,12 @@ interface Props {
 const {
   mobile = true,
   images = [
-    '/images/wallpapers/banner-cosmic.jpg',
-    '/images/wallpapers/banner-nebula.jpg',
-    '/images/wallpapers/banner-starry.jpg?v=3',
-    '/images/wallpapers/banner-galaxy.jpg',
-    '/images/wallpapers/banner-moon.jpg',
-    '/images/wallpapers/banner-sea.jpg',
+    '/images/wallpapers/banner-cosmic.webp',
+    '/images/wallpapers/banner-nebula.webp',
+    '/images/wallpapers/banner-starry.webp',
+    '/images/wallpapers/banner-galaxy.webp',
+    '/images/wallpapers/banner-moon.webp',
+    '/images/wallpapers/banner-sea.webp',
   ],
   height = 'clamp(520px, 88vh, 920px)',
   mobileHeight = 'clamp(320px, 65vh, 520px)',
@@ -38,7 +38,13 @@ const slides = single ? images.slice(0, 1) : images;
       /* 多图轮播：默认不激活任何一张，交给前端按 sessionStorage 定位「续上的那张」，
          避免换页瞬间闪出第一张壁纸；单图（文章封面）则立即激活，保证首屏可见 */
       <div class:list={['wp-slide', { active: single ? i === 0 : false }]} data-index={i}>
-        <img src={src} alt={`壁纸 ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
+        <picture>
+          <source srcset={src.replace(/\.webp$/, '.avif')} type="image/avif" />
+          <img src={src} alt={`壁纸 ${i + 1}`}
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : 'low'}
+            decoding={i === 0 ? 'auto' : 'async'} />
+        </picture>
       </div>
     ))}
   </div>
@@ -104,7 +110,12 @@ const slides = single ? images.slice(0, 1) : images;
       var slides = document.querySelectorAll('.wp-slide');
       if (slides.length > 1) {
         for (var i = 0; i < slides.length; i++) slides[i].classList.remove('active');
-        slides[idx % slides.length].classList.add('active');
+        var el = slides[idx % slides.length];
+        el.classList.add('active');
+        // 首屏/换页的「当前这张」立即显示，不要 1.4s 淡入（否则像在慢慢加载）
+        el.style.transition = 'none';
+        void el.offsetWidth; // 强制提交，使上面这次变更立刻生效
+        el.style.transition = '';
       }
     } catch (e) {}
   })();
@@ -152,8 +163,11 @@ const slides = single ? images.slice(0, 1) : images;
     if (wrap && slides.length > 1) {
       const interval = parseInt(wrap.dataset.interval || '7000', 10);
       let slideIdx = getWpIdx() % slides.length;
-      slides.forEach((s) => s.classList.remove('active'));
-      slides[slideIdx].classList.add('active');
+      // 若当前这张已经被 inline 脚本激活过，就不再重复激活（避免首屏又淡入一次）
+      if (!slides[slideIdx].classList.contains('active')) {
+        slides.forEach((s) => s.classList.remove('active'));
+        slides[slideIdx].classList.add('active');
+      }
       slideTimer = setInterval(() => {
         slides[slideIdx].classList.remove('active');
         slideIdx = (slideIdx + 1) % slides.length;

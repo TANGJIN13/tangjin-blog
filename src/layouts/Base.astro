@@ -74,6 +74,9 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 首屏壁纸预加载：让首页大图在解析 body 之前就开始下载，做到「秒出」。
+         注意：这里的第一张要和 WallpaperBanner 默认 images 数组的第一张保持一致。 -->
+    <link rel="preload" as="image" type="image/avif" href="/images/wallpapers/banner-cosmic.avif" fetchpriority="high" />
     <meta name="generator" content={Astro.generator} />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
