@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
+import Paginate from '../components/Paginate.astro';
 import { getPublishedPosts, formatDate, readingTime } from '../lib/posts';
 
 const posts = await getPublishedPosts();
@@ -38,14 +39,14 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
     <div class="timeline">
       {
         years.map((y) => (
-          <section class="year">
+          <section class="year" data-paginate-group>
             <div class="year-node">
               <span class="year-num">{y}</span>
               <span class="year-count">{byYear.get(y)!.length} 篇</span>
             </div>
             <ul class="year-list">
               {byYear.get(y)!.map((p, i) => (
-                <li class="tl-item onload-animation" style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}>
+                <li class="tl-item onload-animation paginate-item" style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}>
                   <span class="tl-dot" aria-hidden="true"></span>
                   <a class="tl-card" href={`/posts/${p.id}/`}>
                     <time class="tl-date" datetime={p.data.published.toISOString()}>
@@ -66,6 +67,8 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
         ))
       }
     </div>
+
+    <Paginate pageSize={10} />
 
     {
       posts.length === 0 && (

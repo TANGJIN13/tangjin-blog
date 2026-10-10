@@ -556,3 +556,70 @@ body.ilb-lock { overflow: hidden; }
 @media (min-width: 1024px) {
   .hide-with-banner { display: none !important; }
 }
+
+/* ============ 客户端分页（首页文章 / 归档时间线） ============ */
+/* 翻页被隐藏的条目 / 整组年份：用一个带 !important 的类，避免被其它 display 规则覆盖 */
+.paginate-item.is-hidden { display: none !important; }
+[data-paginate-group].is-hidden { display: none !important; }
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 2.25rem 0 0.5rem;
+}
+/* 只有一页（条目没超过 pageSize）时整条分页器隐藏 */
+.pager.is-empty { display: none; }
+
+.pager-btn {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-soft);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+.pager-btn:hover:not(.is-disabled):not(.is-current) {
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  background: var(--primary-soft);
+  transform: translateY(-1px);
+}
+[data-theme='dark'] .pager-btn:hover:not(.is-disabled):not(.is-current) { color: var(--primary-light); }
+
+.pager-btn.is-current {
+  background: var(--primary);
+  color: #fff;
+  border-color: transparent;
+  cursor: default;
+  box-shadow: 0 4px 14px oklch(62% 0.14 250 / 0.32);
+}
+.pager-btn.is-disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.pager-ellipsis {
+  min-width: 1.5rem;
+  text-align: center;
+  color: var(--text-faint);
+  user-select: none;
+}
+.pager-prev, .pager-next { gap: 0.3rem; }
+
+/* 手机端：分页按钮略收窄，避免一排挤不下 */
+@media (max-width: 480px) {
+  .pager-btn { min-width: 2rem; height: 2rem; padding: 0 0.6rem; font-size: 0.8rem; }
+  .pager { gap: 0.35rem; margin-top: 1.75rem; }
+}

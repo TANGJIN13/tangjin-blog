@@ -1,0 +1,131 @@
+---
+interface Props {
+  /** 每页条数：首页文章卡片与归档时间线都用 10 */
+  pageSize?: number;
+}
+const { pageSize = 6 } = Astro.props;
+---
+
+<nav class="pager" data-pager data-page-size={pageSize} aria-label="分页导航"></nav>
+
+<script>
+  // 客户端分页：在首页文章卡片、归档时间线上做「上一页 / 页码 / 下一页」切换，
+  // 不刷新页面（配合 Astro ClientRouter 的 SPA 换页）。
+  // 注意：Astro 在软导航后不会重新执行模块脚本，所以初始化必须挂在 astro:page-load 上，
+  // 同时首屏也直接调用一次兜底（避免事件先于监听器触发导致首屏不渲染页码）。
+  function windowedPages(current: number, count: number): (number | '…')[] {
+    const set = new Set<number>([1, count, current, current - 1, current + 1]);
+    const arr = [...set].filter((n) => n >= 1 && n <= count).sort((a, b) => a - b);
+    const out: (number | '…')[] = [];
+    let prev = 0;
+    for (const n of arr) {
+      if (n - prev > 1) out.push('…');
+      out.push(n);
+      prev = n;
+    }
+    return out;
+  }
+
+  function makeBtn(label: string, disabled: boolean, onClick: () => void): HTMLButtonElement {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'pager-btn';
+    b.textContent = label;
+    if (disabled) {
+      b.disabled = true;
+      b.classList.add('is-disabled');
+    } else {
+      b.addEventListener('click', onClick);
+    }
+    return b;
+  }
+
+  function initPager() {
+    const pager = document.querySelector<HTMLElement>('[data-pager]');
+    if (!pager) return;
+
+    const pageSize = parseInt(pager.getAttribute('data-page-size') || '6', 10) || 6;
+    const items = Array.from(document.querySelectorAll<HTMLElement>('.paginate-item'));
+    const total = items.length;
+    const pageCount = Math.max(1, Math.ceil(total / pageSize));
+
+    // 每个路径记住各自翻到的页（同一标签页内返回时还原位置）
+    const key = 'tj-page:' + (location.pathname.replace(/\/$/, '') || 'home');
+    let page = 1;
+    try {
+      page = parseInt(sessionStorage.getItem(key) || '1', 10) || 1;
+    } catch {
+      page = 1;
+    }
+    if (page < 1 || page > pageCount) page = 1;
+
+    function renderButtons() {
+      if (pageCount <= 1) {
+        pager.innerHTML = '';
+        pager.classList.add('is-empty');
+        return;
+      }
+      pager.classList.remove('is-empty');
+      pager.innerHTML = '';
+
+      const prev = makeBtn('上一页', page - 1 < 1, () => go(page - 1));
+      prev.classList.add('pager-prev');
+      pager.appendChild(prev);
+
+      for (const n of windowedPages(page, pageCount)) {
+        if (n === '…') {
+          const span = document.createElement('span');
+          span.className = 'pager-ellipsis';
+          span.textContent = '…';
+          pager.appendChild(span);
+        } else {
+          const b = makeBtn(String(n), false, () => go(n));
+          if (n === page) b.classList.add('is-current');
+          pager.appendChild(b);
+        }
+      }
+
+      const next = makeBtn('下一页', page + 1 > pageCount, () => go(page + 1));
+      next.classList.add('pager-next');
+      pager.appendChild(next);
+    }
+
+    function render() {
+      items.forEach((el, idx) => {
+        const onPage = idx >= (page - 1) * pageSize && idx < page * pageSize;
+        el.classList.toggle('is-hidden', !onPage);
+      });
+      // 归档：某一年份分组下的条目全部隐藏时，连年份标题一起藏起来
+      document.querySelectorAll<HTMLElement>('[data-paginate-group]').forEach((grp) => {
+        const kids = grp.querySelectorAll('.paginate-item');
+        const anyVisible = Array.from(kids).some((k) => !k.classList.contains('is-hidden'));
+        grp.classList.toggle('is-hidden', !anyVisible);
+      });
+      renderButtons();
+      try {
+        sessionStorage.setItem(key, String(page));
+      } catch {
+        /* ignore */
+      }
+    }
+
+    function go(n: number) {
+      if (n < 1 || n > pageCount) return;
+      page = n;
+      render();
+      const target =
+        document.querySelector('.post-list, .timeline') ||
+        document.getElementById('main-content');
+      if (target) {
+        const y = target.getBoundingClientRect().top + window.scrollY - 90;
+        window.scrollTo({ top: y, behavior: 'smooth' });
+      }
+    }
+
+    render();
+  }
+
+  document.addEventListener('astro:page-load', initPager);
+  // 首屏兜底：模块脚本是 deferred，可能 astro:page-load 已经派发过，这里再跑一次确保渲染
+  initPager();
+</script>

@@ -8,6 +8,7 @@ import CalendarWidget from '../components/CalendarWidget.astro';
 import HolidayWidget from '../components/HolidayWidget.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import SiteStats from '../components/SiteStats.astro';
+import Paginate from '../components/Paginate.astro';
 import Icon from '../components/Icon.astro';
 import { getPublishedPosts, getTags, pinToTop } from '../lib/posts';
 import { categories } from '../data/categories';
@@ -112,9 +113,12 @@ const catCounts = categories.map((c) => ({
           <section class="block">
             <div class="post-list">
               {ordered.map((p, i) => (
-                <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
+                <div class="paginate-item">
+                  <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
+                </div>
               ))}
             </div>
+            <Paginate pageSize={10} />
           </section>
         )}
 

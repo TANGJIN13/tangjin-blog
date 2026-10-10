@@ -7,7 +7,7 @@ tags: []
 draft: false
 ---
 
-# 成功上传webshell 后使用MSF提权的一般方(一)
+# 成功上传webshell 后使用MSF提权的一般方法(一)
 
 ## 一、 基础概念
 
