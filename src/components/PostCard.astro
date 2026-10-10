@@ -21,6 +21,20 @@ const cat = categories.find((c) => c.slug === catSlug) ?? categories.find((c) =>
 const shownTags = tags.slice(0, 4);
 const moreTagCount = tags.length - shownTags.length;
 
+// 卡片摘要：优先用 frontmatter 的 description；没写就从正文提取纯文本兜底，
+// 保证每张卡都有摘要可显示（卡片高度靠「固定两行槽位 + 省略号截断」保持统一）
+const plainBody = post.body
+  .replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, '$1') // Obsidian 双链/嵌入 → 取链接文字
+  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ') // 图片语法整段去掉
+  .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // 普通链接 → 取文字
+  .replace(/```[\s\S]*?```/g, ' ') // 代码块去掉
+  .replace(/^\s{0,3}>\s?/gm, '') // 引用符
+  .replace(/^\s{0,3}#+\s+/gm, '') // 标题符
+  .replace(/[*_~`]/g, '') // 强调符号
+  .replace(/\s+/g, ' ')
+  .trim();
+const excerpt = (description ?? '').trim() || plainBody.slice(0, 120);
+
 // 没写 cover 的文章：按 id 稳定挑一张风景照兜底（同一篇文章永远同一张）
 const fallbackCovers = [
   '/images/covers/cover-01.jpg',
@@ -67,7 +81,7 @@ const coverSrc = cover ?? fallbackCovers[hash % fallbackCovers.length];
       <span class="meta-chip is-soft"><Icon name="clock" size="0.72rem" />约 {minutes} 分钟</span>
     </div>
 
-    {description && <p class="post-card-desc">{description}</p>}
+    {excerpt && <p class="post-card-desc">{excerpt}</p>}
 
     <div class="card-foot">
       {shownTags.map((t) => (
@@ -212,10 +226,19 @@ const coverSrc = cover ?? fallbackCovers[hash % fallbackCovers.length];
   }
   .meta-chip.is-link:hover :global(.icon) { opacity: 1; }
 
-  /* 摘要：不在卡片上占位显示，让所有卡片与「没写摘要的卡」结构一致 → 高度统一。
-     元素仍保留在 DOM 中（display:none 不影响 textContent），
-     搜索组件 SearchWidget 靠 .post-card-desc 取摘要文本，所以不能删掉这个节点。 */
-  .post-card-desc { display: none; }
+  /* 摘要：固定两行槽位——没写摘要/摘要很短的卡也占同样高度，保证所有卡片等高；
+     超出两行用省略号截断（line-clamp）。元素保留在 DOM，搜索组件靠它取摘要文本 */
+  .post-card-desc {
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    line-height: 1.6;
+    height: 3.2em; /* = 1.6 行高 × 2 行 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
   /* ===== 底部：#标签 + 阅读 CTA（贴底对齐） ===== */
   .card-foot {
