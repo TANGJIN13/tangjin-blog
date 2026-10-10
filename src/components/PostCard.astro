@@ -179,13 +179,12 @@ const coverSrc = cover ?? fallbackCovers[hash % fallbackCovers.length];
     color: var(--text);
     text-decoration: none !important;
     transition: color 0.18s ease;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    /* 标题固定一行，超长用省略号：标题再长也不会把卡片撑高，
+       所有卡片的结构与高度完全一致（配合 grid-auto-rows:1fr 抹平残差） */
+    display: block;
+    white-space: nowrap;
     overflow: hidden;
-    /* 标题固定预留两行：标题只有一行的卡不会把空隙挤到「标签 ↔ 阅读全文」之间，
-       所有卡片的 标签/阅读全文 位置完全一致（配合 grid-auto-rows:1fr 高度统一） */
-    min-height: 2.8em;
+    text-overflow: ellipsis;
   }
   .post-card:hover .post-card-title { color: var(--primary) !important; }
 
