@@ -209,16 +209,10 @@ const coverSrc = cover ?? fallbackCovers[hash % fallbackCovers.length];
   }
   .meta-chip.is-link:hover :global(.icon) { opacity: 1; }
 
-  .post-card-desc {
-    margin: 0;
-    color: var(--text-soft);
-    font-size: 0.84rem;
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
+  /* 摘要：不在卡片上占位显示，让所有卡片与「没写摘要的卡」结构一致 → 高度统一。
+     元素仍保留在 DOM 中（display:none 不影响 textContent），
+     搜索组件 SearchWidget 靠 .post-card-desc 取摘要文本，所以不能删掉这个节点。 */
+  .post-card-desc { display: none; }
 
   /* ===== 底部：#标签 + 阅读 CTA（贴底对齐） ===== */
   .card-foot {
