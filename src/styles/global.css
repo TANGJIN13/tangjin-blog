@@ -318,7 +318,6 @@ code, pre, kbd { font-family: var(--font-mono); }
   background-size: auto, auto, 160px 160px;
   /* ③ 毛面：模糊 + 提饱和，背后有颜色时玻璃才会「吸色」 */
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   /* ④ 上缘内高光 + 下缘内暗线（厚度）+ 外圈发丝边（浅底上定形） */
   border: 1px solid var(--glass-edge);
   box-shadow:
@@ -396,7 +395,6 @@ code, pre, kbd { font-family: var(--font-mono); }
 .glass {
   background: rgba(255, 255, 255, 0.72);
   backdrop-filter: blur(12px) saturate(150%);
-  -webkit-backdrop-filter: blur(12px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 [data-theme='dark'] .glass {
@@ -428,7 +426,6 @@ code, pre, kbd { font-family: var(--font-mono); }
   border: 1px solid var(--glass-edge);
   background-color: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
   color: var(--text-soft);
   font-size: 1rem;
   cursor: pointer;
@@ -623,7 +620,6 @@ body.ilb-lock { overflow: hidden; }
   padding: 3.4rem 1.25rem 0.9rem;
   background: oklch(10% 0.02 300 / 0.96);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   opacity: 0;
   transition: opacity 0.22s ease;
 }

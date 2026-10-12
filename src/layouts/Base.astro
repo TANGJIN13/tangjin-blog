@@ -520,7 +520,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   .top-row.scrolled {
     background: oklch(100% 0 0 / 0.72);
     backdrop-filter: blur(14px) saturate(160%);
-    -webkit-backdrop-filter: blur(14px) saturate(160%);
     border-bottom-color: var(--border);
   }
   :global([data-theme='dark'] .top-row.scrolled) {
@@ -531,7 +530,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   body.has-banner .top-row:not(.scrolled) {
     background: oklch(100% 0 0 / 0.14);
     backdrop-filter: blur(10px) saturate(150%);
-    -webkit-backdrop-filter: blur(10px) saturate(150%);
     border-bottom: 1px solid oklch(100% 0 0 / 0.12);
   }
   :global([data-theme='dark'] body.has-banner .top-row:not(.scrolled)) {
@@ -699,7 +697,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: oklch(100% 0 0 / 0.16);
     border: 1px solid oklch(100% 0 0 / 0.28);
     backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
     margin-bottom: 0.15rem;
   }
   .wp-page-title {
@@ -929,7 +926,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     min-width: 13rem;
     z-index: 99;
     background: oklch(100% 0 0 / 0.82);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
     backdrop-filter: blur(16px) saturate(150%);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
