@@ -526,9 +526,13 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: oklch(14% 0.015 300 / 0.75);
   }
 
-  /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上 */
+  /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上。
+     这层白玻璃的透明度 = 白字的对比度预算：它越白，底下的浅色壁纸就被抬得越亮，白字越糊。
+     壁纸遮罩改轻之后（见 WallpaperBanner.astro）底色整体更亮，所以这里同步收一档：
+     桌面 14% → 10%、小屏 6% → 4.5%。
+     既把对比度补回来，也让导航条少一层白雾、多透出一点壁纸本身的颜色。 */
   body.has-banner .top-row:not(.scrolled) {
-    background: oklch(100% 0 0 / 0.14);
+    background: oklch(100% 0 0 / 0.10);
     backdrop-filter: blur(10px) saturate(150%);
     border-bottom: 1px solid oklch(100% 0 0 / 0.12);
   }
@@ -536,11 +540,8 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: oklch(0% 0 0 / 0.22);
     border-bottom-color: oklch(100% 0 0 / 0.08);
   }
-  /* 手机端壁纸遮罩改轻之后（见 WallpaperBanner.astro），导航条自己那层 14% 白玻璃
-     反过来把浅色壁纸又提亮了，白字对比度掉到 1.89。小屏把它压到 6%，
-     背景暗一档 → 对比度回到 ~3.1（比改前的 2.51 还清楚），同时壁纸整体依然更亮。 */
   @media (max-width: 1023px) {
-    body.has-banner .top-row:not(.scrolled) { background: oklch(100% 0 0 / 0.06); }
+    body.has-banner .top-row:not(.scrolled) { background: oklch(100% 0 0 / 0.045); }
   }
 
   .container-fluid {

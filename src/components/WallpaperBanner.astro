@@ -237,16 +237,34 @@ const slides = single ? images.slice(0, 1) : images;
   .wp-slide.active { opacity: 1; transform: scale(1); }
   .wp-slide img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* 暗角遮罩 —— 让白色文字可读 */
+  /* 暗角遮罩 —— 让白色文字可读。
+     原来是一条盖满整张图的均匀黑纱（0.35 / 0.22 / 0.30 / 0.18），平均把壁纸压暗约 21%，
+     粉紫 / 薄荷那点彩度全被压成灰调 —— 这就是「壁纸不够明亮」的根源。
+     改成「只压该压的地方」的分段遮罩（与手机端同一套，全站统一）：
+       ① 顶部 → 只护住悬浮导航条：用像素停靠（--navbar-height）而不是百分比，
+          这样首页 88vh（~792px）和内页 35vh（~315px）两种高度都能精确对齐同一条导航，
+          不会被百分比拉长拉短；
+       ② 中段 → 只压住标题 / 副标题所在的那一条柔晕，峰值浅、跨度宽，肉眼看不出边界。
+          首页大字、内页标题、手机标题都是垂直居中，所以 24%~79% 的对称跨度对三者都成立；
+       ③ 底部 → 不用管：header-waves（四层叠加接近全不透明）+ wallpaper-gradient 已经盖住了。
+     实测：横幅边条平均亮度 170 → ~198（完全不加遮罩的上限是 214）。 */
   .wallpaper-dim {
     position: absolute;
     inset: 0;
     background:
       linear-gradient(180deg,
-        oklch(0% 0 0 / 0.35) 0%,
-        oklch(0% 0 0 / 0.22) 30%,
-        oklch(0% 0 0 / 0.30) 65%,
-        oklch(0% 0 0 / 0.18) 100%);
+        oklch(0% 0 0 / 0.34) 0px,
+        oklch(0% 0 0 / 0.26) calc(var(--navbar-height) * 0.45),
+        oklch(0% 0 0 / 0.10) var(--navbar-height),
+        oklch(0% 0 0 / 0) calc(var(--navbar-height) + 56px)),
+      linear-gradient(180deg,
+        oklch(0% 0 0 / 0) 24%,
+        oklch(0% 0 0 / 0.06) 33%,
+        oklch(0% 0 0 / 0.14) 44%,
+        oklch(0% 0 0 / 0.15) 52%,
+        oklch(0% 0 0 / 0.13) 60%,
+        oklch(0% 0 0 / 0.06) 70%,
+        oklch(0% 0 0 / 0) 79%);
     z-index: 1;
   }
 
@@ -337,7 +355,11 @@ const slides = single ? images.slice(0, 1) : images;
     font-family: 'Liu Jian Mao Cao', 'Xingkai SC', 'STXingkai', 'HanziPen SC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive;
     text-wrap: balance;
     word-break: keep-all;
-    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+    /* 底色提亮之后，给书法笔画补一条「贴着笔画的窄暗边」保证分离度。
+       关键从来不是阴影颜色深浅，而是 blur 半径 ÷ 字号：
+       桌面 86px 字配 24px 晕 = 0.28（安全），手机 35px 字配 24px 晕 = 0.69（笔画被糊成灰的）。
+       所以这里只在原有柔晕前补一层 2~3px 的窄影，其余不动。 */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 4px 24px rgba(0, 0, 0, 0.5);
   }
 
   /* ===== 句子轮换：同格堆叠，逐句淡入浮现 / 淡出上移 ===== */
@@ -482,38 +504,9 @@ const slides = single ? images.slice(0, 1) : images;
   @media (max-width: 1023px) {
     .wallpaper-wrapper { height: 65vh !important; }
 
-    /* 手机端遮罩改成「只压该压的地方」：
-       原来是一条 0.18~0.35 的均匀黑纱盖满整张图，平均把壁纸压暗 26%，
-       粉/薄荷/薰衣草的彩度全被压成灰调 —— 这正是「手机端壁纸不怎么亮」的原因。
-       但整条去掉白色书法标题又读不清，所以改成三段：
-         ① 顶部窄带 → 只保证白色导航条有对比；
-         ② 中段软带 → 只压住标题/副标题所在的那一条，其余保持原色；
-         ③ 底部一点 → 和波浪自然接上。
-       上下天空与远山基本不动，整体亮度回到 ~95%。 */
-    .wallpaper-dim {
-      background:
-        /* 顶部窄带：只护住白色导航条，深度按「导航压暗后背景亮度 ~145」来定，
-           配合 Base.astro 里小屏导航白玻璃降到 6%，白字对比度 ~3.1。 */
-        linear-gradient(180deg,
-          oklch(0% 0 0 / 0.40) 0%,
-          oklch(0% 0 0 / 0.30) 7%,
-          oklch(0% 0 0 / 0.12) 12%,
-          oklch(0% 0 0 / 0) 18%),
-        /* 中段：原来是「一条峰值 0.28 的压暗带」，会在壁纸上留下一道能看出来的灰条。
-           改成更浅（峰值 0.20）更宽（过渡拉到 24%–80%）的柔晕 —— 肉眼看不出边界，
-           但白字底下仍有底。亮度本身也再提一档。 */
-        linear-gradient(180deg,
-          oklch(0% 0 0 / 0) 24%,
-          oklch(0% 0 0 / 0.10) 34%,
-          oklch(0% 0 0 / 0.18) 44%,
-          oklch(0% 0 0 / 0.20) 51%,
-          oklch(0% 0 0 / 0.16) 60%,
-          oklch(0% 0 0 / 0.06) 70%,
-          oklch(0% 0 0 / 0) 80%),
-        linear-gradient(180deg,
-          oklch(0% 0 0 / 0) 84%,
-          oklch(0% 0 0 / 0.08) 100%);
-    }
+    /* 手机端遮罩不再单独覆盖：上面的分段遮罩是像素停靠导航条 + 对称柔晕，
+       首页 88vh / 内页 35vh / 手机 65vh 三种高度都精确对齐，深浅一套到底。
+       （原来这里单独写过一条三段遮罩，峰值 0.20，实测比现在还暗一档，已合并。） */
 
     .header-waves { height: 10vh; min-height: 50px; max-height: 150px; }
     .wp-scroll { display: none; }
