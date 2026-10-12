@@ -494,6 +494,50 @@ body::before {
     radial-gradient(65rem 45rem at 50% 105%,  oklch(48% 0.16 260 / 0.26), transparent 60%);
 }
 
+/* ============ 侧栏背后的柔光（毛玻璃的“底料”） ============
+   ⚠️ 毛玻璃必须有「东西」可模糊才看得出来：背景是一片纯色时，blur 之后
+   还是那片纯色，卡片只会显得更白、更平——这也是之前组件看着不够高级的原因之一。
+   所以在左右侧栏正后方各放一团柔光（位置对着侧栏中线），组件那层 backdrop-filter
+   就会把颜色「吸」进卡面，玻璃才有通透感和层次。用 fixed 定位：侧栏是 sticky，
+   滚动时这团光始终待在卡面背后。 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+@media (min-width: 900px) {
+  /* 中屏只有左栏 */
+  body::after {
+    background:
+      radial-gradient(20rem 30rem at 9% 34%, oklch(70% 0.17 296 / 0.3), transparent 66%),
+      radial-gradient(20rem 30rem at 9% 76%, oklch(74% 0.14 200 / 0.18), transparent 68%);
+  }
+  [data-theme='dark'] body::after {
+    background:
+      radial-gradient(20rem 30rem at 9% 34%, oklch(56% 0.2 296 / 0.34), transparent 66%),
+      radial-gradient(20rem 30rem at 9% 76%, oklch(52% 0.16 210 / 0.22), transparent 68%);
+  }
+}
+@media (min-width: 1280px) {
+  /* 大屏左右栏都有 */
+  body::after {
+    background:
+      radial-gradient(20rem 30rem at 9% 34%, oklch(70% 0.17 296 / 0.3), transparent 66%),
+      radial-gradient(20rem 30rem at 9% 76%, oklch(74% 0.14 200 / 0.18), transparent 68%),
+      radial-gradient(20rem 30rem at 91% 28%, oklch(72% 0.18 330 / 0.26), transparent 66%),
+      radial-gradient(22rem 32rem at 91% 72%, oklch(72% 0.15 268 / 0.22), transparent 68%);
+  }
+  [data-theme='dark'] body::after {
+    background:
+      radial-gradient(20rem 30rem at 9% 34%, oklch(56% 0.2 296 / 0.34), transparent 66%),
+      radial-gradient(20rem 30rem at 9% 76%, oklch(52% 0.16 210 / 0.22), transparent 68%),
+      radial-gradient(20rem 30rem at 91% 28%, oklch(56% 0.2 330 / 0.3), transparent 66%),
+      radial-gradient(22rem 32rem at 91% 72%, oklch(54% 0.18 268 / 0.26), transparent 68%);
+  }
+}
+
 /* ============ 统一的卡片质感：微阴影 + 悬停上浮 ============ */
 .card-base {
   background: var(--surface);
