@@ -62,6 +62,25 @@
   --on-primary: var(--text-on-primary);
   --hue: 290;
 
+  /* ---- 毛玻璃体系（侧栏组件 / 浮动按钮共用）----
+     一块「真实的玻璃」要同时具备四层，缺一层就会退回成普通白卡：
+       ① 半透明的玻璃面（能透出背后的氛围光）
+       ② 背景模糊（毛面）
+       ③ 上缘一道亮线 + 左上角斜向高光（玻璃的反射）
+       ④ 外圈发丝边 + 向下投的柔和阴影（让玻璃「浮」起来，而不是贴上去） */
+  --glass-bg: oklch(100% 0 0 / 0.56);
+  --glass-bg-hover: oklch(100% 0 0 / 0.7);
+  --glass-sheen: oklch(100% 0 0 / 0.55); /* 左上角斜向高光 */
+  --glass-top: oklch(100% 0 0 / 0.3); /* 顶部竖向提亮 */
+  --glass-edge: oklch(100% 0 0 / 0.72); /* 上缘内高光 */
+  --glass-hairline: oklch(0% 0 0 / 0.055); /* 外圈发丝边 */
+  --glass-shadow: 0 12px 32px oklch(45% 0.06 300 / 0.1), 0 3px 10px oklch(45% 0.06 300 / 0.06);
+  --glass-shadow-hover: 0 18px 44px oklch(45% 0.07 300 / 0.14), 0 4px 12px oklch(45% 0.06 300 / 0.07);
+  --glass-blur: blur(20px) saturate(175%);
+  /* 磨砂颗粒：纯色玻璃看着像塑料，一层 5% 的极细噪点就有「毛面」的微观质感。
+     用 SVG feTurbulence 现算，不需要额外图片资源。 */
+  --glass-noise: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='gn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23gn)' opacity='0.05'/%3E%3C/svg%3E");
+
   /* 布局 —— 参照站为 110rem(1760px) */
   --page-width: 110rem;
   --sidebar-width: 17.5rem;
@@ -95,6 +114,17 @@
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.3);
   --shadow: 0 4px 16px oklch(0% 0 0 / 0.35);
   --shadow-lg: 0 8px 32px oklch(0% 0 0 / 0.45);
+
+  /* 暗色玻璃：面要更透一点、高光要更弱，否则深色底上会糊成一片灰 */
+  --glass-bg: oklch(26% 0.028 300 / 0.52);
+  --glass-bg-hover: oklch(29% 0.032 300 / 0.6);
+  --glass-sheen: oklch(100% 0 0 / 0.09);
+  --glass-top: oklch(100% 0 0 / 0.06);
+  --glass-edge: oklch(100% 0 0 / 0.14);
+  --glass-hairline: oklch(0% 0 0 / 0.28);
+  --glass-shadow: 0 12px 32px oklch(0% 0 0 / 0.42), 0 3px 10px oklch(0% 0 0 / 0.32);
+  --glass-shadow-hover: 0 18px 44px oklch(0% 0 0 / 0.5), 0 4px 12px oklch(0% 0 0 / 0.36);
+  --glass-blur: blur(22px) saturate(150%);
 }
 
 /* ============ 基础重置 ============ */
@@ -266,25 +296,49 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* ============ Widget 系统 ============ */
 /* 卡片基底统一在下面「统一的卡片质感」一节定义，这里不再重复声明 */
 
-/* 侧栏卡片：极浅的竖向渐变给一点「上亮下暗」的层次（不设 overflow:hidden，
-   否则搜索卡片的浮层下拉会被裁掉） */
-.widget-card {
+/* 侧栏卡片：毛玻璃。
+   ⚠️ 选择器必须写成 `.card-base.widget-card`（两个类）——`.card-base` 的
+   `background: var(--surface)` 是**简写**，会把 background-image 一起重置成 none。
+   它写在文件更后面、优先级又相同，所以只要这里只写 `.widget-card`，
+   上面那条高光渐变就会被静默吃掉（这正是改版前一直没有「上亮下暗」层次的原因）。
+   用双类选择器把优先级提到 (0,2,0)，就和源码顺序无关了。
+   也不设 overflow:hidden，否则搜索卡片的浮层下拉会被裁掉。 */
+.card-base.widget-card {
   padding: 1rem 1rem 1.05rem;
   position: relative;
-  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.5), transparent 42%);
+
+  /* ① 半透明玻璃面（能透出背后的氛围光斑） */
+  background-color: var(--glass-bg);
+  /* ② 三层叠出「玻璃」：左上斜向高光 → 顶部竖向提亮 → 磨砂颗粒 */
+  background-image:
+    radial-gradient(130% 96% at 0% 0%, var(--glass-sheen), transparent 58%),
+    linear-gradient(180deg, var(--glass-top), transparent 46%),
+    var(--glass-noise);
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-size: auto, auto, 160px 160px;
+  /* ③ 毛面：模糊 + 提饱和，背后有颜色时玻璃才会「吸色」 */
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  /* ④ 上缘内高光 + 下缘内暗线（厚度）+ 外圈发丝边（浅底上定形） */
+  border: 1px solid var(--glass-edge);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-edge),
+    inset 0 -1px 0 0 var(--glass-hairline),
+    0 0 0 1px var(--glass-hairline),
+    var(--glass-shadow);
 }
-[data-theme='dark'] .widget-card {
-  background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.04), transparent 42%);
-}
-/* 侧栏是一列组件、不算「内容卡片」，悬停时不上浮跳动，只轻轻提亮描边 */
-.widget-card:hover {
+/* 侧栏是一列组件、不算「内容卡片」：悬停不上浮跳动，只把玻璃提亮一档、阴影加深一点 */
+.card-base.widget-card:hover {
   transform: none;
-  border-color: color-mix(in srgb, var(--primary) 26%, transparent);
-  box-shadow: 0 2px 8px oklch(0% 0 0 / 0.05), 0 10px 24px oklch(60% 0.13 300 / 0.1);
+  background-color: var(--glass-bg-hover);
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--glass-edge));
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-edge),
+    inset 0 -1px 0 0 var(--glass-hairline),
+    0 0 0 1px var(--glass-hairline),
+    var(--glass-shadow-hover);
 }
-[data-theme='dark'] .widget-card:hover {
-  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 10px 24px oklch(0% 0 0 / 0.4);
-}
+
 /* 悬停时顶部浮出一条主色高光线 */
 .widget-card::after {
   content: '';
@@ -371,23 +425,31 @@ code, pre, kbd { font-family: var(--font-mono); }
   width: 36px;
   height: 36px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-  background: var(--surface);
+  border: 1px solid var(--glass-edge);
+  background-color: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
   color: var(--text-soft);
   font-size: 1rem;
   cursor: pointer;
   display: grid;
   place-items: center;
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-edge),
+    0 0 0 1px var(--glass-hairline),
+    0 4px 14px oklch(45% 0.06 300 / 0.1);
   transition: all 0.2s ease;
 }
 .floating-btn:hover {
   border-color: var(--primary);
   color: var(--primary);
+  background-color: var(--glass-bg-hover);
 }
 .floating-btn.active {
   background: var(--primary);
   color: var(--text-on-primary);
   border-color: var(--primary);
+  box-shadow: 0 4px 16px oklch(62% 0.14 300 / 0.38);
 }
 
 .reading-progress {
