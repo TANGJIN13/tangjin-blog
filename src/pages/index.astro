@@ -25,6 +25,8 @@ const catCounts = categories.map((c) => ({
   ...c,
   count: posts.filter((p) => p.data.category === c.slug).length,
 }));
+// 分类占比条的基准（最多的那个分类占满）
+const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
 
 ---
 
@@ -40,15 +42,16 @@ const catCounts = categories.map((c) => ({
         <div class="card-base profile-card onload-animation">
           <div class="avatar-ring">
             <img class="profile-avatar" src={site.avatar} alt="头像" width="78" height="78" />
+            <span class="avatar-status" title="在线"></span>
           </div>
           <h3 class="profile-name">{site.title}</h3>
           <p class="profile-bio">Web 安全 / CTF / 生活趣事</p>
           <nav class="profile-nav">
-            <a href="/" class="nav-item active"><Icon name="home" size="1rem" /> 首页</a>
-            <a href="/archive/" class="nav-item"><Icon name="archive" size="1rem" /> 归档</a>
-            <a href="/album/" class="nav-item"><Icon name="photo" size="1rem" /> 相册</a>
-            <a href="/says/" class="nav-item"><Icon name="comment" size="1rem" /> 说说</a>
-            <a href="/about/" class="nav-item"><Icon name="person" size="1rem" /> 关于</a>
+            <a href="/" class="nav-item active"><span class="nav-icon"><Icon name="home" size="0.95rem" /></span><span>首页</span></a>
+            <a href="/archive/" class="nav-item"><span class="nav-icon"><Icon name="archive" size="0.95rem" /></span><span>归档</span></a>
+            <a href="/album/" class="nav-item"><span class="nav-icon"><Icon name="photo" size="0.95rem" /></span><span>相册</span></a>
+            <a href="/says/" class="nav-item"><span class="nav-icon"><Icon name="comment" size="0.95rem" /></span><span>说说</span></a>
+            <a href="/about/" class="nav-item"><span class="nav-icon"><Icon name="person" size="0.95rem" /></span><span>关于</span></a>
           </nav>
         </div>
 
@@ -63,8 +66,13 @@ const catCounts = categories.map((c) => ({
           <div class="cat-list" id="cat-list" data-collapsed="5">
             {catCounts.map((c, i) => (
               <a class="cat-row" href={`/categories/${c.slug}/`} data-index={i}>
-                <span class="cat-row-name">{c.name}</span>
-                <span class="cat-row-count">{c.count}</span>
+                <span class="cat-row-head">
+                  <span class="cat-row-name">{c.name}</span>
+                  <span class="cat-row-count">{c.count}</span>
+                </span>
+                <span class="cat-bar" aria-hidden="true">
+                  <i style={`width: ${Math.round((c.count / maxCatCount) * 100)}%`}></i>
+                </span>
               </a>
             ))}
           </div>
@@ -224,10 +232,10 @@ const catCounts = categories.map((c) => ({
   .ref-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
   .block { scroll-margin-top: 80px; min-width: 0; }
 
-  /* 资料卡 */
+  /* ===== 个人资料卡 ===== */
   .profile-card {
     text-align: center;
-    padding: 1.5rem 1rem 1.1rem;
+    padding: 1.5rem 1rem 1.05rem;
     position: relative;
     overflow: hidden;
   }
@@ -236,11 +244,24 @@ const catCounts = categories.map((c) => ({
     content: '';
     position: absolute;
     inset: 0 0 auto;
-    height: 4px;
+    height: 3px;
     background: var(--gradient-primary);
+  }
+  /* 右上角一团柔光，避免卡片显得平 */
+  .profile-card::after {
+    content: '';
+    position: absolute;
+    top: -46px;
+    right: -46px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, oklch(70% 0.15 250 / 0.16), transparent 68%);
+    pointer-events: none;
   }
 
   .avatar-ring {
+    position: relative;
     width: 84px; height: 84px;
     margin: 0 auto 0.7rem;
     border-radius: 50%;
@@ -248,6 +269,25 @@ const catCounts = categories.map((c) => ({
     background: var(--gradient-primary);
     box-shadow: 0 6px 20px oklch(62% 0.14 250 / 0.35);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  /* 头像右下角的在线状态点（呼吸扩散） */
+  .avatar-status {
+    position: absolute;
+    right: 3px;
+    bottom: 5px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: oklch(72% 0.17 150);
+    border: 2.5px solid var(--surface);
+    animation: statusPulse 2.6s ease-out infinite;
+  }
+  @keyframes statusPulse {
+    0%   { box-shadow: 0 0 0 0 oklch(72% 0.17 150 / 0.55); }
+    70%  { box-shadow: 0 0 0 8px oklch(72% 0.17 150 / 0); }
+    100% { box-shadow: 0 0 0 0 oklch(72% 0.17 150 / 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .avatar-status { animation: none; }
   }
   .profile-card:hover .avatar-ring { transform: rotate(8deg) scale(1.05); }
   .profile-avatar {
@@ -281,33 +321,56 @@ const catCounts = categories.map((c) => ({
   .nav-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 0.6rem;
+    gap: 0.55rem;
+    padding: 0.4rem 0.5rem;
     border-radius: var(--radius-sm);
     color: var(--text-soft);
     font-size: 0.84rem;
     text-decoration: none !important;
-    transition: all 0.18s ease;
+    transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
     position: relative;
   }
-  .nav-item :global(.icon) { opacity: 0.8; transition: transform 0.18s ease; }
+  /* 图标坐进小色块 */
+  .nav-icon {
+    width: 1.7rem; height: 1.7rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    color: var(--text-soft);
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
   .nav-item:hover { background: var(--surface-2); color: var(--text); transform: translateX(3px); }
-  .nav-item:hover :global(.icon) { transform: scale(1.12); }
+  .nav-item:hover .nav-icon {
+    background: var(--primary-soft);
+    border-color: transparent;
+    color: var(--primary);
+    transform: scale(1.06);
+  }
   .nav-item.active {
     background: var(--primary-soft);
     color: var(--primary-strong);
     font-weight: 600;
   }
   [data-theme='dark'] .nav-item.active { color: var(--primary-light); }
-  .nav-item.active :global(.icon) { opacity: 1; }
-
-  /* widget 标题带图标 */
-  :global(.widget-title) {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+  .nav-item.active .nav-icon {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    color: var(--text-on-primary);
+    box-shadow: 0 3px 10px -2px var(--primary-glow);
   }
-  :global(.widget-title .icon) { color: var(--primary); }
+  /* 当前页右侧一颗小圆点 */
+  .nav-item.active::after {
+    content: '';
+    margin-left: auto;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+  }
+
 
   /* 分区标题 */
   .section-head {
@@ -543,21 +606,22 @@ const catCounts = categories.map((c) => ({
   }
   .cat-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.35rem 0.5rem;
+    flex-direction: column;
+    gap: 0.34rem;
+    padding: 0.36rem 0.5rem;
     border-radius: var(--radius-sm);
     color: var(--text-soft);
     font-size: 0.82rem;
     text-decoration: none !important;
-    transition: background 0.15s ease, color 0.15s ease, padding 0.15s ease;
-    position: relative;
+    transition: background 0.15s ease, color 0.15s ease;
   }
-  .cat-row:hover {
-    background: var(--surface-2);
-    color: var(--primary-strong);
-    padding-left: 0.65rem;
+  .cat-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
+  .cat-row:hover { background: var(--surface-2); color: var(--primary-strong); }
   [data-theme='dark'] .cat-row:hover { color: var(--primary-light); }
   .cat-row-name {
     overflow: hidden;
@@ -567,21 +631,38 @@ const catCounts = categories.map((c) => ({
     text-align: left;
   }
   .cat-row-count {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 0.08rem 0.5rem;
+    padding: 0.08rem 0.45rem;
     border-radius: 999px;
-    background: oklch(95% 0.025 var(--hue));
-    color: var(--btn-content);
+    background: var(--surface-2);
+    color: var(--text-faint);
     flex-shrink: 0;
-    min-width: 1.5rem;
+    min-width: 1.4rem;
     text-align: center;
-    margin-left: 0.5rem;
+    transition: background 0.18s ease, color 0.18s ease;
   }
-  [data-theme='dark'] .cat-row-count {
-    background: var(--primary);
-    color: var(--deep-text);
+  .cat-row:hover .cat-row-count {
+    background: var(--gradient-primary);
+    color: var(--text-on-primary);
   }
+  /* 占比条：发文越多的分类条越长 */
+  .cat-bar {
+    display: block;
+    height: 4px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .cat-bar i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--gradient-primary);
+    opacity: 0.45;
+    transition: opacity 0.22s ease;
+  }
+  .cat-row:hover .cat-bar i { opacity: 1; }
   /* 折叠：超过 5 条时隐藏 */
   .cat-list.is-collapsed .cat-row:nth-child(n+6) { display: none; }
   /* 展开/收起按钮 */
