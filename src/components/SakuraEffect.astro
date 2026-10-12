@@ -45,6 +45,16 @@
   let spawnDeadline = 0;
   // 本次会话是否已经飘过「开站那一阵子」，避免每次切页都重来一遍
   let burstPlayed = false;
+  // 「开站那一阵子」的截止时刻。换页后如果还没到点就接着飘完，
+  // 不然切一次页那 10 秒就被腰斩了。
+  let burstUntil = 0;
+  // 上一次 init 绑定的 canvas 元素。
+  // ⚠️ 这是「樱花定住不动」那个 bug 的关键：ClientRouter 的首屏会先让脚本自己执行一次
+  //（下面的 init()），紧接着又派发一次 astro:page-load 再调一次 init()。
+  // 第二次会把第一次刚启动的 requestAnimationFrame 取消掉、petals 清空，然后在
+  // 「本次会话已经飘过」的分支里直接 return —— 画面上就留下第一帧，永远不动了。
+  // 用元素身份判断「是不是同一页被重复调用」：同一个 canvas 就直接跳过。
+  let boundCanvas = null;
 
   function readSaved() {
     try {
@@ -259,7 +269,8 @@
     if (next === 'off') {
       stop();
     } else {
-      spawnDeadline = next === 'burst' ? Date.now() + BURST_MS : 0;
+      if (next === 'burst') burstUntil = Date.now() + BURST_MS;
+      spawnDeadline = next === 'burst' ? burstUntil : 0;
       start(!!initial);
     }
   }
