@@ -5,14 +5,17 @@
 //   on           —— 点按钮后常开，一直飘
 //   off          —— 再点一次关掉
 // 状态存 sessionStorage，客户端路由切页 / 刷新都能续上。
+//
+// 按钮本体（#btn-sakura）不在这里，而是挂在 Base.astro 的 .floating-controls 里，
+// 作为那一列浮动按钮的第四个 —— 这样它天然和另外三个同一条右轨、同一个层叠上下文，
+// 不会像之前那样被浮动按钮盖住（之前它 fixed 在 right:1.35rem / bottom:8.5rem，
+// 正好落在浮动按钮栈 [bottom 48px 起、高 119px] 的范围内，elementFromPoint 打到的
+// 永远是别人的图标，整颗按钮根本点不到）。本组件只负责行为：按 id 找到它、绑事件、同步状态。
+//
 // 注意：脚本部分**必须写纯 JS**，Astro 的脚本块里塞 TS 类型标注会直接报错、整段不执行（踩过）。
-import Icon from './Icon.astro';
 ---
 
 <canvas id="sakura-canvas" aria-hidden="true"></canvas>
-<button class="sakura-toggle" id="sakura-toggle" type="button" title="一直飘樱花" aria-label="切换樱花特效" aria-pressed="false">
-  <Icon name="sparkle" size="1.05rem" />
-</button>
 
 <script>
   // 打开页面先飘一阵子的时长
@@ -290,7 +293,7 @@ import Icon from './Icon.astro';
     sparkles = [];
 
     canvas = document.getElementById('sakura-canvas');
-    toggleBtn = document.getElementById('sakura-toggle');
+    toggleBtn = document.getElementById('btn-sakura');
     if (!canvas || !toggleBtn) return;
     ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -300,9 +303,11 @@ import Icon from './Icon.astro';
     if (saved === 'off') return setMode('off', false);
     if (saved === 'on') return setMode('on', true);
 
-    // 关掉动效 / 移动端 → 不自动飘（按钮仍可手动开）
+    // 只尊重系统的「减少动态效果」；手机端也照常飘。
+    // 之前这里还有一条 `window.innerWidth < 768` 直接跳过，「刚点开网站飘 10 秒」
+    // 在手机上根本没生效过。花瓣只有 32 片、10 秒后自动收摊，开销可以忽略。
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || window.innerWidth < 768) return setMode('off', false);
+    if (reduce) return setMode('off', false);
 
     // 开站那一阵子只在本次会话的第一次播放
     if (burstPlayed) return syncButton();
@@ -322,43 +327,7 @@ import Icon from './Icon.astro';
     z-index: 1;
   }
 
-  .sakura-toggle {
-    position: fixed;
-    bottom: 8.5rem;
-    right: 1.35rem;
-    z-index: 30;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: blur(10px);
-    color: var(--text-faint);
-    cursor: pointer;
-    display: grid;
-    place-items: center;
-    box-shadow: 0 4px 14px oklch(0% 0 0 / 0.1);
-    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  .sakura-toggle:hover {
-    color: var(--primary);
-    transform: scale(1.08);
-    box-shadow: 0 6px 18px oklch(0% 0 0 / 0.14);
-  }
-  .sakura-toggle.active {
-    background: var(--gradient-primary);
-    border-color: transparent;
-    color: var(--text-on-primary);
-    box-shadow: 0 6px 18px -4px var(--primary-glow);
-  }
-  .sakura-toggle.active :global(.icon) { animation: sakura-spin 6s linear infinite; }
-  @keyframes sakura-spin {
-    to { transform: rotate(360deg); }
-  }
-  @media (max-width: 767px) {
-    .sakura-toggle { bottom: 5.5rem; right: 1rem; width: 36px; height: 36px; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .sakura-toggle.active :global(.icon) { animation: none; }
-  }
+  /* 按钮样式不在这里 —— 按钮本体和外观都归 Base.astro 的 .floating-controls /
+     global.css 的 .floating-btn（第四个按钮），开/关态用 .floating-btn.active。
+     本组件只保留上面这层 canvas。 */
 </style>

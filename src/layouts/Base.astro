@@ -183,6 +183,13 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
       <button class="floating-btn" id="btn-wallpaper" title="切换壁纸" aria-label="切换壁纸">
         <Icon name="image" size="1.05rem" />
       </button>
+      <!-- 樱花开关。放在这一列的**最下面**：这一列是靠底对齐的（bottom 定位 + 内容撑高），
+           所以最下面那个按钮的位置永远不动，上面三个出现/消失都不会把它顶走。
+           和另外三个一样常显（.visible 在 CSS 里其实没有对应规则，是个历史遗留的空类）。
+           行为逻辑在 SakuraEffect.astro 里，这里只放按钮本体。 -->
+      <button class="floating-btn" id="btn-sakura" title="一直飘樱花" aria-label="切换樱花特效" aria-pressed="false">
+        <Icon name="sparkle" size="1.05rem" />
+      </button>
     </div>
 
     <!-- 浮动音乐播放器 —— 左下角常驻，切页不中断 -->

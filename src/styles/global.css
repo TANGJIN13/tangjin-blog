@@ -473,6 +473,17 @@ code, pre, kbd { font-family: var(--font-mono); }
   border-color: var(--primary);
   box-shadow: 0 4px 16px oklch(62% 0.14 300 / 0.38);
 }
+/* 樱花开关打开时图标慢慢转，一眼能看出「正在飘」。
+   注意：这条必须写在 global.css（全局样式表）里，不能写进组件 —— 图标是 Icon.astro
+   渲染的元素，组件里用带作用域的 .icon 选不中，得写 :global(.icon)，
+   而 global.css 里禁止 :global()（写了整条规则会失效，踩过）。 */
+#btn-sakura.active .icon { animation: sakura-spin 6s linear infinite; }
+@keyframes sakura-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #btn-sakura.active .icon { animation: none; }
+}
 
 .reading-progress {
   position: fixed;
