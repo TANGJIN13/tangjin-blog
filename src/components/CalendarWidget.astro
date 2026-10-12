@@ -109,7 +109,7 @@ const monthPostCount = cells.filter((c) => c.type === 'day' && c.hasPost).length
     color: var(--primary);
     background: var(--primary-soft);
   }
-  [data-theme='dark'] .calendar-badge { color: var(--primary-light); }
+  :global([data-theme='dark'] .calendar-badge) { color: var(--primary-light); }
 
   .calendar-grid {
     display: grid;
@@ -171,5 +171,5 @@ const monthPostCount = cells.filter((c) => c.type === 'day' && c.hasPost).length
     background: var(--primary);
   }
   .calendar-cell.today .calendar-dot { background: #fff; }
-  [data-theme='dark'] .calendar-dot { background: var(--primary-light); }
+  :global([data-theme='dark'] .calendar-dot) { background: var(--primary-light); }
 </style>

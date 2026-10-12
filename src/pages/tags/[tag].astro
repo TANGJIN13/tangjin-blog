@@ -85,7 +85,7 @@ const { tag, posts } = Astro.props;
     box-shadow: 0 4px 14px oklch(62% 0.14 300 / 0.18);
     flex-shrink: 0;
   }
-  [data-theme='dark'] .tg-hero-icon { color: var(--primary-light); }
+  :global([data-theme='dark'] .tg-hero-icon) { color: var(--primary-light); }
   .tg-kicker { margin: 0; font-size: 0.72rem; letter-spacing: 0.18em; color: var(--text-faint); }
   .tg-title {
     margin: 0;
@@ -110,7 +110,7 @@ const { tag, posts } = Astro.props;
     padding: 0.14rem 0.6rem;
     border-radius: 999px;
   }
-  [data-theme='dark'] .tg-total { color: var(--primary-light); }
+  :global([data-theme='dark'] .tg-total) { color: var(--primary-light); }
 
   .post-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr)); gap: 1rem; }
 

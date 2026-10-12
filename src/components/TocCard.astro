@@ -42,7 +42,7 @@ import Icon from './Icon.astro';
     border-left-color: var(--primary);
     font-weight: 500;
   }
-  [data-theme='dark'] :global(.toc-item.active) { color: var(--primary-light); }
+  :global([data-theme='dark'] .toc-item.active) { color: var(--primary-light); }
   :global(.toc-level-1) { font-weight: 600; color: var(--text); }
   :global(.toc-level-3) { padding-left: 1.2rem; font-size: 0.78rem; }
   /* 点击目录跳转时，标题不要被固定导航挡住 */

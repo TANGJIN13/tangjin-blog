@@ -352,7 +352,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     color: var(--primary-strong);
     font-weight: 600;
   }
-  [data-theme='dark'] .nav-item.active { color: var(--primary-light); }
+  :global([data-theme='dark'] .nav-item.active) { color: var(--primary-light); }
   .nav-item.active .nav-icon {
     background: var(--gradient-primary);
     border-color: transparent;
@@ -401,7 +401,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     border-radius: 999px;
     flex-shrink: 0;
   }
-  [data-theme='dark'] .post-count { color: var(--primary-light); }
+  :global([data-theme='dark'] .post-count) { color: var(--primary-light); }
   .section-more {
     font-size: 0.76rem;
     font-weight: 600;
@@ -466,7 +466,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     background: color-mix(in srgb, var(--primary) 15%, transparent);
     border-color: color-mix(in srgb, var(--primary) 25%, transparent);
   }
-  [data-theme='dark'] .cat-pill:hover { color: var(--primary-light); }
+  :global([data-theme='dark'] .cat-pill:hover) { color: var(--primary-light); }
   .cat-pill.is-active {
     background: var(--primary);
     color: #fff;
@@ -547,8 +547,8 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     background: linear-gradient(to right, transparent, var(--surface));
     opacity: 1;
   }
-  [data-theme='dark'] .cat-scroll-fade-left { background: linear-gradient(to left, transparent, var(--surface)); }
-  [data-theme='dark'] .cat-scroll-fade-right { background: linear-gradient(to right, transparent, var(--surface)); }
+  :global([data-theme='dark'] .cat-scroll-fade-left) { background: linear-gradient(to left, transparent, var(--surface)); }
+  :global([data-theme='dark'] .cat-scroll-fade-right) { background: linear-gradient(to right, transparent, var(--surface)); }
 
   /* ===== 标签云 ===== */
   .tag-card { padding: 1rem; }
@@ -613,7 +613,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     transition: background-color 0.18s ease, color 0.18s ease;
   }
   .cat-row:hover { background-color: var(--surface-2); color: var(--primary-strong); }
-  [data-theme='dark'] .cat-row:hover { color: var(--primary-light); }
+  :global([data-theme='dark'] .cat-row:hover) { color: var(--primary-light); }
   .cat-row-name {
     overflow: hidden;
     text-overflow: ellipsis;

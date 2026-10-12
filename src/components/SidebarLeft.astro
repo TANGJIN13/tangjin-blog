@@ -165,7 +165,7 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
     color: var(--primary-strong);
     font-weight: 600;
   }
-  [data-theme='dark'] .nav-item.active { color: var(--primary-light); }
+  :global([data-theme='dark'] .nav-item.active) { color: var(--primary-light); }
   .nav-item.active .nav-icon {
     background: var(--gradient-primary);
     border-color: transparent;

@@ -523,7 +523,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     -webkit-backdrop-filter: blur(14px) saturate(160%);
     border-bottom-color: var(--border);
   }
-  [data-theme='dark'] .top-row.scrolled {
+  :global([data-theme='dark'] .top-row.scrolled) {
     background: oklch(14% 0.015 300 / 0.75);
   }
 
@@ -534,7 +534,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     -webkit-backdrop-filter: blur(10px) saturate(150%);
     border-bottom: 1px solid oklch(100% 0 0 / 0.12);
   }
-  [data-theme='dark'] body.has-banner .top-row:not(.scrolled) {
+  :global([data-theme='dark'] body.has-banner .top-row:not(.scrolled)) {
     background: oklch(0% 0 0 / 0.22);
     border-bottom-color: oklch(100% 0 0 / 0.08);
   }
@@ -627,7 +627,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: var(--primary-soft);
     font-weight: 600;
   }
-  [data-theme='dark'] .nav-item[aria-current='page'] { color: var(--primary-light); }
+  :global([data-theme='dark'] .nav-item[aria-current='page']) { color: var(--primary-light); }
 
   /* 中等宽度 1024–1279px：导航项缩进一点，保证 9 个入口也不会挤出去 */
   @media (min-width: 1024px) and (max-width: 1279px) {
@@ -759,7 +759,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
       oklch(95% 0.03 316) 100%);
     border-bottom: 1px solid var(--border);
   }
-  [data-theme='dark'] .music-float-head {
+  :global([data-theme='dark'] .music-float-head) {
     background: linear-gradient(145deg,
       oklch(21% 0.03 300) 0%,
       oklch(18% 0.04 316) 100%);
@@ -805,7 +805,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     box-shadow: 0 4px 16px oklch(0% 0 0 / 0.14);
     transition: all 0.2s ease;
   }
-  [data-theme='dark'] .music-float-mini { background: oklch(20% 0.02 300 / 0.88); }
+  :global([data-theme='dark'] .music-float-mini) { background: oklch(20% 0.02 300 / 0.88); }
   .music-float-mini:hover { transform: scale(1.08); box-shadow: 0 6px 22px oklch(0% 0 0 / 0.18); }
 
   /* 播放时收起按钮显示动态均衡器（替代静态音符图标） */
@@ -941,7 +941,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     transform: translateY(0) scale(1);
     opacity: 1;
   }
-  [data-theme='dark'] .mobile-menu {
+  :global([data-theme='dark'] .mobile-menu) {
     background: oklch(22% 0.02 300 / 0.88);
     border-color: oklch(100% 0 0 / 0.08);
   }
@@ -972,7 +972,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: var(--primary-soft);
     font-weight: 600;
   }
-  [data-theme='dark'] .mobile-nav-item:hover { background: oklch(28% 0.03 300); }
+  :global([data-theme='dark'] .mobile-nav-item:hover) { background: oklch(28% 0.03 300); }
   .mobile-nav-item :global(.icon) { opacity: 0.85; }
 
   @media (max-width: 1023px) {

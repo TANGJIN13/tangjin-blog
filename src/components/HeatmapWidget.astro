@@ -119,7 +119,7 @@ function getLevel(count: number): number {
     color: var(--primary);
     font-variant-numeric: tabular-nums;
   }
-  [data-theme='dark'] .hm-pill strong { color: var(--primary-light); }
+  :global([data-theme='dark'] .hm-pill strong) { color: var(--primary-light); }
 
   /* 月份刻度和格子必须用同一套列定义（都是 repeat(N, 1fr) + 同样的 gap），
      否则隐式列宽会跟刻度对不上，月份就飘了。 */
@@ -158,11 +158,11 @@ function getLevel(count: number): number {
   .heatmap-cell.level-2 { background: hsl(var(--hue), 66%, 70%); }
   .heatmap-cell.level-3 { background: hsl(var(--hue), 70%, 56%); }
   .heatmap-cell.level-4 { background: hsl(var(--hue), 74%, 46%); }
-  [data-theme='dark'] .heatmap-cell.level-0 { background: oklch(100% 0 0 / 0.07); }
-  [data-theme='dark'] .heatmap-cell.level-1 { background: hsl(var(--hue), 50%, 25%); }
-  [data-theme='dark'] .heatmap-cell.level-2 { background: hsl(var(--hue), 55%, 35%); }
-  [data-theme='dark'] .heatmap-cell.level-3 { background: hsl(var(--hue), 60%, 45%); }
-  [data-theme='dark'] .heatmap-cell.level-4 { background: hsl(var(--hue), 65%, 55%); }
+  :global([data-theme='dark'] .heatmap-cell.level-0) { background: oklch(100% 0 0 / 0.07); }
+  :global([data-theme='dark'] .heatmap-cell.level-1) { background: hsl(var(--hue), 50%, 25%); }
+  :global([data-theme='dark'] .heatmap-cell.level-2) { background: hsl(var(--hue), 55%, 35%); }
+  :global([data-theme='dark'] .heatmap-cell.level-3) { background: hsl(var(--hue), 60%, 45%); }
+  :global([data-theme='dark'] .heatmap-cell.level-4) { background: hsl(var(--hue), 65%, 55%); }
 
   .heatmap-legend {
     display: flex;

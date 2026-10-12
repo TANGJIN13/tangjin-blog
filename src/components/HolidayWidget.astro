@@ -123,7 +123,7 @@ const dateLabel = nextHoliday
     color: var(--primary);
     opacity: 0.8;
   }
-  [data-theme='dark'] .holiday-tag { color: var(--primary-light); }
+  :global([data-theme='dark'] .holiday-tag) { color: var(--primary-light); }
   .holiday-name { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.25; }
   .holiday-date { font-size: 0.72rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
   .holiday-countdown { position: relative; text-align: right; flex-shrink: 0; }

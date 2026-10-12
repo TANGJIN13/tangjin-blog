@@ -103,7 +103,7 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
     color: var(--primary-strong);
     font-weight: 800;
   }
-  [data-theme='dark'] .page-head strong { color: var(--primary-light); }
+  :global([data-theme='dark'] .page-head strong) { color: var(--primary-light); }
 
   /* ============ 时间线 ============ */
   .timeline {
@@ -210,7 +210,7 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
     padding: 0.18rem 0.55rem;
     border-radius: 999px;
   }
-  [data-theme='dark'] .tl-date { color: var(--primary-light); }
+  :global([data-theme='dark'] .tl-date) { color: var(--primary-light); }
 
   .tl-title {
     flex: 1;
@@ -224,7 +224,7 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
     transition: color 0.15s ease;
   }
   .tl-card:hover .tl-title { color: var(--primary-strong); }
-  [data-theme='dark'] .tl-card:hover .tl-title { color: var(--primary-light); }
+  :global([data-theme='dark'] .tl-card:hover .tl-title) { color: var(--primary-light); }
 
   .tl-tags {
     flex-shrink: 0;

@@ -96,7 +96,7 @@ const posts = pinToTop(raw.sort((a, b) => b.data.published.valueOf() - a.data.pu
   .cat-post-info { display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0; }
   .cat-post-icon { color: var(--primary); flex-shrink: 0; }
   .cat-pin { color: var(--primary-strong); flex-shrink: 0; display: inline-grid; place-items: center; }
-  [data-theme='dark'] .cat-pin { color: var(--primary-light); }
+  :global([data-theme='dark'] .cat-pin) { color: var(--primary-light); }
   .cat-post-title { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cat-post-date { font-size: 0.78rem; color: var(--text-faint); flex-shrink: 0; }
 

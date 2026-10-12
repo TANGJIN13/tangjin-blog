@@ -134,7 +134,7 @@ import { downloads as files } from '../lib/downloads';
     text-decoration: none !important;
     transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.26s ease, border-color 0.26s ease;
   }
-  [data-theme='dark'] .dl-card {
+  :global([data-theme='dark'] .dl-card) {
     box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 6px 18px oklch(0% 0 0 / 0.28);
   }
   .dl-card:hover {

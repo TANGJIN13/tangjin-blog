@@ -72,7 +72,7 @@ const max = Math.max(...tags.map((t) => t.count), 1);
     box-shadow: 0 4px 14px oklch(62% 0.14 300 / 0.18);
     flex-shrink: 0;
   }
-  [data-theme='dark'] .tg-hero-icon { color: var(--primary-light); }
+  :global([data-theme='dark'] .tg-hero-icon) { color: var(--primary-light); }
   .tg-kicker { margin: 0; font-size: 0.72rem; letter-spacing: 0.18em; color: var(--text-faint); }
   .tg-title {
     margin: 0;
@@ -95,7 +95,7 @@ const max = Math.max(...tags.map((t) => t.count), 1);
     padding: 0.14rem 0.6rem;
     border-radius: 999px;
   }
-  [data-theme='dark'] .tg-total { color: var(--primary-light); }
+  :global([data-theme='dark'] .tg-total) { color: var(--primary-light); }
 
   .tg-board { padding: 1.25rem 1.35rem 1.4rem; }
   .tg-cloud { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem 0.85rem; }

@@ -171,7 +171,7 @@ const {
     color: var(--primary);
     background: var(--primary-soft);
   }
-  [data-theme='dark'] .stat-row-icon { color: var(--primary-light); }
+  :global([data-theme='dark'] .stat-row-icon) { color: var(--primary-light); }
   .stat-row-label { font-size: 0.78rem; }
   .stat-row-value {
     margin-left: auto;
@@ -203,7 +203,7 @@ const {
     color: var(--primary);
     font-variant-numeric: tabular-nums;
   }
-  [data-theme='dark'] .dl-num { color: var(--primary-light); }
+  :global([data-theme='dark'] .dl-num) { color: var(--primary-light); }
   .dl-label { font-size: 0.68rem; color: var(--text-faint); }
   .dl-bar {
     display: block;
@@ -214,7 +214,7 @@ const {
     background: oklch(94.5% 0.014 300);
     overflow: hidden;
   }
-  [data-theme='dark'] .dl-bar { background: oklch(100% 0 0 / 0.08); }
+  :global([data-theme='dark'] .dl-bar) { background: oklch(100% 0 0 / 0.08); }
   .dl-bar i {
     display: block;
     height: 100%;

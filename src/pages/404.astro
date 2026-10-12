@@ -67,7 +67,7 @@ import Icon from '../components/Icon.astro';
     border: 1px solid oklch(70% 0.14 300 / 0.3);
     animation: drift 4s ease-in-out infinite;
   }
-  [data-theme='dark'] .float-chip { color: var(--primary-light); }
+  :global([data-theme='dark'] .float-chip) { color: var(--primary-light); }
   .float-chip.c1 { left: -4.2rem; animation-delay: 0.4s; }
   .float-chip.c2 { right: -4.2rem; }
   @keyframes drift {

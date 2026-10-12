@@ -113,7 +113,7 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
     box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 6px 18px oklch(0% 0 0 / 0.05);
     transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
   }
-  [data-theme='dark'] .post-card {
+  :global([data-theme='dark'] .post-card) {
     box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 6px 18px oklch(0% 0 0 / 0.28);
   }
   .post-card:hover {
@@ -121,7 +121,7 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
     border-color: oklch(70% 0.14 300 / 0.5);
     box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 300 / 0.18);
   }
-  [data-theme='dark'] .post-card:hover {
+  :global([data-theme='dark'] .post-card:hover) {
     box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 18px 38px oklch(0% 0 0 / 0.5);
   }
 
@@ -218,7 +218,7 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
     border: 1px solid oklch(70% 0.14 300 / 0.22);
     transition: all 0.18s ease;
   }
-  [data-theme='dark'] .meta-chip { color: var(--primary-light); }
+  :global([data-theme='dark'] .meta-chip) { color: var(--primary-light); }
   .meta-chip :global(.icon) { opacity: 0.85; flex-shrink: 0; }
   /* 次要信息（更新于 / 时长）：灰底，弱化 */
   .meta-chip.is-soft {

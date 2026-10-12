@@ -157,7 +157,7 @@ import Icon from './Icon.astro';
     color: var(--text);
   }
   .search-result-item:hover .search-result-title { color: var(--primary-strong); }
-  [data-theme='dark'] .search-result-item:hover .search-result-title { color: var(--primary-light); }
+  :global([data-theme='dark'] .search-result-item:hover .search-result-title) { color: var(--primary-light); }
   .search-result-desc {
     font-size: 0.73rem;
     color: var(--text-faint);
@@ -171,7 +171,7 @@ import Icon from './Icon.astro';
     font-size: 0.82rem;
     color: var(--text-faint);
   }
-  [data-theme='dark'] .search-results {
+  :global([data-theme='dark'] .search-results) {
     background: oklch(16% 0.02 300);
     border-color: oklch(100% 0 0 / 0.08);
   }
