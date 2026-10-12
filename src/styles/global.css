@@ -297,16 +297,22 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* 卡片基底统一在下面「统一的卡片质感」一节定义，这里不再重复声明 */
 
 /* 侧栏卡片：毛玻璃。
-   ⚠️ 选择器必须写成 `.card-base.widget-card`（两个类）——`.card-base` 的
+   ⚠️ 选择器必须用双类 `.card-base.widget-card`（(0,2,0)）——`.card-base` 的
    `background: var(--surface)` 是**简写**，会把 background-image 一起重置成 none。
-   它写在文件更后面、优先级又相同，所以只要这里只写 `.widget-card`，
-   上面那条高光渐变就会被静默吃掉（这正是改版前一直没有「上亮下暗」层次的原因）。
-   用双类选择器把优先级提到 (0,2,0)，就和源码顺序无关了。
+   `.card-base` 写在文件更后面、优先级又相同，所以这里只写 `.widget-card` 的话，
+   高光渐变会被静默吃掉（这正是改版前组件一直没有层次感的原因）。
    也不设 overflow:hidden，否则搜索卡片的浮层下拉会被裁掉。 */
 .card-base.widget-card {
   padding: 1rem 1rem 1.05rem;
   position: relative;
+}
 
+/* 侧栏里所有组件都吃同一套玻璃：名片卡 / 热力图 / 标签卡各自有自己的内边距，
+   所以几何属性留在上面那条单独的规则里，这里只管「玻璃长什么样」。 */
+.card-base.widget-card,
+.card-base.profile-card,
+.card-base.heatmap-widget,
+.card-base.tag-card {
   /* ① 半透明玻璃面（能透出背后的氛围光斑） */
   background-color: var(--glass-bg);
   /* ② 三层叠出「玻璃」：左上斜向高光 → 顶部竖向提亮 → 磨砂颗粒 */
@@ -325,9 +331,28 @@ code, pre, kbd { font-family: var(--font-mono); }
     inset 0 -1px 0 0 var(--glass-hairline),
     0 0 0 1px var(--glass-hairline),
     var(--glass-shadow);
+
+  /* 卡片**内部**的「内表面」变量也跟着变半透明。--surface / --surface-2 会被
+     输入框、日历胶囊、热力图 pill、标签片、状态点描边等内层元素继承使用，
+     在组件子树里就地改成半透明，它们就自然融进玻璃，
+     不用逐个组件去改——否则磨砂面上会贴出一块块实心白补丁。
+     只覆盖背景类变量；--border 保持原样，发丝线还是要暗的才看得见。 */
+  --surface: oklch(100% 0 0 / 0.62);
+  --surface-2: oklch(100% 0 0 / 0.42);
 }
+[data-theme='dark'] .card-base.widget-card,
+[data-theme='dark'] .card-base.profile-card,
+[data-theme='dark'] .card-base.heatmap-widget,
+[data-theme='dark'] .card-base.tag-card {
+  --surface: oklch(28% 0.03 300 / 0.7);
+  --surface-2: oklch(32% 0.035 300 / 0.5);
+}
+
 /* 侧栏是一列组件、不算「内容卡片」：悬停不上浮跳动，只把玻璃提亮一档、阴影加深一点 */
-.card-base.widget-card:hover {
+.card-base.widget-card:hover,
+.card-base.profile-card:hover,
+.card-base.heatmap-widget:hover,
+.card-base.tag-card:hover {
   transform: none;
   background-color: var(--glass-bg-hover);
   border-color: color-mix(in srgb, var(--primary) 26%, var(--glass-edge));

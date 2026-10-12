@@ -138,8 +138,10 @@ import Icon from './Icon.astro';
     z-index: 10;
     padding: 0.25rem;
     /* 下拉浮层：比卡片更实一档（保证可读性），但仍留一点透明 + 背景模糊，
-       这样它像「另一块玻璃叠在上面」而不是一张硬纸片 */
-    background: color-mix(in srgb, var(--surface) 86%, transparent);
+       这样它像「另一块玻璃叠在上面」而不是一张硬纸片。
+       ⚠️ 这里不能用 var(--surface)：卡片子树里它已经被改成半透明了，
+       再 color-mix 一次会透得什么都看不清，所以直接写死浓度。 */
+    background: oklch(100% 0 0 / 0.9);
     backdrop-filter: var(--glass-blur);
     border: 1px solid var(--glass-edge);
     border-radius: var(--radius-md);
