@@ -482,6 +482,38 @@ const slides = single ? images.slice(0, 1) : images;
   /* ===== 移动端：banner 65vh、波浪 10vh ===== */
   @media (max-width: 1023px) {
     .wallpaper-wrapper { height: 65vh !important; }
+
+    /* 手机端遮罩改成「只压该压的地方」：
+       原来是一条 0.18~0.35 的均匀黑纱盖满整张图，平均把壁纸压暗 26%，
+       粉/薄荷/薰衣草的彩度全被压成灰调 —— 这正是「手机端壁纸不怎么亮」的原因。
+       但整条去掉白色书法标题又读不清，所以改成三段：
+         ① 顶部窄带 → 只保证白色导航条有对比；
+         ② 中段软带 → 只压住标题/副标题所在的那一条，其余保持原色；
+         ③ 底部一点 → 和波浪自然接上。
+       上下天空与远山基本不动，整体亮度回到 ~95%。 */
+    .wallpaper-dim {
+      background:
+        /* 顶部窄带：只护住白色导航条，深度按「导航压暗后背景亮度 ~145」来定，
+           配合 Base.astro 里小屏导航白玻璃降到 6%，白字对比度 ~3.1。 */
+        linear-gradient(180deg,
+          oklch(0% 0 0 / 0.40) 0%,
+          oklch(0% 0 0 / 0.30) 7%,
+          oklch(0% 0 0 / 0.12) 12%,
+          oklch(0% 0 0 / 0) 18%),
+        /* 中段软带收紧一点：同样的「压暗总量」集中压到标题所在的那一条上，
+           文字对比度够，天空和远山又不动 —— 比原来均匀铺满一层黑纱亮得多。 */
+        linear-gradient(180deg,
+          oklch(0% 0 0 / 0) 26%,
+          oklch(0% 0 0 / 0.20) 36%,
+          oklch(0% 0 0 / 0.28) 44%,
+          oklch(0% 0 0 / 0.28) 58%,
+          oklch(0% 0 0 / 0.14) 68%,
+          oklch(0% 0 0 / 0) 78%),
+        linear-gradient(180deg,
+          oklch(0% 0 0 / 0) 82%,
+          oklch(0% 0 0 / 0.09) 100%);
+    }
+
     .header-waves { height: 10vh; min-height: 50px; max-height: 150px; }
     .wp-scroll { display: none; }
     .wp-inner { gap: 0.5rem; }
@@ -491,7 +523,8 @@ const slides = single ? images.slice(0, 1) : images;
       font-weight: 400 !important;
       letter-spacing: normal !important;
       font-family: 'Liu Jian Mao Cao', 'Xingkai SC', 'STXingkai', 'HanziPen SC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive !important;
-      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8) !important;
+      /* 手机端遮罩比桌面轻，所以用「近距实影 + 远处柔晕」两层把笔画托出来 */
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 0, 0, 0.45) !important;
       margin-bottom: 0.85rem;
     }
     .wp-quote-sub {
@@ -499,7 +532,7 @@ const slides = single ? images.slice(0, 1) : images;
       line-height: 1.4;
       letter-spacing: normal;
       font-family: 'Liu Jian Mao Cao', 'Xingkai SC', 'STXingkai', 'HanziPen SC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive;
-      text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 0, 0, 0.5);
     }
     .wp-links { flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 0.3rem; }
     .wp-link { padding: 0.38rem 0.85rem; font-size: 0.8rem; }

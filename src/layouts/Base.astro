@@ -538,6 +538,12 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: oklch(0% 0 0 / 0.22);
     border-bottom-color: oklch(100% 0 0 / 0.08);
   }
+  /* 手机端壁纸遮罩改轻之后（见 WallpaperBanner.astro），导航条自己那层 14% 白玻璃
+     反过来把浅色壁纸又提亮了，白字对比度掉到 1.89。小屏把它压到 6%，
+     背景暗一档 → 对比度回到 ~3.1（比改前的 2.51 还清楚），同时壁纸整体依然更亮。 */
+  @media (max-width: 1023px) {
+    body.has-banner .top-row:not(.scrolled) { background: oklch(100% 0 0 / 0.06); }
+  }
 
   .container-fluid {
     width: 92%;
