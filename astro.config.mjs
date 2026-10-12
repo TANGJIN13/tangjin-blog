@@ -20,7 +20,11 @@ export default defineConfig({
       mdastPlugins: [obsidianCompatPlugin],
     }),
     shikiConfig: {
-      theme: 'catppuccin-latte',
+      // 双主题：浅色用 latte、深色用 mocha。
+      // 单主题时 Shiki 会把颜色写成**内联样式**，内联优先级高于样式表，
+      // 暗色下代码块就会顶着浅色底 + 浅色 token（怎么改 CSS 都盖不掉）。
+      // 双主题会改成输出 --shiki-light / --shiki-dark 变量，再由 global.css 按主题切换。
+      themes: { light: 'catppuccin-latte', dark: 'catppuccin-mocha' },
       wrap: true,
     },
   },

@@ -134,6 +134,21 @@ h1, h2, h3, h4 {
 p { margin: 0 0 1em; }
 code, pre, kbd { font-family: var(--font-mono); }
 
+/* ===== 代码块深浅色 =====
+   Shiki 用双主题渲染（astro.config.mjs 里 themes: light/dark），
+   浅色值与深色值都以 CSS 变量写在 <pre>/<span> 的**内联 style** 上：
+     background-color:#eff1f5; --shiki-dark-bg:#1e1e2e; color:#4c4f69; --shiki-dark:#cdd6f4
+   内联优先级高于样式表，所以必须用 !important 把暗色值顶上去，否则暗色站点里
+   代码块会一直是浅色底 + 浅色 token（这是单主题时代留下的老问题）。 */
+[data-theme='dark'] .astro-code,
+[data-theme='dark'] .astro-code span {
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
+  font-style: var(--shiki-dark-font-style) !important;
+  font-weight: var(--shiki-dark-font-weight) !important;
+  text-decoration: var(--shiki-dark-text-decoration) !important;
+}
+
 /* 正文里的链接：细下划线，悬停时从左侧展开成主色实线 */
 .post-body a:not(.tag) {
   text-decoration: none;
