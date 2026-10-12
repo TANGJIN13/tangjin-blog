@@ -189,52 +189,91 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
 </Base>
 
 <script>
-  // 分享功能
-  const shareToggle = document.getElementById('share-toggle');
-  const sharePanel = document.getElementById('share-panel');
-  if (shareToggle && sharePanel) {
-    shareToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      sharePanel.hidden = !sharePanel.hidden;
-    });
-    document.addEventListener('click', (e) => {
-      if (!sharePanel.hidden && !e.target.closest('.share-box')) sharePanel.hidden = true;
-    });
-  }
+  // 文章页交互：分享面板 / 复制链接 / 阅读进度条。
+  //
+  // ⚠️ 统一做成「幂等初始化」，首屏和每次换页（ClientRouter 的 astro:page-load）都跑一遍。
+  // 原来是在模块顶层直接绑一次，能不能在「从首页软跳转进文章」这条路上生效，
+  // 全靠 Astro 会不会重新执行这段页面脚本 —— 太脆，一旦不执行，分享按钮就是「点了没反应」。
+  // 顺带解决两个老问题：
+  //   ① document 上的「点别处关闭」监听每进一次文章页就多加一个（闭包里还留着已不在 DOM 的旧面板）；
+  //   ② 阅读进度条的 scroll 监听同样每次换页叠加。
+  // 现在全局监听只在第一次绑一次，执行时按 id 现查元素，换页换了 DOM 也不用重绑。
+  function initPostPage() {
+    // ---------- 分享 ----------
+    const shareToggle = document.getElementById('share-toggle');
+    const sharePanel = document.getElementById('share-panel');
+    if (shareToggle && sharePanel) {
+      // 用 onclick 而不是 addEventListener：换页后重新赋值即可，不会叠加
+      shareToggle.onclick = (e) => {
+        e.stopPropagation();
+        sharePanel.hidden = !sharePanel.hidden;
+      };
 
-  const pageUrl = window.location.href;
-  const pageTitle = document.title;
+      // 分享链接按「当前这一页」现算。
+      // location.href 是百分号编码的，encodeURIComponent 再编一次不是 bug ——
+      // 对方（微博/QQ空间）解一次码，正好还原成合法的百分号编码 URL。
+      const pageUrl = window.location.href;
+      const pageTitle = document.title;
+      const weibo = document.getElementById('share-weibo');
+      if (weibo) weibo.setAttribute('href',
+        `https://service.weibo.com/share/share.php?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`);
+      const qzone = document.getElementById('share-qzone');
+      if (qzone) qzone.setAttribute('href',
+        `https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`);
 
-  const shareCopy = document.getElementById('share-copy');
-  shareCopy?.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(pageUrl);
-      shareCopy.classList.add('copied');
-      const orig = shareCopy.innerHTML;
-      shareCopy.innerHTML = '<span class="share-ok">✓</span> 已复制';
-      setTimeout(() => { shareCopy.innerHTML = orig; shareCopy.classList.remove('copied'); }, 1600);
-    } catch {
-      window.prompt('复制链接：', pageUrl);
+      const copy = document.getElementById('share-copy');
+      if (copy) {
+        copy.onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(pageUrl);
+            copy.classList.add('copied');
+            const orig = copy.innerHTML;
+            copy.innerHTML = '<span class="share-ok">✓</span> 已复制';
+            setTimeout(() => { copy.innerHTML = orig; copy.classList.remove('copied'); }, 1600);
+          } catch {
+            window.prompt('复制链接：', pageUrl);
+          }
+        };
+      }
     }
-  });
 
-  const shareWeibo = document.getElementById('share-weibo');
-  shareWeibo?.setAttribute('href', `https://service.weibo.com/share/share.php?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`);
-  const shareQzone = document.getElementById('share-qzone');
-  shareQzone?.setAttribute('href', `https://sns.qzone.qq.com/cgi-bin/qzshare/cgi_qzshare_onekey?url=${encodeURIComponent(pageUrl)}&title=${encodeURIComponent(pageTitle)}`);
-
-  // 阅读进度条
-  const bar = document.getElementById('read-progress');
-  if (bar) {
-    const update = () => {
-      const total = document.documentElement.scrollHeight - window.innerHeight;
-      const ratio = total > 0 ? Math.min(window.scrollY / total, 1) : 0;
-      bar.style.transform = `scaleX(${ratio})`;
-    };
-    window.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-    update();
+    // 阅读进度条：先复位，避免换页后还留着上一页的进度
+    const bar = document.getElementById('read-progress');
+    if (bar) bar.style.transform = 'scaleX(0)';
+    updateProgress();
   }
+
+  // 点面板外面关掉（全局只绑一次）
+  // ⚠️ 标记挂在 document 上而不是 document.body：ClientRouter 换页会替换整个 <body>，
+  //    挂在 body 上的标记会跟着丢，监听就开始一次次叠加了。document 是稳定对象。
+  function bindOutsideClose() {
+    if (document.__shareOutsideBound) return;
+    document.__shareOutsideBound = true;
+    document.addEventListener('click', (e) => {
+      const p = document.getElementById('share-panel');
+      if (p && !p.hidden && e.target && !e.target.closest('.share-box')) p.hidden = true;
+    });
+  }
+
+  // 阅读进度：按 id 现查，换页后自动作用在新元素上
+  function updateProgress() {
+    const bar = document.getElementById('read-progress');
+    if (!bar) return;
+    const total = document.documentElement.scrollHeight - window.innerHeight;
+    const ratio = total > 0 ? Math.min(window.scrollY / total, 1) : 0;
+    bar.style.transform = `scaleX(${ratio})`;
+  }
+  function bindProgress() {
+    if (document.__progressBound) return;
+    document.__progressBound = true;
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress);
+  }
+
+  bindOutsideClose();
+  bindProgress();
+  initPostPage();
+  document.addEventListener('astro:page-load', () => { initPostPage(); updateProgress(); });
 </script>
 
 <style>

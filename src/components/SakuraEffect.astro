@@ -48,6 +48,8 @@
   // 「开站那一阵子」的截止时刻。换页后如果还没到点就接着飘完，
   // 不然切一次页那 10 秒就被腰斩了。
   let burstUntil = 0;
+  // 一阵子模式到点后的整体淡出系数（1 → 0）。常开模式恒为 1。
+  let burstFade = 1;
   // 上一次 init 绑定的 canvas 元素。
   // ⚠️ 这是「樱花定住不动」那个 bug 的关键：ClientRouter 的首屏会先让脚本自己执行一次
   //（下面的 init()），紧接着又派发一次 astro:page-load 再调一次 init()。
@@ -121,7 +123,7 @@
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rotation);
-    ctx.globalAlpha = p.opacity;
+    ctx.globalAlpha = p.opacity * burstFade;
     ctx.fillStyle = p.color;
 
     petalPath(p.size);
@@ -196,6 +198,15 @@
       while (petals.length < TARGET_PETALS) petals.push(createPetal(false));
     }
 
+    // 一阵子模式到点之后：整批一起淡出。
+    // 不这么做的话，最慢的花瓣（speedY 只有 0.35px/帧 ≈ 20px/s）要飘 40 多秒才出画，
+    // 「开站飘 10 秒」会拖成一分多钟零零散散的花瓣，看着像卡住没走干净。
+    if (mode === 'burst' && Date.now() >= spawnDeadline) {
+      burstFade = Math.max(0, burstFade - 0.018);
+    } else {
+      burstFade = 1;
+    }
+
     for (let i = petals.length - 1; i >= 0; i--) {
       const p = petals[i];
       p.y += p.speedY;
@@ -225,9 +236,12 @@
       if (s.life >= s.maxLife) sparkles.splice(i, 1);
     }
 
-    // 一阵子模式：过点且花瓣/闪光都落完了 → 自动收摊
-    if (mode === 'burst' && Date.now() >= spawnDeadline && petals.length === 0 && sparkles.length === 0) {
+    // 一阵子模式：过点 + 淡出完毕（或花瓣/闪光都落完了）→ 擦干净收摊
+    if (mode === 'burst' && Date.now() >= spawnDeadline &&
+        (burstFade === 0 || (petals.length === 0 && sparkles.length === 0))) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      petals = [];
+      sparkles = [];
       animId = 0;
       return;
     }
@@ -237,6 +251,7 @@
 
   function start(initial) {
     resize();
+    burstFade = 1;
     petals = Array.from({ length: initial ? TARGET_PETALS : 6 }, function () {
       return createPetal(initial);
     });
@@ -252,6 +267,7 @@
     petals = [];
     sparkles = [];
     spawnDeadline = 0;
+    burstFade = 1;
   }
 
   function syncButton() {
