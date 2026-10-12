@@ -1,82 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 800" preserveAspectRatio="xMidYMid slice">
-  <defs>
-    <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2b1a4e"/>
-      <stop offset="25%" stop-color="#7b3f6b"/>
-      <stop offset="50%" stop-color="#d4635f"/>
-      <stop offset="72%" stop-color="#f2a65a"/>
-      <stop offset="88%" stop-color="#fcd9a0"/>
-      <stop offset="100%" stop-color="#ffe9c4"/>
+<defs>
+    <linearGradient id="skB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f7f0fb"/><stop offset="30%" stop-color="#fbe6f1"/>
+      <stop offset="58%" stop-color="#f6dce9"/><stop offset="78%" stop-color="#e8ddf5"/>
+      <stop offset="100%" stop-color="#dfe6f2"/>
     </linearGradient>
-    <radialGradient id="sun2" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#fffbe8" stop-opacity="1"/>
-      <stop offset="20%" stop-color="#ffe9a8" stop-opacity="0.8"/>
-      <stop offset="55%" stop-color="#ffb765" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#ff9a4d" stop-opacity="0"/>
+    <radialGradient id="sunB" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffcfd" stop-opacity="0.95"/>
+      <stop offset="30%" stop-color="#fde3ef" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#f6cfe4" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="cloud2a" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#8e4a72" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#5c2f57" stop-opacity="0.15"/>
+    <linearGradient id="watB" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#d5c7ec" stop-opacity="0.85"/><stop offset="100%" stop-color="#c2b3e0" stop-opacity="0.45"/>
     </linearGradient>
-    <linearGradient id="cloud2b" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffd9a8" stop-opacity="0.75"/>
-      <stop offset="100%" stop-color="#f7a86b" stop-opacity="0.2"/>
-    </linearGradient>
-    <linearGradient id="mtn2" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#4a2a52"/>
-      <stop offset="100%" stop-color="#251634"/>
-    </linearGradient>
-    <linearGradient id="mtn2b" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#2e1a3c"/>
-      <stop offset="100%" stop-color="#160d20"/>
-    </linearGradient>
-    <filter id="soft2"><feGaussianBlur stdDeviation="6"/></filter>
-    <filter id="soft2b"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="fC" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="26"/></filter>
+    <filter id="fD" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="10"/></filter>
   </defs>
-
-  <rect width="1920" height="800" fill="url(#sky2)"/>
-
-  <!-- 太阳光晕 -->
-  <circle cx="960" cy="520" r="420" fill="url(#sun2)"/>
-  <circle cx="960" cy="520" r="88" fill="#fffdf0" opacity="0.95"/>
-
-  <!-- 高层云 -->
-  <g filter="url(#soft2b)" opacity="0.5">
-    <ellipse cx="420" cy="200" rx="430" ry="30" fill="#b4638a"/>
-    <ellipse cx="1350" cy="160" rx="480" ry="26" fill="#a85a83"/>
-    <ellipse cx="900" cy="120" rx="380" ry="20" fill="#8f4d76"/>
-  </g>
-
-  <!-- 中层云（被夕阳染色） -->
-  <g filter="url(#soft2)" opacity="0.75">
-    <ellipse cx="300" cy="360" rx="340" ry="26" fill="url(#cloud2b)"/>
-    <ellipse cx="1500" cy="330" rx="380" ry="24" fill="url(#cloud2b)"/>
-    <ellipse cx="800" cy="400" rx="300" ry="20" fill="url(#cloud2b)"/>
-  </g>
-
-  <!-- 低层云带 -->
-  <g filter="url(#soft2)" opacity="0.85">
-    <ellipse cx="600" cy="470" rx="460" ry="22" fill="url(#cloud2a)"/>
-    <ellipse cx="1450" cy="500" rx="420" ry="20" fill="url(#cloud2a)"/>
-  </g>
-
-  <!-- 远山剪影 -->
-  <path d="M0 580 L200 500 L380 555 L560 480 L740 560 L920 495 L1100 570 L1280 505 L1460 575 L1640 515 L1820 580 L1920 545 L1920 800 L0 800 Z"
-        fill="url(#mtn2)" opacity="0.92"/>
-  <!-- 近山 -->
-  <path d="M0 680 L240 605 L480 675 L720 600 L960 680 L1200 610 L1440 685 L1680 615 L1920 675 L1920 800 L0 800 Z"
-        fill="url(#mtn2b)"/>
-
-  <!-- 云海前景 -->
-  <g filter="url(#soft2b)" opacity="0.45">
-    <ellipse cx="500" cy="740" rx="600" ry="34" fill="#ffd0a0"/>
-    <ellipse cx="1500" cy="760" rx="560" ry="28" fill="#ffc38f"/>
-  </g>
-
-  <!-- 飞鸟 -->
-  <g stroke="#3a1f33" stroke-width="2.5" fill="none" opacity="0.55" stroke-linecap="round">
-    <path d="M1120 240 q14 -10 26 0 q12 -10 26 0"/>
-    <path d="M1210 200 q11 -8 20 0 q9 -8 20 0"/>
-    <path d="M1060 190 q9 -7 17 0 q8 -7 17 0"/>
-  </g>
+<rect width="1920" height="800" fill="url(#skB)"/>
+<ellipse cx="806" cy="320" rx="420" ry="250" fill="url(#sunB)"/>
+<circle cx="806" cy="336" r="72" fill="#fffdfe" opacity="0.9" filter="url(#fD)"/>
+<g filter="url(#fC)" opacity="0.7">
+<ellipse cx="345" cy="240" rx="537" ry="28" fill="#f6d3e6"/>
+<ellipse cx="1190" cy="176" rx="652" ry="24" fill="#f3d8ea"/>
+<ellipse cx="1651" cy="288" rx="460" ry="22" fill="#ecd9f4"/>
+<ellipse cx="844" cy="416" rx="576" ry="19" fill="#f8deeb"/>
+<ellipse cx="1382" cy="463" rx="499" ry="17" fill="#eee0f6"/>
+</g>
+<rect x="0" y="592" width="1920" height="208" fill="url(#watB)"/>
+<ellipse cx="384" cy="616" rx="576" ry="8" fill="#fffafd" opacity="0.55" filter="url(#fD)"/>
+<ellipse cx="576" cy="642" rx="576" ry="8" fill="#fffafd" opacity="0.50" filter="url(#fD)"/>
+<ellipse cx="768" cy="668" rx="576" ry="8" fill="#fffafd" opacity="0.44" filter="url(#fD)"/>
+<ellipse cx="960" cy="695" rx="576" ry="8" fill="#fffafd" opacity="0.39" filter="url(#fD)"/>
+<ellipse cx="1152" cy="721" rx="576" ry="8" fill="#fffafd" opacity="0.33" filter="url(#fD)"/>
+<ellipse cx="1344" cy="748" rx="576" ry="8" fill="#fffafd" opacity="0.28" filter="url(#fD)"/>
+<ellipse cx="1536" cy="774" rx="576" ry="8" fill="#fffafd" opacity="0.22" filter="url(#fD)"/>
+<path d="M0 544 L210 480 L430 532 L650 468 L880 536 L1120 480 L1350 540 L1600 484 L1830 544 L1920 512 L1920 608 L0 608 Z" fill="#c4b4e3" opacity="0.72"/>
 </svg>

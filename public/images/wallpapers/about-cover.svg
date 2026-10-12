@@ -1,134 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid slice">
-  <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0d0b1e"/>
-      <stop offset="35%" stop-color="#1e1545"/>
-      <stop offset="65%" stop-color="#3d2060"/>
-      <stop offset="100%" stop-color="#1a0f2e"/>
+<defs>
+    <linearGradient id="skD" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fdf6fa"/><stop offset="42%" stop-color="#f7e8f3"/>
+      <stop offset="100%" stop-color="#e3ddf4"/>
     </linearGradient>
-    <radialGradient id="nebula1" cx="30%" cy="40%" r="40%">
-      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    <radialGradient id="moonD" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fffefb" stop-opacity="1"/>
+      <stop offset="32%" stop-color="#fbeef6" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#f2dcec" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="nebula2" cx="70%" cy="60%" r="35%">
-      <stop offset="0%" stop-color="#ec4899" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#ec4899" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="moon-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#e8d5f5" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#e8d5f5" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="moon" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#fef9ef"/>
-      <stop offset="100%" stop-color="#e8d5b8"/>
-    </linearGradient>
-    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#1a0f2e" stop-opacity="0"/>
-      <stop offset="100%" stop-color="#0a0612"/>
-    </linearGradient>
-    <filter id="blur-lg"><feGaussianBlur stdDeviation="15"/></filter>
-    <filter id="blur-md"><feGaussianBlur stdDeviation="6"/></filter>
-    <filter id="blur-sm"><feGaussianBlur stdDeviation="2"/></filter>
+    <linearGradient id="a1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ddd2f2"/><stop offset="100%" stop-color="#cdbde9"/></linearGradient>
+    <linearGradient id="a2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bfabe0"/><stop offset="100%" stop-color="#ad96d3"/></linearGradient>
+    <linearGradient id="a3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#9c85c6"/><stop offset="100%" stop-color="#8a72b3"/></linearGradient>
+    <filter id="fG" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="16"/></filter>
   </defs>
-
-  <!-- 夜空 -->
-  <rect width="1200" height="400" fill="url(#sky)"/>
-
-  <!-- 星云 -->
-  <ellipse cx="300" cy="160" rx="250" ry="120" fill="url(#nebula1)" filter="url(#blur-lg)"/>
-  <ellipse cx="800" cy="200" rx="200" ry="100" fill="url(#nebula2)" filter="url(#blur-lg)"/>
-
-  <!-- 星星 -->
-  <g fill="#fff">
-    <circle cx="100" cy="50" r="1.5" opacity="0.8"><animate attributeName="opacity" values="0.8;0.3;0.8" dur="3s" repeatCount="indefinite"/></circle>
-    <circle cx="250" cy="80" r="1" opacity="0.6"/>
-    <circle cx="400" cy="40" r="1.8" opacity="0.9"><animate attributeName="opacity" values="0.9;0.4;0.9" dur="2.5s" repeatCount="indefinite"/></circle>
-    <circle cx="550" cy="70" r="1.2" opacity="0.7"/>
-    <circle cx="700" cy="30" r="1.5" opacity="0.85"><animate attributeName="opacity" values="0.85;0.35;0.85" dur="3.5s" repeatCount="indefinite"/></circle>
-    <circle cx="850" cy="60" r="1" opacity="0.5"/>
-    <circle cx="1000" cy="45" r="1.6" opacity="0.8"><animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.8s" repeatCount="indefinite"/></circle>
-    <circle cx="1150" cy="70" r="1.3" opacity="0.65"/>
-    <circle cx="150" cy="120" r="0.8" opacity="0.4"/>
-    <circle cx="350" cy="100" r="1" opacity="0.55"/>
-    <circle cx="500" cy="130" r="0.7" opacity="0.35"/>
-    <circle cx="650" cy="90" r="1.1" opacity="0.6"><animate attributeName="opacity" values="0.6;0.2;0.6" dur="4s" repeatCount="indefinite"/></circle>
-    <circle cx="800" cy="110" r="0.9" opacity="0.45"/>
-    <circle cx="950" cy="80" r="1.2" opacity="0.7"><animate attributeName="opacity" values="0.7;0.25;0.7" dur="3.2s" repeatCount="indefinite"/></circle>
-    <circle cx="1100" cy="100" r="0.8" opacity="0.4"/>
-    <circle cx="200" cy="160" r="0.6" opacity="0.3"/>
-    <circle cx="450" cy="150" r="0.9" opacity="0.5"/>
-    <circle cx="600" cy="140" r="0.7" opacity="0.35"/>
-    <circle cx="750" cy="130" r="1" opacity="0.55"><animate attributeName="opacity" values="0.55;0.15;0.55" dur="4.5s" repeatCount="indefinite"/></circle>
-    <circle cx="900" cy="150" r="0.8" opacity="0.4"/>
-    <circle cx="1050" cy="120" r="0.6" opacity="0.3"/>
-  </g>
-
-  <!-- 月亮 -->
-  <circle cx="900" cy="140" r="160" fill="url(#moon-glow)" filter="url(#blur-lg)"/>
-  <circle cx="900" cy="140" r="80" fill="url(#moon-glow)" filter="url(#blur-md)"/>
-  <circle cx="900" cy="140" r="50" fill="url(#moon)"/>
-  <g opacity="0.12" transform="translate(888,128)">
-    <ellipse cx="0" cy="8" rx="10" ry="8" fill="#b8956a"/>
-    <circle cx="0" cy="0" r="6" fill="#b8956a"/>
-    <ellipse cx="-3" cy="-8" rx="1.8" ry="4" fill="#b8956a"/>
-    <ellipse cx="3" cy="-8" rx="1.8" ry="4" fill="#b8956a"/>
-  </g>
-
-  <!-- 樱花花瓣 -->
-  <g>
-    <ellipse cx="150" cy="50" rx="2.5" ry="4.5" fill="#f9a8d4" opacity="0.7" transform="rotate(30 150 50)">
-      <animate attributeName="cy" values="50;350" dur="8s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="150;170" dur="8s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="350" cy="30" rx="2" ry="4" fill="#fbcfe8" opacity="0.6" transform="rotate(-25 350 30)">
-      <animate attributeName="cy" values="30;360" dur="10s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="350;330" dur="10s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="550" cy="70" rx="2.5" ry="4" fill="#f9a8d4" opacity="0.65" transform="rotate(45 550 70)">
-      <animate attributeName="cy" values="70;370" dur="9s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="550;580" dur="9s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="750" cy="40" rx="2" ry="3.5" fill="#fbcfe8" opacity="0.55" transform="rotate(-35 750 40)">
-      <animate attributeName="cy" values="40;340" dur="11s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="750;720" dur="11s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="1050" cy="80" rx="2.2" ry="4" fill="#f9a8d4" opacity="0.6" transform="rotate(20 1050 80)">
-      <animate attributeName="cy" values="80;380" dur="7.5s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="1050;1080" dur="7.5s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="200" cy="120" rx="1.8" ry="3.5" fill="#fbcfe8" opacity="0.5" transform="rotate(-40 200 120)">
-      <animate attributeName="cy" values="120;390" dur="12s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="200;180" dur="12s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="500" cy="100" rx="2" ry="3.8" fill="#f9a8d4" opacity="0.45" transform="rotate(35 500 100)">
-      <animate attributeName="cy" values="100;370" dur="9.5s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="500;520" dur="9.5s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="700" cy="60" rx="1.8" ry="3.5" fill="#fbcfe8" opacity="0.5" transform="rotate(-30 700 60)">
-      <animate attributeName="cy" values="60;360" dur="10.5s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="700;670" dur="10.5s" repeatCount="indefinite"/>
-    </ellipse>
-    <ellipse cx="1100" cy="30" rx="2.2" ry="4" fill="#f9a8d4" opacity="0.6" transform="rotate(40 1100 30)">
-      <animate attributeName="cy" values="30;350" dur="8.5s" repeatCount="indefinite"/>
-      <animate attributeName="cx" values="1100;1130" dur="8.5s" repeatCount="indefinite"/>
-    </ellipse>
-  </g>
-
-  <!-- 远景樱花树 -->
-  <g opacity="0.2">
-    <rect x="80" y="240" width="4" height="60" rx="2" fill="#3d2060"/>
-    <ellipse cx="82" cy="235" rx="14" ry="18" fill="#5c3d8a"/>
-  </g>
-  <g opacity="0.15">
-    <rect x="1100" y="250" width="3.5" height="50" rx="1.75" fill="#3d2060"/>
-    <ellipse cx="1102" cy="245" rx="11" ry="14" fill="#5c3d8a"/>
-  </g>
-
-  <!-- 地面 -->
-  <rect y="330" width="1200" height="70" fill="url(#water)"/>
-
-  <!-- 月亮倒影 -->
-  <g opacity="0.1">
-    <ellipse cx="900" cy="350" rx="25" ry="6" fill="#e8d5f5" filter="url(#blur-sm)"/>
-  </g>
+<rect width="1200" height="400" fill="url(#skD)"/>
+<ellipse cx="912" cy="120" rx="230" ry="150" fill="url(#moonD)"/>
+<circle cx="912" cy="120" r="34" fill="#fffdfe" opacity="0.92"/>
+<path d="M-60 225 L90 233 L240 210 L390 236 L540 215 L690 223 L840 237 L990 216 L1140 238 L1260 400 L-60 400 Z" fill="url(#a1)" opacity="0.75"/>
+<ellipse cx="600" cy="240" rx="864" ry="16" fill="#fffbfe" opacity="0.4" filter="url(#fG)"/>
+<path d="M-60 268 L90 254 L240 246 L390 280 L540 256 L690 259 L840 261 L990 290 L1140 294 L1260 400 L-60 400 Z" fill="url(#a2)" opacity="0.86"/>
+<ellipse cx="600" cy="296" rx="864" ry="16" fill="#fffbfe" opacity="0.4" filter="url(#fG)"/>
+<path d="M-60 342 L90 339 L240 329 L390 360 L540 365 L690 335 L840 354 L990 353 L1140 335 L1260 400 L-60 400 Z" fill="url(#a3)" opacity="0.93"/>
+<ellipse cx="600" cy="368" rx="864" ry="16" fill="#fffbfe" opacity="0.4" filter="url(#fG)"/>
 </svg>
