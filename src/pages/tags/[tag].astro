@@ -53,7 +53,7 @@ const { tag, posts } = Astro.props;
 
       <div class="post-list">
         {posts.map((p, i) => (
-          <PostCard post={p} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
+          <PostCard post={p} index={i} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
         ))}
       </div>
 

@@ -68,7 +68,7 @@ const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 
       }
     </div>
 
-    <Paginate pageSize={10} />
+    <Paginate pageSize={15} />
 
     {
       posts.length === 0 && (
