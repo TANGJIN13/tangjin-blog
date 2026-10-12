@@ -295,15 +295,25 @@
   window.addEventListener('mouseleave', onLeave);
   window.addEventListener('resize', onResize);
 
-  // 初始化：每次换页（客户端路由会换掉 canvas / 按钮元素）都要重新取元素、重绑事件
+  // 初始化：每次换页（客户端路由会换掉 canvas / 按钮元素）都要重新取元素、重绑事件。
+  // ⚠️ 必须幂等：首屏会被调用两次（脚本自己一次 + astro:page-load 一次），
+  // 见 boundCanvas 的说明 —— 第二次如果照常「先拆后建」，就会把刚开始的飘落掐死在第一帧。
   function init() {
-    // 先把挂在旧元素上的循环停掉
+    const nextCanvas = document.getElementById('sakura-canvas');
+    // 还是同一个 canvas → 同一页的重复调用，直接跳过，别动正在跑的循环
+    if (nextCanvas && nextCanvas === boundCanvas) {
+      syncButton();
+      return;
+    }
+    boundCanvas = nextCanvas;
+
+    // 换页了：先把挂在旧元素上的循环停掉
     if (animId) cancelAnimationFrame(animId);
     animId = 0;
     petals = [];
     sparkles = [];
 
-    canvas = document.getElementById('sakura-canvas');
+    canvas = nextCanvas;
     toggleBtn = document.getElementById('btn-sakura');
     if (!canvas || !toggleBtn) return;
     ctx = canvas.getContext('2d');
@@ -320,8 +330,19 @@
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) return setMode('off', false);
 
-    // 开站那一阵子只在本次会话的第一次播放
-    if (burstPlayed) return syncButton();
+    // 开站那一阵子本次会话只播一次；但换页时如果还没到点，就接着把剩下的飘完，
+    // 否则在飘的时候点进一篇文章，那 10 秒会被当场腰斩（而且新 canvas 是空的）。
+    if (burstPlayed) {
+      if (burstUntil > Date.now()) {
+        mode = 'burst';
+        spawnDeadline = burstUntil;
+        start(true);
+        return syncButton();
+      }
+      // 已经飘完了 → 清干净收摊，绝不能留一帧画面定在屏幕上
+      stop();
+      return syncButton();
+    }
     burstPlayed = true;
     setMode('burst', true);
   }
