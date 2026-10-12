@@ -200,8 +200,11 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* ===== 列表页侧栏吸附跟随 =====
    首页/归档/分类等列表页（.page-shell 与首页 .ref-layout）：
    文章一多、侧栏内容被滚过去之后两侧会大片留白 → 侧栏吸附在视口两侧一直可见。
-   align-self 改 start（stretch 会把 aside 拉到与文章列等高，sticky 就没有移动空间）；
-   侧栏内容比视口高时（如右栏日历+热力图）在侧栏内部滚动，滚动条隐藏。
+   align-self 改 start（stretch 会把 aside 拉到与文章列等高，sticky 就没有移动空间）。
+
+   ⚠️ 这里**不能再加 max-height + overflow**：侧栏内容（右栏约 1200px）通常比视口高，
+   一旦限高就成了「内部滚动」，配上隐藏滚动条会让底部的组件被悄悄裁掉、访客还以为没做完。
+   现在只做 sticky：内容放得下时它就吸在顶部一直可见；放不下时随页面一起滚（全部内容都能看到）。
    文章页 .post-shell 不受影响，右侧目录的吸附行为保持原样。 */
 @media (min-width: 900px) {
   .page-shell > .ref-sidebar-left,
@@ -211,20 +214,7 @@ code, pre, kbd { font-family: var(--font-mono); }
     align-self: start;
     position: sticky;
     top: calc(var(--navbar-height) + 0.75rem);
-    max-height: calc(100vh - var(--navbar-height) - 1.5rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: none;
   }
-  .page-shell > .ref-sidebar-left::-webkit-scrollbar,
-  .page-shell > .ref-sidebar-right::-webkit-scrollbar,
-  .ref-layout > .ref-sidebar-left::-webkit-scrollbar,
-  .ref-layout > .ref-sidebar-right::-webkit-scrollbar { display: none; }
-  /* 内部滚动时不让卡片被压缩，保证完整高度撑出侧栏滚动 */
-  .page-shell > .ref-sidebar-left > *,
-  .page-shell > .ref-sidebar-right > *,
-  .ref-layout > .ref-sidebar-left > *,
-  .ref-layout > .ref-sidebar-right > * { flex-shrink: 0; }
 }
 
 /* 中屏：只放得下左栏（文章页则只放右栏） */

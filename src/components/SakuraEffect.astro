@@ -24,7 +24,11 @@ import Icon from './Icon.astro';
   const BURST_MS = 10000;
   let spawnDeadline = 0;
 
-  const PETAL_COLORS = ['#ffb7c5', '#ffc0cb', '#ff9eb5', '#ffd1dc', '#f8c8dc', '#ffafaf'];
+  // 花瓣配色：比早期的浅粉更深一些。整站底色改成浅色水彩后，
+  // 原来的 #ffb7c5 之类贴在浅色背景上色差只有 6% 左右，几乎看不见，所以整体加深加饱和。
+  const PETAL_COLORS = ['#f489a6', '#ef7d9c', '#f795ae', '#e8708f', '#f58aa3', '#ec7f9d'];
+  // 花瓣描边：给浅色背景上的花瓣一层轮廓，保证在白色正文区也能看清
+  const PETAL_EDGE = 'rgba(203, 96, 138, 0.5)';
   const SPARKLE_COLORS = ['#fff', '#ffe4f0', '#ffd7ec', '#fff0f5', '#ffe0ec'];
 
   function resize() {
@@ -32,16 +36,19 @@ import Icon from './Icon.astro';
     canvas.height = window.innerHeight;
   }
 
-  function createPetal() {
+  // initial = true 时把花瓣随机撒在整个视口里（刚进页面就已经是「在飘」的状态），
+  // 否则从屏幕上方外部生成，让花瓣自然飘进来
+  function createPetal(initial) {
     return {
       x: Math.random() * canvas.width,
-      y: -20 - Math.random() * 100,
-      size: 5 + Math.random() * 9,
+      y: initial ? Math.random() * canvas.height : -20 - Math.random() * 100,
+      size: 6 + Math.random() * 10,
       speedY: 0.4 + Math.random() * 1.0,
       speedX: -0.3 + Math.random() * 0.6,
       rotation: Math.random() * Math.PI * 2,
       rotSpeed: -0.02 + Math.random() * 0.04,
-      opacity: 0.3 + Math.random() * 0.5,
+      // 透明度整体上调：浅色底需要更高的不透明度才看得出花瓣
+      opacity: 0.55 + Math.random() * 0.35,
       color: PETAL_COLORS[Math.floor(Math.random() * PETAL_COLORS.length)],
       swing: 0,
       swingSpeed: 0.01 + Math.random() * 0.02,
@@ -75,6 +82,10 @@ import Icon from './Icon.astro';
     ctx.bezierCurveTo(p.size * 0.5, -p.size * 0.5, p.size * 0.5, p.size * 0.3, 0, p.size * 0.6);
     ctx.bezierCurveTo(-p.size * 0.5, p.size * 0.3, -p.size * 0.5, -p.size * 0.5, 0, -p.size);
     ctx.fill();
+    // 描边：浅色区域（白色正文、浅色壁纸）上给花瓣一个轮廓，不然会糊在背景里
+    ctx.strokeStyle = PETAL_EDGE;
+    ctx.lineWidth = 1;
+    ctx.stroke();
 
     // 花瓣渐变高光
     ctx.globalAlpha = p.opacity * 0.4;
@@ -117,7 +128,7 @@ import Icon from './Icon.astro';
 
   // 获取 CSS 变量 --hue 的实际值
   function getHue() {
-    return getComputedStyle(document.documentElement).getPropertyValue('--hue').trim() || '250';
+    return getComputedStyle(document.documentElement).getPropertyValue('--hue').trim() || '300';
   }
 
   // 鼠标跟随光晕
@@ -149,7 +160,7 @@ import Icon from './Icon.astro';
       p.rotation += p.rotSpeed;
       if (p.y > canvas.height + 20) {
         if (enabled && Date.now() < spawnDeadline) {
-          Object.assign(p, createPetal());
+          Object.assign(p, createPetal(false));
         } else {
           petals.splice(i, 1);
           continue;
@@ -193,7 +204,7 @@ import Icon from './Icon.astro';
 
   function start() {
     resize();
-    petals = Array.from({ length: 35 }, createPetal);
+    petals = Array.from({ length: 35 }, () => createPetal(true));
     sparkles = [];
     spawnDeadline = Date.now() + BURST_MS;
     tick();
