@@ -511,30 +511,31 @@ body::after {
   /* 中屏只有左栏 */
   body::after {
     background:
-      radial-gradient(20rem 30rem at 9% 34%, oklch(70% 0.17 296 / 0.3), transparent 66%),
-      radial-gradient(20rem 30rem at 9% 76%, oklch(74% 0.14 200 / 0.18), transparent 68%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(70% 0.17 296 / 0.17), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(74% 0.14 200 / 0.1), transparent 74%);
   }
   [data-theme='dark'] body::after {
     background:
-      radial-gradient(20rem 30rem at 9% 34%, oklch(56% 0.2 296 / 0.34), transparent 66%),
-      radial-gradient(20rem 30rem at 9% 76%, oklch(52% 0.16 210 / 0.22), transparent 68%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(56% 0.2 296 / 0.26), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(52% 0.16 210 / 0.16), transparent 74%);
   }
 }
 @media (min-width: 1280px) {
-  /* 大屏左右栏都有 */
+  /* 大屏左右栏都有。浓度刻意压低、半径拉大：只要够让玻璃「吃到一点颜色」，
+     太浓就会在背景上看到一坨明显的色块，反而脏。 */
   body::after {
     background:
-      radial-gradient(20rem 30rem at 9% 34%, oklch(70% 0.17 296 / 0.3), transparent 66%),
-      radial-gradient(20rem 30rem at 9% 76%, oklch(74% 0.14 200 / 0.18), transparent 68%),
-      radial-gradient(20rem 30rem at 91% 28%, oklch(72% 0.18 330 / 0.26), transparent 66%),
-      radial-gradient(22rem 32rem at 91% 72%, oklch(72% 0.15 268 / 0.22), transparent 68%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(70% 0.17 296 / 0.17), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(74% 0.14 200 / 0.1), transparent 74%),
+      radial-gradient(28rem 40rem at 93% 30%, oklch(72% 0.18 330 / 0.15), transparent 72%),
+      radial-gradient(30rem 42rem at 93% 74%, oklch(72% 0.15 268 / 0.12), transparent 74%);
   }
   [data-theme='dark'] body::after {
     background:
-      radial-gradient(20rem 30rem at 9% 34%, oklch(56% 0.2 296 / 0.34), transparent 66%),
-      radial-gradient(20rem 30rem at 9% 76%, oklch(52% 0.16 210 / 0.22), transparent 68%),
-      radial-gradient(20rem 30rem at 91% 28%, oklch(56% 0.2 330 / 0.3), transparent 66%),
-      radial-gradient(22rem 32rem at 91% 72%, oklch(54% 0.18 268 / 0.26), transparent 68%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(56% 0.2 296 / 0.26), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(52% 0.16 210 / 0.16), transparent 74%),
+      radial-gradient(28rem 40rem at 93% 30%, oklch(56% 0.2 330 / 0.24), transparent 72%),
+      radial-gradient(30rem 42rem at 93% 74%, oklch(54% 0.18 268 / 0.2), transparent 74%);
   }
 }
 
