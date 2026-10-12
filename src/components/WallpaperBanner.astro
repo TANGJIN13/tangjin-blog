@@ -500,31 +500,36 @@ const slides = single ? images.slice(0, 1) : images;
           oklch(0% 0 0 / 0.30) 7%,
           oklch(0% 0 0 / 0.12) 12%,
           oklch(0% 0 0 / 0) 18%),
-        /* 中段软带收紧一点：同样的「压暗总量」集中压到标题所在的那一条上，
-           文字对比度够，天空和远山又不动 —— 比原来均匀铺满一层黑纱亮得多。 */
+        /* 中段：原来是「一条峰值 0.28 的压暗带」，会在壁纸上留下一道能看出来的灰条。
+           改成更浅（峰值 0.20）更宽（过渡拉到 24%–80%）的柔晕 —— 肉眼看不出边界，
+           但白字底下仍有底。亮度本身也再提一档。 */
         linear-gradient(180deg,
-          oklch(0% 0 0 / 0) 26%,
-          oklch(0% 0 0 / 0.20) 36%,
-          oklch(0% 0 0 / 0.28) 44%,
-          oklch(0% 0 0 / 0.28) 58%,
-          oklch(0% 0 0 / 0.14) 68%,
-          oklch(0% 0 0 / 0) 78%),
+          oklch(0% 0 0 / 0) 24%,
+          oklch(0% 0 0 / 0.10) 34%,
+          oklch(0% 0 0 / 0.18) 44%,
+          oklch(0% 0 0 / 0.20) 51%,
+          oklch(0% 0 0 / 0.16) 60%,
+          oklch(0% 0 0 / 0.06) 70%,
+          oklch(0% 0 0 / 0) 80%),
         linear-gradient(180deg,
-          oklch(0% 0 0 / 0) 82%,
-          oklch(0% 0 0 / 0.09) 100%);
+          oklch(0% 0 0 / 0) 84%,
+          oklch(0% 0 0 / 0.08) 100%);
     }
 
     .header-waves { height: 10vh; min-height: 50px; max-height: 150px; }
     .wp-scroll { display: none; }
     .wp-inner { gap: 0.5rem; }
     .wp-title {
-      font-size: min(4.5rem, 8vw) !important;
+      font-size: min(4.6rem, 9vw) !important;
       line-height: 1.1 !important;
       font-weight: 400 !important;
       letter-spacing: normal !important;
       font-family: 'Liu Jian Mao Cao', 'Xingkai SC', 'STXingkai', 'HanziPen SC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive !important;
-      /* 手机端遮罩比桌面轻，所以用「近距实影 + 远处柔晕」两层把笔画托出来 */
-      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 0, 0, 0.45) !important;
+      /* ⚠️ 别再加大面积软阴影（8px/24px 那种）：书法字笔画很细，
+         软影会从笔画四周糊出来，白字看着就「发黑、发灰」。
+         正确做法是**贴着笔画的窄实影**（1px 偏移 + 2px 模糊）给出一条清晰暗边，
+         再补一点很轻的 8px 晕做分离，字就干净了。 */
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.92), 0 2px 8px rgba(0, 0, 0, 0.32) !important;
       margin-bottom: 0.85rem;
     }
     .wp-quote-sub {
@@ -532,14 +537,16 @@ const slides = single ? images.slice(0, 1) : images;
       line-height: 1.4;
       letter-spacing: normal;
       font-family: 'Liu Jian Mao Cao', 'Xingkai SC', 'STXingkai', 'HanziPen SC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8), 0 0 16px rgba(0, 0, 0, 0.5);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.88), 0 1px 6px rgba(0, 0, 0, 0.3);
     }
     .wp-links { flex-wrap: wrap; justify-content: center; gap: 0.4rem; margin-top: 0.3rem; }
     .wp-link { padding: 0.38rem 0.85rem; font-size: 0.8rem; }
     .wp-desc { font-size: 0.82rem; padding-inline: 0.5rem; }
   }
   @media (max-width: 640px) {
-    .wp-title { font-size: min(4.5rem, 8vw) !important; letter-spacing: 0.02em; margin-bottom: 0.75rem; }
+    /* 尺寸要和上面 ≤1023 那段保持一致（这里写在后面、优先级相同会覆盖它）：
+       手机端把书法标题放大一档，笔画粗一点，白字才不会被阴影盖成灰的。 */
+    .wp-title { font-size: min(4.6rem, 9vw) !important; letter-spacing: 0.02em; margin-bottom: 0.75rem; }
     .wp-quote-sub { font-size: 1.125rem; }
   }
   @media (max-width: 480px) {

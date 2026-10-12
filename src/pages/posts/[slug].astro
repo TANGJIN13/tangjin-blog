@@ -523,12 +523,13 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
   }
 
   /* ============ 响应式 ============ */
-  /* 手机端横幅遮罩改轻了（见 WallpaperBanner.astro）：天空/远山不再被压暗，
-     白色标题与描述只靠原来的「大面积柔光」会发飘，这里补一层近距实影把笔画托住。 */
+  /* 手机端横幅遮罩改轻了（见 WallpaperBanner.astro）：天空/远山不再被压暗。
+     阴影一律用「贴笔画的窄实影」，不要大面积软影 —— 软影会从字周围糊出来，
+     白字看着发灰发黑（首页书法标题踩过这个坑）。 */
   @media (max-width: 1023px) {
-    .pb-title { text-shadow: 0 2px 6px oklch(0% 0 0 / 0.72), 0 0 26px oklch(0% 0 0 / 0.45); }
-    .pb-desc  { text-shadow: 0 1px 5px oklch(0% 0 0 / 0.72), 0 0 16px oklch(0% 0 0 / 0.42); }
-    .pb-meta  { text-shadow: 0 1px 5px oklch(0% 0 0 / 0.70), 0 0 14px oklch(0% 0 0 / 0.40); }
+    .pb-title { text-shadow: 0 1px 2px oklch(0% 0 0 / 0.92), 0 3px 12px oklch(0% 0 0 / 0.34); }
+    .pb-desc  { text-shadow: 0 1px 2px oklch(0% 0 0 / 0.88), 0 1px 8px oklch(0% 0 0 / 0.32); }
+    .pb-meta  { text-shadow: 0 1px 2px oklch(0% 0 0 / 0.88), 0 1px 7px oklch(0% 0 0 / 0.32); }
   }
 
   @media (max-width: 860px) {
