@@ -65,14 +65,10 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
           <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 分类</h3>
           <div class="cat-list" id="cat-list" data-collapsed="5">
             {catCounts.map((c, i) => (
-              <a class="cat-row" href={`/categories/${c.slug}/`} data-index={i}>
-                <span class="cat-row-head">
-                  <span class="cat-row-name">{c.name}</span>
-                  <span class="cat-row-count">{c.count}</span>
-                </span>
-                <span class="cat-bar" aria-hidden="true">
-                  <i style={`width: ${Math.round((c.count / maxCatCount) * 100)}%`}></i>
-                </span>
+              <a class="cat-row" href={`/categories/${c.slug}/`} data-index={i}
+                 style={`--pct: ${Math.round((c.count / maxCatCount) * 100)}%`}>
+                <span class="cat-row-name">{c.name}</span>
+                <span class="cat-row-count">{c.count}</span>
               </a>
             ))}
           </div>
@@ -239,13 +235,15 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     position: relative;
     overflow: hidden;
   }
-  /* 卡片顶部一条主色渐变装饰线 */
+  /* 卡片顶部一条主色渐变装饰线（左右缩进，避免直条穿过圆角显得毛躁） */
   .profile-card::before {
     content: '';
     position: absolute;
-    inset: 0 0 auto;
+    inset: 0 20% auto;
     height: 3px;
+    border-radius: 0 0 999px 999px;
     background: var(--gradient-primary);
+    opacity: 0.9;
   }
   /* 右上角一团柔光，避免卡片显得平 */
   .profile-card::after {
@@ -342,7 +340,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     flex-shrink: 0;
     transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
   }
-  .nav-item:hover { background: var(--surface-2); color: var(--text); transform: translateX(3px); }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
   .nav-item:hover .nav-icon {
     background: var(--primary-soft);
     border-color: transparent;
@@ -360,15 +358,6 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     border-color: transparent;
     color: var(--text-on-primary);
     box-shadow: 0 3px 10px -2px var(--primary-glow);
-  }
-  /* 当前页右侧一颗小圆点 */
-  .nav-item.active::after {
-    content: '';
-    margin-left: auto;
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
   }
 
 
@@ -605,23 +594,25 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     transition: max-height 0.35s ease;
   }
   .cat-row {
-    display: flex;
-    flex-direction: column;
-    gap: 0.34rem;
-    padding: 0.36rem 0.5rem;
-    border-radius: var(--radius-sm);
-    color: var(--text-soft);
-    font-size: 0.82rem;
-    text-decoration: none !important;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  .cat-row-head {
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+    padding: 0.44rem 0.55rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-soft);
+    font-size: 0.82rem;
+    text-decoration: none !important;
+    /* 占比直接用一条柔和的主色填充铺在行底（--pct 由发布数算出）。
+       不再另加一根横条：名称+胶囊+横条三层结构看着碎，0 篇的分类还会留下一条空线。 */
+    background-image: linear-gradient(90deg,
+      var(--primary-soft) 0 var(--pct, 0%),
+      transparent var(--pct, 0%) 100%);
+    background-repeat: no-repeat;
+    transition: background-color 0.18s ease, color 0.18s ease;
   }
-  .cat-row:hover { background: var(--surface-2); color: var(--primary-strong); }
+  .cat-row:hover { background-color: var(--surface-2); color: var(--primary-strong); }
   [data-theme='dark'] .cat-row:hover { color: var(--primary-light); }
   .cat-row-name {
     overflow: hidden;
@@ -646,23 +637,6 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     background: var(--gradient-primary);
     color: var(--text-on-primary);
   }
-  /* 占比条：发文越多的分类条越长 */
-  .cat-bar {
-    display: block;
-    height: 4px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    overflow: hidden;
-  }
-  .cat-bar i {
-    display: block;
-    height: 100%;
-    border-radius: 999px;
-    background: var(--gradient-primary);
-    opacity: 0.45;
-    transition: opacity 0.22s ease;
-  }
-  .cat-row:hover .cat-bar i { opacity: 1; }
   /* 折叠：超过 5 条时隐藏 */
   .cat-list.is-collapsed .cat-row:nth-child(n+6) { display: none; }
   /* 展开/收起按钮 */

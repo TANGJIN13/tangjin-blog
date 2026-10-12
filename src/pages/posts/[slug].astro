@@ -3,7 +3,6 @@ import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import WallpaperBanner from '../../components/WallpaperBanner.astro';
 import GiscusComments from '../../components/GiscusComments.astro';
-import SakuraEffect from '../../components/SakuraEffect.astro';
 import Icon from '../../components/Icon.astro';
 import TocCard from '../../components/TocCard.astro';
 import { getPublishedPosts, formatDate, readingTime } from '../../lib/posts';
@@ -63,9 +62,6 @@ const bannerImages = hasCover ? [coverSrc] : undefined;
 >
   <!-- 阅读进度条 -->
   <div class="read-progress" id="read-progress" aria-hidden="true"></div>
-
-  <!-- 樱花特效：只在进入文章时飘一阵子 -->
-  <SakuraEffect />
 
   <!-- 顶部壁纸横幅：文章标题 / 标签 / 元信息 -->
   <WallpaperBanner

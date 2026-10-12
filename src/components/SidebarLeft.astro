@@ -21,13 +21,14 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
   <div class="card-base profile-card onload-animation">
     <div class="avatar-ring">
       <img class="profile-avatar" src={site.avatar} alt="头像" width="78" height="78" />
+      <span class="avatar-status" title="在线"></span>
     </div>
     <h3 class="profile-name">{site.title}</h3>
     <p class="profile-bio">Web 安全 / CTF / 生活趣事</p>
     <nav class="profile-nav">
       {navItems.map((it) => (
         <a href={it.href} class:list={['nav-item', isActive(it.href) && 'active']}>
-          <Icon name={it.icon} size="1rem" />
+          <span class="nav-icon"><Icon name={it.icon} size="0.95rem" /></span>
           <span>{it.label}</span>
         </a>
       ))}
@@ -47,16 +48,31 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
     position: relative;
     overflow: hidden;
   }
-  /* 卡片顶部一条主色渐变装饰线 */
+  /* 卡片顶部一条主色渐变装饰线（左右缩进，避免直条穿过圆角显得毛躁） */
   .profile-card::before {
     content: '';
     position: absolute;
-    inset: 0 0 auto;
-    height: 4px;
+    inset: 0 20% auto;
+    height: 3px;
+    border-radius: 0 0 999px 999px;
     background: var(--gradient-primary);
+    opacity: 0.9;
+  }
+  /* 右上角一团柔光，避免卡片显得平 */
+  .profile-card::after {
+    content: '';
+    position: absolute;
+    top: -46px;
+    right: -46px;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, oklch(70% 0.15 300 / 0.16), transparent 68%);
+    pointer-events: none;
   }
 
   .avatar-ring {
+    position: relative;
     width: 84px; height: 84px;
     margin: 0 auto 0.7rem;
     border-radius: 50%;
@@ -66,6 +82,25 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .profile-card:hover .avatar-ring { transform: rotate(8deg) scale(1.05); }
+  /* 头像右下角的在线状态点（呼吸扩散） */
+  .avatar-status {
+    position: absolute;
+    right: 3px;
+    bottom: 5px;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: oklch(72% 0.17 150);
+    border: 2.5px solid var(--surface);
+    animation: statusPulse 2.6s ease-out infinite;
+  }
+  @keyframes statusPulse {
+    0%   { box-shadow: 0 0 0 0 oklch(72% 0.17 150 / 0.55); }
+    70%  { box-shadow: 0 0 0 8px oklch(72% 0.17 150 / 0); }
+    100% { box-shadow: 0 0 0 0 oklch(72% 0.17 150 / 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .avatar-status { animation: none; }
+  }
   .profile-avatar {
     width: 100%; height: 100%;
     border-radius: 50%;
@@ -97,23 +132,44 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
   .nav-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 0.6rem;
+    gap: 0.55rem;
+    padding: 0.4rem 0.5rem;
     border-radius: var(--radius-sm);
     color: var(--text-soft);
     font-size: 0.84rem;
     text-decoration: none !important;
-    transition: all 0.18s ease;
+    transition: background 0.18s ease, color 0.18s ease;
     position: relative;
   }
-  .nav-item :global(.icon) { opacity: 0.8; transition: transform 0.18s ease; }
-  .nav-item:hover { background: var(--surface-2); color: var(--text); transform: translateX(3px); }
-  .nav-item:hover :global(.icon) { transform: scale(1.12); }
+  /* 图标坐进小色块（与首页左侧栏保持同一套观感） */
+  .nav-icon {
+    width: 1.7rem; height: 1.7rem;
+    display: grid;
+    place-items: center;
+    border-radius: 0.5rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    color: var(--text-soft);
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item:hover .nav-icon {
+    background: var(--primary-soft);
+    border-color: transparent;
+    color: var(--primary);
+    transform: scale(1.06);
+  }
   .nav-item.active {
     background: var(--primary-soft);
     color: var(--primary-strong);
     font-weight: 600;
   }
   [data-theme='dark'] .nav-item.active { color: var(--primary-light); }
-  .nav-item.active :global(.icon) { opacity: 1; }
+  .nav-item.active .nav-icon {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    color: var(--text-on-primary);
+    box-shadow: 0 3px 10px -2px var(--primary-glow);
+  }
 </style>

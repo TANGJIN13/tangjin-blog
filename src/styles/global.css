@@ -241,12 +241,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 }
 
 /* ============ Widget 系统 ============ */
-.card-base {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xl);
-  /* 参照站无阴影 */
-}
+/* 卡片基底统一在下面「统一的卡片质感」一节定义，这里不再重复声明 */
 
 /* 侧栏卡片：极浅的竖向渐变给一点「上亮下暗」的层次（不设 overflow:hidden，
    否则搜索卡片的浮层下拉会被裁掉） */
@@ -258,11 +253,20 @@ code, pre, kbd { font-family: var(--font-mono); }
 [data-theme='dark'] .widget-card {
   background-image: linear-gradient(180deg, oklch(100% 0 0 / 0.04), transparent 42%);
 }
+/* 侧栏是一列组件、不算「内容卡片」，悬停时不上浮跳动，只轻轻提亮描边 */
+.widget-card:hover {
+  transform: none;
+  border-color: color-mix(in srgb, var(--primary) 26%, transparent);
+  box-shadow: 0 2px 8px oklch(0% 0 0 / 0.05), 0 10px 24px oklch(60% 0.13 300 / 0.1);
+}
+[data-theme='dark'] .widget-card:hover {
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 10px 24px oklch(0% 0 0 / 0.4);
+}
 /* 悬停时顶部浮出一条主色高光线 */
 .widget-card::after {
   content: '';
   position: absolute;
-  inset: 0 12% auto;
+  inset: 0 18% auto;
   height: 1px;
   border-radius: 999px;
   background: linear-gradient(90deg, transparent, var(--primary), transparent);
@@ -270,9 +274,10 @@ code, pre, kbd { font-family: var(--font-mono); }
   transition: opacity 0.35s ease;
   pointer-events: none;
 }
-.widget-card:hover::after { opacity: 0.5; }
+.widget-card:hover::after { opacity: 0.55; }
 
-/* 组件标题：图标坐在渐变圆角色块里，右侧接一条渐隐细线 */
+/* 组件标题：图标坐进柔色块，右侧接一条渐隐细线。
+   默认是「淡底 + 主色图标」的安静状态，悬停才亮成实色渐变——一列五六个组件时不会满屏紫块。 */
 .widget-title {
   font-size: 0.98rem;
   font-weight: 700;
@@ -289,13 +294,18 @@ code, pre, kbd { font-family: var(--font-mono); }
   box-sizing: content-box;
   padding: 0.3rem;
   border-radius: 0.6rem;
-  background: var(--gradient-primary);
-  color: var(--text-on-primary);
-  box-shadow: 0 4px 12px -3px var(--primary-glow);
+  background: var(--primary-soft);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
   flex-shrink: 0;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: background 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.widget-card:hover .widget-title .icon { transform: scale(1.06) rotate(-4deg); }
+.widget-card:hover .widget-title .icon {
+  background: var(--gradient-primary);
+  border-color: transparent;
+  color: var(--text-on-primary);
+  transform: scale(1.06) rotate(-4deg);
+}
 .widget-title::after {
   content: '';
   flex: 1;

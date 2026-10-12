@@ -4,6 +4,7 @@ import { site } from '../site';
 import Icon from '../components/Icon.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
 import ImageZoom from '../components/ImageZoom.astro';
+import SakuraEffect from '../components/SakuraEffect.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import { ClientRouter } from 'astro:transitions';
 
@@ -213,6 +214,9 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
 
     <!-- 图片放大查看层：正文里的图点击后全屏观看 -->
     <ImageZoom />
+
+    <!-- 樱花飘落特效：全站生效，右下角有开关（开站飘一阵子 / 常开 / 关闭） -->
+    <SakuraEffect />
 
     <!-- 页脚 -->
     <footer class="site-footer">
