@@ -16,6 +16,8 @@
   --primary-strong: oklch(55% 0.16 300);
   --primary-soft: oklch(95% 0.03 300);
   --primary-light: oklch(80% 0.10 300);
+  /* 主色光晕：图标 / 按钮的辉光阴影用。之前漏了定义，引用它的 box-shadow 整条都被浏览器丢掉。 */
+  --primary-glow: oklch(70% 0.14 300 / 0.45);
 
   /* 背景 */
   --bg: oklch(97.6% 0.004 300);
@@ -74,6 +76,12 @@
   --surface: oklch(17% 0.02 300);
   --surface-hover: oklch(20% 0.025 300);
   --surface-2: oklch(21% 0.025 300);
+
+  /* 主色系也要跟着翻面：--primary-soft 原来是 95% 亮度的近白色，
+     暗色下没覆盖 → 所有「淡底」块（导航选中、组件标题图标、分类占比）都变成刺眼的白块。
+     暗色里它应该是「深一点的紫」，浅色里才是「浅一点的紫」。 */
+  --primary-soft: oklch(29% 0.05 300);
+  --primary-glow: oklch(70% 0.14 300 / 0.5);
 
   --text: oklch(92% 0.008 300);
   --text-soft: oklch(72% 0.01 300);
@@ -296,10 +304,11 @@ code, pre, kbd { font-family: var(--font-mono); }
   border-radius: 0.6rem;
   background: var(--primary-soft);
   border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
-  color: var(--primary);
+  color: var(--primary-strong);
   flex-shrink: 0;
   transition: background 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+[data-theme='dark'] .widget-title .icon { color: var(--primary-light); }
 .widget-card:hover .widget-title .icon {
   background: var(--gradient-primary);
   border-color: transparent;
