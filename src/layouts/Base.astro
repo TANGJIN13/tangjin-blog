@@ -414,7 +414,14 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
         const mfWrap = document.getElementById('music-float');
         if (mfWrap && !mfWrap.dataset.bound) {
           mfWrap.dataset.bound = '1';
-          if (localStorage.getItem('music-float-expanded') === '0') {
+          // 起始状态：宽屏上左侧栏是常驻的，展开的播放器卡片会盖住左侧栏底部的组件，
+          // 所以「宽屏且页面有左侧栏」时默认收起（提示气泡仍会告诉访客左下角有播放器）；
+          // 窄屏没有左侧栏，维持默认展开。一旦用户手动展开/收起，就以其存储的偏好为准。
+          let mfPref = null;
+          try { mfPref = localStorage.getItem('music-float-expanded'); } catch (e) {}
+          const mfWideHasSidebar =
+            window.matchMedia('(min-width: 1024px)').matches && !!document.querySelector('.ref-sidebar-left');
+          if (mfPref === '0' || (mfPref === null && mfWideHasSidebar)) {
             mfWrap.classList.remove('expanded');
           }
           const setExpanded = (open) => {
@@ -745,13 +752,13 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     padding: 0.55rem 0.85rem;
     background: linear-gradient(145deg,
       oklch(97% 0.02 300) 0%,
-      oklch(95% 0.03 265) 100%);
+      oklch(95% 0.03 316) 100%);
     border-bottom: 1px solid var(--border);
   }
   [data-theme='dark'] .music-float-head {
     background: linear-gradient(145deg,
       oklch(21% 0.03 300) 0%,
-      oklch(18% 0.04 265) 100%);
+      oklch(18% 0.04 316) 100%);
   }
   .music-float-title {
     display: inline-flex;

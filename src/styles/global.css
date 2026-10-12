@@ -83,7 +83,7 @@
   --border: oklch(100% 0 0 / 0.08);
   --border-light: oklch(100% 0 0 / 0.05);
 
-  --gradient-card: linear-gradient(160deg, oklch(21% 0.03 300), oklch(18% 0.04 265));
+  --gradient-card: linear-gradient(160deg, oklch(21% 0.03 300), oklch(18% 0.04 316));
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.3);
   --shadow: 0 4px 16px oklch(0% 0 0 / 0.35);
   --shadow-lg: 0 8px 32px oklch(0% 0 0 / 0.45);
