@@ -1,31 +1,55 @@
 ---
+// 活跃度热力图 —— 最近 26 周（周一对齐），带月份刻度，格子自适应卡片宽度
 import { getCollection } from 'astro:content';
 import Icon from './Icon.astro';
 
 const posts = await getCollection('posts');
 
+// 用本地时区取年月日，避免 toISOString() 的 UTC 偏移把日期算错一天
+const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 // 按日期统计文章数量
 const dateCount = new Map<string, number>();
 for (const p of posts) {
-  const date = p.data.published.toISOString().slice(0, 10);
-  dateCount.set(date, (dateCount.get(date) || 0) + 1);
+  const k = dayKey(p.data.published);
+  dateCount.set(k, (dateCount.get(k) || 0) + 1);
 }
 
-// 生成过去 365 天的热力图数据
+const WEEKS = 26;
 const today = new Date();
-const days: { date: string; count: number }[] = [];
-for (let i = 364; i >= 0; i--) {
-  const d = new Date(today);
-  d.setDate(d.getDate() - i);
-  const dateStr = d.toISOString().slice(0, 10);
-  days.push({ date: dateStr, count: dateCount.get(dateStr) || 0 });
+today.setHours(0, 0, 0, 0);
+
+// 起点 = (WEEKS-1) 周前的周一，这样每一列正好是周一到周日
+const start = new Date(today);
+start.setDate(start.getDate() - (WEEKS - 1) * 7);
+const dowMon = (start.getDay() + 6) % 7; // 周一 = 0
+start.setDate(start.getDate() - dowMon);
+
+const cells: { date: string; count: number }[] = [];
+for (const d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+  const k = dayKey(d);
+  cells.push({ date: k, count: dateCount.get(k) || 0 });
 }
 
-// 计算统计数据
-const totalPosts = posts.length;
-const totalDays = days.length;
-const activeDays = days.filter((d) => d.count > 0).length;
-const maxCount = Math.max(...days.map((d) => d.count), 1);
+// 每 7 天切一列（周）
+const weeks: (typeof cells)[] = [];
+for (let i = 0; i < cells.length; i += 7) {
+  weeks.push(cells.slice(i, i + 7));
+}
+
+// 顶部月份刻度：连续同月的列合并成一段
+const monthLabels: { month: number; span: number }[] = [];
+for (const w of weeks) {
+  const m = Number(w[0].date.slice(5, 7));
+  if (monthLabels.length && monthLabels[monthLabels.length - 1].month === m) {
+    monthLabels[monthLabels.length - 1].span += 1;
+  } else {
+    monthLabels.push({ month: m, span: 1 });
+  }
+}
+
+const activeDays = cells.filter((c) => c.count > 0).length;
 
 function getLevel(count: number): number {
   if (count === 0) return 0;
@@ -36,18 +60,26 @@ function getLevel(count: number): number {
 
 <div class="card-base heatmap-widget">
   <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 活跃度</h3>
+
   <div class="heatmap-stats">
-    <span><strong>{totalPosts}</strong> 篇文章</span>
-    <span><strong>{activeDays}</strong> 活跃天</span>
+    <span class="hm-pill"><strong>{activeDays}</strong> 活跃天</span>
+    <span class="hm-pill">最近 <strong>26</strong> 周</span>
   </div>
-  <div class="heatmap-grid">
-    {days.map((d) => (
-      <div
-        class={`heatmap-cell level-${getLevel(d.count)}`}
-        title={`${d.date}: ${d.count} 篇文章`}
-      ></div>
+
+  <div class="heatmap-months" style={`grid-template-columns: repeat(${weeks.length}, 1fr)`}>
+    {monthLabels.map((l) => (
+      <span class="hm-month" style={`grid-column: span ${l.span}`}>{l.span >= 2 ? `${l.month}月` : ''}</span>
     ))}
   </div>
+
+  <div class="heatmap-grid">
+    {weeks.map((w) => (
+      w.map((c) => (
+        <span class={`heatmap-cell level-${getLevel(c.count)}`} title={`${c.date}：${c.count} 篇`}></span>
+      ))
+    ))}
+  </div>
+
   <div class="heatmap-legend">
     <span>少</span>
     <span class="heatmap-cell level-0"></span>
@@ -56,31 +88,87 @@ function getLevel(count: number): number {
     <span class="heatmap-cell level-3"></span>
     <span class="heatmap-cell level-4"></span>
     <span>多</span>
+    <span class="hm-total">共 {posts.length} 篇</span>
   </div>
 </div>
 
 <style>
   .heatmap-widget { padding: 1rem; }
-  .heatmap-stats { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-faint); margin-bottom: 0.6rem; }
-  .heatmap-stats strong { color: var(--text); }
-  /* 窄屏（手机端侧栏）可横向滑动，避免撑破布局 */
-  .heatmap-grid {
-    display: grid; grid-template-rows: repeat(7, 1fr); grid-auto-flow: column; gap: 2px;
-    overflow-x: auto; max-width: 100%; padding-bottom: 0.25rem;
+
+  .heatmap-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.6rem;
   }
-  .heatmap-cell { width: 10px; height: 10px; border-radius: 2px; transition: all 0.15s ease; cursor: pointer; }
-  .heatmap-cell:hover { transform: scale(1.3); }
+  .hm-pill {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    color: var(--text-faint);
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+  }
+  .hm-pill strong {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+  }
+  [data-theme='dark'] .hm-pill strong { color: var(--primary-light); }
+
+  .heatmap-months {
+    display: grid;
+    gap: 3px;
+    margin-bottom: 0.28rem;
+    font-size: 0.6rem;
+    color: var(--text-faint);
+  }
+  .hm-month { white-space: nowrap; overflow: hidden; }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-rows: repeat(7, auto);
+    grid-auto-flow: column;
+    gap: 3px;
+  }
+  .heatmap-cell {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 3px;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+    cursor: pointer;
+  }
+  .heatmap-cell:hover {
+    transform: scale(1.5);
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 0 0 1.5px var(--primary);
+  }
   .heatmap-cell.level-0 { background: var(--surface-2); }
   .heatmap-cell.level-1 { background: hsl(var(--hue), 60%, 85%); }
   .heatmap-cell.level-2 { background: hsl(var(--hue), 65%, 70%); }
   .heatmap-cell.level-3 { background: hsl(var(--hue), 70%, 55%); }
   .heatmap-cell.level-4 { background: hsl(var(--hue), 75%, 45%); }
-  [data-theme='dark'] .heatmap-cell.level-0 { background: rgba(255,255,255,0.06); }
+  [data-theme='dark'] .heatmap-cell.level-0 { background: rgba(255, 255, 255, 0.06); }
   [data-theme='dark'] .heatmap-cell.level-1 { background: hsl(var(--hue), 50%, 25%); }
   [data-theme='dark'] .heatmap-cell.level-2 { background: hsl(var(--hue), 55%, 35%); }
   [data-theme='dark'] .heatmap-cell.level-3 { background: hsl(var(--hue), 60%, 45%); }
   [data-theme='dark'] .heatmap-cell.level-4 { background: hsl(var(--hue), 65%, 55%); }
-  .heatmap-legend { display: flex; align-items: center; gap: 3px; margin-top: 0.5rem; font-size: 0.7rem; color: var(--text-faint); }
-  .heatmap-legend .heatmap-cell { cursor: default; }
-  .heatmap-legend .heatmap-cell:hover { transform: none; }
+
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 0.6rem;
+    font-size: 0.66rem;
+    color: var(--text-faint);
+  }
+  .heatmap-legend .heatmap-cell { width: 9px; height: 9px; aspect-ratio: auto; cursor: default; }
+  .heatmap-legend .heatmap-cell:hover { transform: none; box-shadow: none; }
+  .hm-total { margin-left: auto; }
 </style>

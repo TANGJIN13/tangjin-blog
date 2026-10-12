@@ -1,4 +1,5 @@
 ---
+// 侧栏搜索：输入即过滤首页文章；支持按 "/" 快速聚焦
 import Icon from './Icon.astro';
 ---
 
@@ -12,52 +13,70 @@ import Icon from './Icon.astro';
       placeholder="搜索文章..."
       autocomplete="off"
     />
+    <kbd class="search-kbd">/</kbd>
   </div>
   <div class="search-results" id="sw-search-results"></div>
 </div>
 
 <script>
+  // 注意：站点启用了 ClientRouter，换页会替换 DOM；模块脚本只执行一次，
+  // 所以这里用 init() + astro:page-load 重新绑定，并且一律用 on* 赋值（幂等）。
   (() => {
-    // id 带 sw- 前缀：页面级的 /search 页面也用 search-input 这类通用 id，撞车会互相冲掉内容
-    const input = document.getElementById('sw-search-input');
-    const results = document.getElementById('sw-search-results');
-    if (!input || !results) return;
+    function init() {
+      // id 带 sw- 前缀：页面级的 /search 页面也用 search-input 这类通用 id，撞车会互相冲掉内容
+      const input = document.getElementById('sw-search-input') as HTMLInputElement | null;
+      const results = document.getElementById('sw-search-results');
+      if (!input || !results) return;
 
-    // 获取文章数据（从页面中抓取）
-    const posts = [...document.querySelectorAll('.post-list article, .post-list a')].map(el => {
-      const title = el.querySelector('.post-card-title, .post-title')?.textContent?.trim() || '';
-      const link = el.closest('a') || el.querySelector('a');
-      const href = link?.getAttribute('href') || '#';
-      const desc = el.querySelector('.post-card-desc, .post-desc')?.textContent?.trim() || '';
-      return { title, href, desc };
-    }).filter(p => p.title);
+      // 每次重新抓取当前页面的文章列表（SPA 换页后内容会变）
+      const posts = [...document.querySelectorAll('.post-list article, .post-list a')].map((el) => {
+        const title = el.querySelector('.post-card-title, .post-title')?.textContent?.trim() || '';
+        const link = el.closest('a') || el.querySelector('a');
+        const href = link?.getAttribute('href') || '#';
+        const desc = el.querySelector('.post-card-desc, .post-desc')?.textContent?.trim() || '';
+        return { title, href, desc };
+      }).filter((p) => p.title);
 
-    input.addEventListener('input', () => {
-      const q = input.value.trim().toLowerCase();
-      if (!q) { results.innerHTML = ''; results.style.display = 'none'; return; }
-      const matches = posts.filter(p =>
-        p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
-      ).slice(0, 6);
+      input.oninput = () => {
+        const q = input.value.trim().toLowerCase();
+        if (!q) { results.innerHTML = ''; results.style.display = 'none'; return; }
+        const matches = posts.filter((p) =>
+          p.title.toLowerCase().includes(q) || p.desc.toLowerCase().includes(q)
+        ).slice(0, 6);
 
-      if (matches.length === 0) {
-        results.innerHTML = '<div class="search-empty">没有找到相关文章</div>';
-      } else {
-        results.innerHTML = matches.map(p => `
-          <a class="search-result-item" href="${p.href}">
-            <span class="search-result-title">${p.title}</span>
-            ${p.desc ? `<span class="search-result-desc">${p.desc}</span>` : ''}
-          </a>
-        `).join('');
-      }
-      results.style.display = 'block';
-    });
+        if (matches.length === 0) {
+          results.innerHTML = '<div class="search-empty">没有找到相关文章</div>';
+        } else {
+          results.innerHTML = matches.map((p) => `
+            <a class="search-result-item" href="${p.href}">
+              <span class="search-result-title">${p.title}</span>
+              ${p.desc ? `<span class="search-result-desc">${p.desc}</span>` : ''}
+            </a>
+          `).join('');
+        }
+        results.style.display = 'block';
+      };
 
-    // 点击外部收起
+      // 页面里没有可见的表单时，按 "/" 直接把光标送进搜索框
+      document.onkeydown = (e: KeyboardEvent) => {
+        if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+        const tag = (document.activeElement?.tagName || '').toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || (document.activeElement as HTMLElement)?.isContentEditable) return;
+        e.preventDefault();
+        input.focus();
+      };
+    }
+
+    // 点击外部收起（绑在 document 上，只需一次）
     document.addEventListener('click', (e) => {
-      if (!e.target.closest('.search-widget')) {
+      const results = document.getElementById('sw-search-results');
+      if (results && !(e.target as HTMLElement).closest('.search-widget')) {
         results.style.display = 'none';
       }
     });
+
+    init();
+    document.addEventListener('astro:page-load', init);
   })();
 </script>
 
@@ -67,19 +86,22 @@ import Icon from './Icon.astro';
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 0.8rem;
+    padding: 0.5rem 0.55rem 0.5rem 0.8rem;
     border-radius: var(--radius);
     background: var(--surface-2);
     border: 1px solid var(--border);
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   }
   .search-input-wrap:focus-within {
     border-color: var(--primary);
+    background: var(--surface);
     box-shadow: 0 0 0 3px var(--primary-soft);
   }
-  .search-input-wrap :global(.icon) { color: var(--text-faint); flex-shrink: 0; }
+  .search-input-wrap :global(.icon) { color: var(--text-faint); flex-shrink: 0; transition: color 0.2s ease; }
+  .search-input-wrap:focus-within :global(.icon) { color: var(--primary); }
   .search-input {
     flex: 1;
+    min-width: 0;
     border: none;
     background: transparent;
     color: var(--text);
@@ -87,16 +109,34 @@ import Icon from './Icon.astro';
     outline: none;
   }
   .search-input::placeholder { color: var(--text-faint); }
+  /* 快捷键提示：聚焦后淡出，不挡视线 */
+  .search-kbd {
+    flex-shrink: 0;
+    font-family: inherit;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.22rem 0.4rem;
+    border-radius: 0.35rem;
+    color: var(--text-faint);
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 0 var(--border);
+    transition: opacity 0.2s ease;
+  }
+  .search-input-wrap:focus-within .search-kbd { opacity: 0; }
+
   .search-results {
     display: none;
     position: absolute;
-    top: calc(100% + 4px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
     z-index: 10;
+    padding: 0.25rem;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     max-height: 280px;
     overflow-y: auto;
@@ -105,18 +145,21 @@ import Icon from './Icon.astro';
     display: flex;
     flex-direction: column;
     gap: 0.15rem;
-    padding: 0.6rem 0.8rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--radius-sm);
     text-decoration: none !important;
     transition: background 0.12s ease;
   }
-  .search-result-item:hover { background: var(--surface-2); }
+  .search-result-item:hover { background: var(--primary-soft); }
   .search-result-title {
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.83rem;
+    font-weight: 600;
     color: var(--text);
   }
+  .search-result-item:hover .search-result-title { color: var(--primary-strong); }
+  [data-theme='dark'] .search-result-item:hover .search-result-title { color: var(--primary-light); }
   .search-result-desc {
-    font-size: 0.75rem;
+    font-size: 0.73rem;
     color: var(--text-faint);
     white-space: nowrap;
     overflow: hidden;
@@ -129,7 +172,7 @@ import Icon from './Icon.astro';
     color: var(--text-faint);
   }
   [data-theme='dark'] .search-results {
-    background: oklch(16% 0.02 250);
+    background: oklch(16% 0.02 300);
     border-color: oklch(100% 0 0 / 0.08);
   }
 </style>

@@ -76,7 +76,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <!-- 首屏壁纸预加载：让首页大图在解析 body 之前就开始下载，做到「秒出」。
          注意：这里的第一张要和 WallpaperBanner 默认 images 数组的第一张保持一致。 -->
-    <link rel="preload" as="image" type="image/avif" href="/images/wallpapers/banner-cosmic.avif" fetchpriority="high" />
+    <link rel="preload" as="image" type="image/avif" href="/images/wallpapers/banner-pastel-01.avif" fetchpriority="high" />
     <meta name="generator" content={Astro.generator} />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
@@ -513,7 +513,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     border-bottom-color: var(--border);
   }
   [data-theme='dark'] .top-row.scrolled {
-    background: oklch(14% 0.015 250 / 0.75);
+    background: oklch(14% 0.015 300 / 0.75);
   }
 
   /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上 */
@@ -744,13 +744,13 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     justify-content: space-between;
     padding: 0.55rem 0.85rem;
     background: linear-gradient(145deg,
-      oklch(97% 0.02 250) 0%,
+      oklch(97% 0.02 300) 0%,
       oklch(95% 0.03 265) 100%);
     border-bottom: 1px solid var(--border);
   }
   [data-theme='dark'] .music-float-head {
     background: linear-gradient(145deg,
-      oklch(21% 0.03 250) 0%,
+      oklch(21% 0.03 300) 0%,
       oklch(18% 0.04 265) 100%);
   }
   .music-float-title {
@@ -794,7 +794,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     box-shadow: 0 4px 16px oklch(0% 0 0 / 0.14);
     transition: all 0.2s ease;
   }
-  [data-theme='dark'] .music-float-mini { background: oklch(20% 0.02 250 / 0.88); }
+  [data-theme='dark'] .music-float-mini { background: oklch(20% 0.02 300 / 0.88); }
   .music-float-mini:hover { transform: scale(1.08); box-shadow: 0 6px 22px oklch(0% 0 0 / 0.18); }
 
   /* 播放时收起按钮显示动态均衡器（替代静态音符图标） */
@@ -871,7 +871,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   /* 提示期间给播放器本体一圈主色光晕，视线更容易被引导过去 */
   .music-float.hinting .music-float-mini,
   .music-float.hinting .music-float-panel {
-    box-shadow: 0 0 0 3px oklch(70% 0.14 250 / 0.35), 0 8px 28px oklch(0% 0 0 / 0.16);
+    box-shadow: 0 0 0 3px oklch(70% 0.14 300 / 0.35), 0 8px 28px oklch(0% 0 0 / 0.16);
   }
 
   /* 展开态：显示面板，隐藏小按钮 */
@@ -887,8 +887,8 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     animation: music-pulse 2.4s ease-in-out infinite;
   }
   @keyframes music-pulse {
-    0%, 100% { box-shadow: 0 4px 16px oklch(70% 0.14 250 / 0.25); }
-    50%      { box-shadow: 0 4px 26px oklch(70% 0.14 250 / 0.5); }
+    0%, 100% { box-shadow: 0 4px 16px oklch(70% 0.14 300 / 0.25); }
+    50%      { box-shadow: 0 4px 26px oklch(70% 0.14 300 / 0.5); }
   }
 
   @media (max-width: 640px) {
@@ -931,7 +931,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     opacity: 1;
   }
   [data-theme='dark'] .mobile-menu {
-    background: oklch(22% 0.02 250 / 0.88);
+    background: oklch(22% 0.02 300 / 0.88);
     border-color: oklch(100% 0 0 / 0.08);
   }
 
@@ -953,7 +953,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     transition: all 0.18s ease;
   }
   .mobile-nav-item:hover {
-    background: oklch(95% 0.03 250);
+    background: oklch(95% 0.03 300);
     color: var(--text);
   }
   .mobile-nav-item[aria-current='page'] {
@@ -961,7 +961,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: var(--primary-soft);
     font-weight: 600;
   }
-  [data-theme='dark'] .mobile-nav-item:hover { background: oklch(28% 0.03 250); }
+  [data-theme='dark'] .mobile-nav-item:hover { background: oklch(28% 0.03 300); }
   .mobile-nav-item :global(.icon) { opacity: 0.85; }
 
   @media (max-width: 1023px) {

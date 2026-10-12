@@ -12,20 +12,20 @@
    ============================================================ */
 :root {
   /* 颜色 —— 从参照站计算样式提取 */
-  --primary: oklch(70% 0.14 250);
-  --primary-strong: oklch(55% 0.16 250);
-  --primary-soft: oklch(95% 0.03 250);
-  --primary-light: oklch(80% 0.10 250);
+  --primary: oklch(70% 0.14 300);
+  --primary-strong: oklch(55% 0.16 300);
+  --primary-soft: oklch(95% 0.03 300);
+  --primary-light: oklch(80% 0.10 300);
 
   /* 背景 */
-  --bg: oklch(97.6% 0.004 250);
+  --bg: oklch(97.6% 0.004 300);
   --surface: oklch(100% 0 0);
-  --surface-hover: oklch(97% 0.008 250);
+  --surface-hover: oklch(97% 0.008 300);
 
   /* 文字 */
-  --text: oklch(20% 0.02 250);
-  --text-soft: oklch(45% 0.02 250);
-  --text-faint: oklch(60% 0.015 250);
+  --text: oklch(20% 0.02 300);
+  --text-soft: oklch(45% 0.02 300);
+  --text-faint: oklch(60% 0.015 300);
   --text-on-primary: oklch(100% 0 0);
 
   /* 边框 —— 低透明度 */
@@ -45,20 +45,20 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, "Courier New", monospace;
 
   /* 渐变 —— 标题文字 / 图标底 / 卡片底 */
-  --gradient-primary: linear-gradient(135deg, oklch(72% 0.14 250), oklch(55% 0.17 265));
-  --gradient-card: linear-gradient(160deg, oklch(97% 0.015 250), oklch(93% 0.03 265));
+  --gradient-primary: linear-gradient(135deg, oklch(72% 0.14 300), oklch(57% 0.17 316));
+  --gradient-card: linear-gradient(160deg, oklch(97% 0.015 300), oklch(93% 0.03 316));
 
   /* 圆角（通用）与阴影体系 */
   --radius: 0.75rem;
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.08);
   --shadow: 0 4px 16px oklch(0% 0 0 / 0.1);
   --shadow-lg: 0 8px 32px oklch(0% 0 0 / 0.14);
-  --shadow-glow: 0 0 12px oklch(70% 0.14 250 / 0.5);
+  --shadow-glow: 0 0 12px oklch(70% 0.14 300 / 0.5);
 
   /* 次级表面（悬停底色）、主色上文字别名、色相（热力图） */
-  --surface-2: oklch(96% 0.008 250);
+  --surface-2: oklch(96% 0.008 300);
   --on-primary: var(--text-on-primary);
-  --hue: 220;
+  --hue: 290;
 
   /* 布局 —— 参照站为 110rem(1760px) */
   --page-width: 110rem;
@@ -70,20 +70,20 @@
 }
 
 [data-theme='dark'] {
-  --bg: oklch(12% 0.015 250);
-  --surface: oklch(17% 0.02 250);
-  --surface-hover: oklch(20% 0.025 250);
-  --surface-2: oklch(21% 0.025 250);
+  --bg: oklch(12% 0.015 300);
+  --surface: oklch(17% 0.02 300);
+  --surface-hover: oklch(20% 0.025 300);
+  --surface-2: oklch(21% 0.025 300);
 
-  --text: oklch(92% 0.008 250);
-  --text-soft: oklch(72% 0.01 250);
-  --text-faint: oklch(55% 0.01 250);
-  --text-on-primary: oklch(15% 0.01 250);
+  --text: oklch(92% 0.008 300);
+  --text-soft: oklch(72% 0.01 300);
+  --text-faint: oklch(55% 0.01 300);
+  --text-on-primary: oklch(15% 0.01 300);
 
   --border: oklch(100% 0 0 / 0.08);
   --border-light: oklch(100% 0 0 / 0.05);
 
-  --gradient-card: linear-gradient(160deg, oklch(21% 0.03 250), oklch(18% 0.04 265));
+  --gradient-card: linear-gradient(160deg, oklch(21% 0.03 300), oklch(18% 0.04 265));
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.3);
   --shadow: 0 4px 16px oklch(0% 0 0 / 0.35);
   --shadow-lg: 0 8px 32px oklch(0% 0 0 / 0.45);
@@ -129,7 +129,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* 正文里的链接：细下划线，悬停时从左侧展开成主色实线 */
 .post-body a:not(.tag) {
   text-decoration: none;
-  border-bottom: 1px solid oklch(70% 0.14 250 / 0.45);
+  border-bottom: 1px solid oklch(70% 0.14 300 / 0.45);
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 .post-body a:not(.tag):hover {
@@ -424,8 +424,8 @@ body::before {
 }
 .card-base:hover {
   transform: translateY(-3px);
-  border-color: oklch(70% 0.14 250 / 0.45);
-  box-shadow: 0 2px 4px oklch(0% 0 0 / 0.05), 0 14px 34px oklch(60% 0.13 250 / 0.16);
+  border-color: oklch(70% 0.14 300 / 0.45);
+  box-shadow: 0 2px 4px oklch(0% 0 0 / 0.05), 0 14px 34px oklch(60% 0.13 300 / 0.16);
 }
 [data-theme='dark'] .card-base:hover {
   box-shadow: 0 2px 4px oklch(0% 0 0 / 0.3), 0 14px 34px oklch(0% 0 0 / 0.45);
@@ -435,14 +435,14 @@ body::before {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: oklch(70% 0.14 250 / 0.35);
+  background: oklch(70% 0.14 300 / 0.35);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); background-clip: content-box; }
-::selection { background: oklch(70% 0.14 250 / 0.28); color: var(--primary-strong); }
-[data-theme='dark']::selection { background: oklch(60% 0.16 250 / 0.4); color: oklch(95% 0.02 250); }
+::selection { background: oklch(70% 0.14 300 / 0.28); color: var(--primary-strong); }
+[data-theme='dark']::selection { background: oklch(60% 0.16 300 / 0.4); color: oklch(95% 0.02 300); }
 
 /* 键盘可达性：焦点环 */
 a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
@@ -519,8 +519,8 @@ html { font-size: 14px; }
 @media (min-width: 768px) { html { font-size: 16px; } }
 
 /* 分类条 pill 文字色（hue=250） */
-:root { --btn-content: oklch(0.55 0.12 250); }
-[data-theme='dark'] { --btn-content: oklch(0.75 0.1 250); }
+:root { --btn-content: oklch(0.55 0.12 300); }
+[data-theme='dark'] { --btn-content: oklch(0.75 0.1 300); }
 
 /* ============ 图片点击放大查看（Lightbox） ============ */
 .post-body img { cursor: zoom-in; }
@@ -535,7 +535,7 @@ body.ilb-lock { overflow: hidden; }
   flex-direction: column;
   gap: 0.7rem;
   padding: 3.4rem 1.25rem 0.9rem;
-  background: oklch(10% 0.02 250 / 0.96);
+  background: oklch(10% 0.02 300 / 0.96);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   opacity: 0;
@@ -664,7 +664,7 @@ body.ilb-lock { overflow: hidden; }
   color: #fff;
   border-color: transparent;
   cursor: default;
-  box-shadow: 0 4px 14px oklch(62% 0.14 250 / 0.32);
+  box-shadow: 0 4px 14px oklch(62% 0.14 300 / 0.32);
 }
 .pager-btn.is-disabled {
   opacity: 0.42;

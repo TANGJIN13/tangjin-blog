@@ -1,6 +1,7 @@
 ---
-// 日历组件
+// 日历组件：今天高亮 + 周末淡红 + 有文章发布的日期带小圆点
 import Icon from './Icon.astro';
+import { getCollection } from 'astro:content';
 
 const now = new Date();
 const year = now.getFullYear();
@@ -17,33 +18,55 @@ const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 // 月份名称
 const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
 
+// 有文章发布的日期（用本地时区取年月日，避免 toISOString 的 UTC 偏移把日期算错一天）
+const posts = await getCollection('posts');
+const dayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const postDays = new Set(posts.map((p) => dayKey(p.data.published)));
+
 // 生成日历格子
 const cells = [];
-// 前面的空格
 for (let i = 0; i < firstDayOfWeek; i++) {
   cells.push({ type: 'empty' });
 }
-// 日期
 for (let d = 1; d <= daysInMonth; d++) {
-  cells.push({ type: 'day', day: d, isToday: d === today });
+  const date = new Date(year, month, d);
+  const dow = date.getDay();
+  cells.push({
+    type: 'day',
+    day: d,
+    isToday: d === today,
+    isWeekend: dow === 0 || dow === 6,
+    hasPost: postDays.has(dayKey(date)),
+  });
 }
+
+// 本月发文数（放在头部）
+const monthPostCount = cells.filter((c) => c.type === 'day' && c.hasPost).length;
 ---
 
 <div class="calendar-widget">
   <div class="calendar-header">
     <span class="calendar-month">{monthNames[month]}</span>
-    <span class="calendar-year">{year}</span>
+    <span class="calendar-year">
+      {year}
+      {monthPostCount > 0 && <em class="calendar-badge">本月 {monthPostCount} 篇</em>}
+    </span>
   </div>
   <div class="calendar-grid">
-    {weekDays.map(w => (
-      <span class="calendar-weekday">{w}</span>
+    {weekDays.map((w, i) => (
+      <span class:list={['calendar-weekday', (i === 0 || i === 6) && 'is-weekend']}>{w}</span>
     ))}
     {cells.map(cell => (
       cell.type === 'empty' ? (
         <span class="calendar-cell empty"></span>
       ) : (
-        <span class:list={['calendar-cell', { today: cell.isToday }]}>
-          {cell.day}
+        <span
+          class:list={['calendar-cell', { today: cell.isToday, weekend: cell.isWeekend, 'has-post': cell.hasPost }]}
+          title={cell.hasPost ? '这天发布了文章' : undefined}
+        >
+          <span class="calendar-day">{cell.day}</span>
+          {cell.hasPost && <i class="calendar-dot" aria-hidden="true"></i>}
         </span>
       )
     ))}
@@ -51,50 +74,102 @@ for (let d = 1; d <= daysInMonth; d++) {
 </div>
 
 <style>
-  .calendar-widget {
-    padding: 0.5rem 0;
-  }
+  .calendar-widget { padding: 0.1rem 0 0; }
   .calendar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.6rem;
+    gap: 0.5rem;
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--border);
   }
   .calendar-month {
     font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text);
+    font-weight: 800;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   .calendar-year {
-    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
     color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
   }
+  .calendar-badge {
+    font-style: normal;
+    font-size: 0.64rem;
+    font-weight: 700;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    color: var(--primary);
+    background: var(--primary-soft);
+  }
+  [data-theme='dark'] .calendar-badge { color: var(--primary-light); }
+
   .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 0.2rem;
+    gap: 0.15rem;
   }
   .calendar-weekday {
     text-align: center;
-    font-size: 0.7rem;
+    font-size: 0.66rem;
+    font-weight: 700;
     color: var(--text-faint);
-    padding: 0.3rem 0;
-    font-weight: 500;
+    padding: 0.2rem 0 0.35rem;
   }
+  .calendar-weekday.is-weekend { color: oklch(68% 0.13 25 / 0.85); }
+
   .calendar-cell {
-    text-align: center;
-    font-size: 0.78rem;
-    padding: 0.35rem 0;
-    border-radius: var(--radius-sm);
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1 / 1;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
     color: var(--text-soft);
-    transition: all 0.15s ease;
+    font-variant-numeric: tabular-nums;
+    transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+    cursor: default;
   }
-  .calendar-cell.empty {
-    background: transparent;
+  .calendar-cell.empty { background: transparent; }
+  .calendar-cell:not(.empty):hover {
+    background: var(--surface-2);
+    color: var(--text);
+    transform: translateY(-1px);
   }
+  .calendar-cell.weekend { color: var(--text-faint); }
+  /* 今天：实心渐变 + 外圈光晕 */
   .calendar-cell.today {
-    background: var(--primary);
+    background: var(--gradient-primary);
     color: #fff;
-    font-weight: 600;
+    font-weight: 700;
+    box-shadow: 0 4px 12px -3px var(--primary-glow);
   }
+  .calendar-cell.today::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 0.68rem;
+    border: 2px solid color-mix(in srgb, var(--primary) 40%, transparent);
+    pointer-events: none;
+  }
+  /* 有文章的日子：格子底部小圆点 */
+  .calendar-dot {
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 50%;
+    background: var(--primary);
+  }
+  .calendar-cell.today .calendar-dot { background: #fff; }
+  [data-theme='dark'] .calendar-dot { background: var(--primary-light); }
 </style>

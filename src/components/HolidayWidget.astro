@@ -1,5 +1,5 @@
 ---
-// 节假日倒计时组件
+// 节假日倒计时组件 —— 渐变卡片 + 大号倒计时数字
 import Icon from './Icon.astro';
 
 // 2026年中国法定节假日（公历日期）
@@ -43,17 +43,24 @@ if (!nextHoliday) {
     }
   }
 }
+
+// 日期显示成「2月17日 周二」
+const dateLabel = nextHoliday
+  ? `${new Date(nextHoliday.date).getMonth() + 1}月${new Date(nextHoliday.date).getDate()}日`
+  : '';
 ---
 
 <div class="holiday-widget">
   {nextHoliday ? (
-    <div class="holiday-content">
+    <div class="holiday-card">
+      <span class="holiday-glow" aria-hidden="true"></span>
       <div class="holiday-icon">
-        <Icon name={nextHoliday.icon} size="1.5rem" />
+        <Icon name={nextHoliday.icon} size="1.3rem" />
       </div>
       <div class="holiday-info">
+        <span class="holiday-tag">下一个假期</span>
         <span class="holiday-name">{nextHoliday.name}</span>
-        <span class="holiday-date">{nextHoliday.date}</span>
+        <span class="holiday-date">{dateLabel}</span>
       </div>
       <div class="holiday-countdown">
         <span class="countdown-num">{nextHoliday.daysLeft}</span>
@@ -66,54 +73,72 @@ if (!nextHoliday) {
 </div>
 
 <style>
-  .holiday-widget {
-    padding: 0.5rem 0;
-  }
-  .holiday-content {
+  .holiday-widget { padding: 0; }
+  .holiday-card {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 0.7rem;
+    padding: 0.8rem 0.85rem;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--primary-soft), color-mix(in srgb, var(--primary) 5%, transparent));
+    border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+    overflow: hidden;
+  }
+  /* 右上角一团柔光 */
+  .holiday-glow {
+    position: absolute;
+    top: -42px;
+    right: -30px;
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 28%, transparent), transparent 70%);
+    pointer-events: none;
   }
   .holiday-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-md);
-    background: var(--primary-soft);
-    color: var(--primary);
+    position: relative;
+    width: 42px;
+    height: 42px;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
     display: grid;
     place-items: center;
-    flex-shrink: 0;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    box-shadow: 0 6px 16px -5px var(--primary-glow);
   }
   .holiday-info {
+    position: relative;
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
+    gap: 0.05rem;
   }
-  .holiday-name {
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: var(--text);
+  .holiday-tag {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--primary);
+    opacity: 0.8;
   }
-  .holiday-date {
-    font-size: 0.78rem;
-    color: var(--text-faint);
-  }
-  .holiday-countdown {
-    text-align: right;
-    flex-shrink: 0;
-  }
+  [data-theme='dark'] .holiday-tag { color: var(--primary-light); }
+  .holiday-name { font-size: 1rem; font-weight: 700; color: var(--text); line-height: 1.25; }
+  .holiday-date { font-size: 0.72rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .holiday-countdown { position: relative; text-align: right; flex-shrink: 0; }
   .countdown-num {
     display: block;
-    font-size: 1.5rem;
+    font-size: 1.7rem;
     font-weight: 800;
-    color: var(--primary);
     line-height: 1;
+    font-variant-numeric: tabular-nums;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
-  .countdown-label {
-    font-size: 0.7rem;
-    color: var(--text-faint);
-  }
+  .countdown-label { font-size: 0.66rem; color: var(--text-faint); }
   .holiday-empty {
     text-align: center;
     color: var(--text-faint);
