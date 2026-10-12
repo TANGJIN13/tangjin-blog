@@ -240,23 +240,32 @@ const slides = single ? images.slice(0, 1) : images;
   /* 暗角遮罩 —— 让白色文字可读。
      原来是一条盖满整张图的均匀黑纱（0.35 / 0.22 / 0.30 / 0.18），平均把壁纸压暗约 21%，
      粉紫 / 薄荷那点彩度全被压成灰调 —— 这就是「壁纸不够明亮」的根源。
-     改成「只压该压的地方」的分段遮罩（与手机端同一套，全站统一）：
-       ① 顶部 → 只护住悬浮导航条：用像素停靠（--navbar-height）而不是百分比，
-          这样首页 88vh（~792px）和内页 35vh（~315px）两种高度都能精确对齐同一条导航，
-          不会被百分比拉长拉短；
-       ② 中段 → 只压住标题 / 副标题所在的那一条柔晕，峰值浅、跨度宽，肉眼看不出边界。
-          首页大字、内页标题、手机标题都是垂直居中，所以 24%~79% 的对称跨度对三者都成立；
+     改成「只压该压的地方」的两层遮罩：
+       ① 顶部（本元素）→ 只护住悬浮导航条：用像素停靠（--navbar-height）而不是百分比，
+          这样首页 88vh（792px）、内页 35vh（315px）、手机 65vh（549px）三种高度
+          都能精确对齐同一条导航，不会被百分比拉长拉短。
+       ② 中段（::after 伪元素）→ 只压住标题那一块的柔晕，峰值浅、跨度宽，看不出边界。
+          实测文字块纵向范围：首页 39.8%~60.2%、内页 42.9%~74.3%、手机 39.3%~53.7%
+          （都是垂直居中），所以 24%~79% 的对称跨度对三者都成立。
        ③ 底部 → 不用管：header-waves（四层叠加接近全不透明）+ wallpaper-gradient 已经盖住了。
-     实测：横幅边条平均亮度 170 → ~198（完全不加遮罩的上限是 214）。 */
+     实测横幅边条平均亮度：桌面 170 → 204，手机 201 → 204（完全不加遮罩的上限是 214 / 223）。 */
   .wallpaper-dim {
     position: absolute;
     inset: 0;
+    z-index: 1;
     background:
       linear-gradient(180deg,
         oklch(0% 0 0 / 0.34) 0px,
         oklch(0% 0 0 / 0.26) calc(var(--navbar-height) * 0.45),
         oklch(0% 0 0 / 0.10) var(--navbar-height),
-        oklch(0% 0 0 / 0) calc(var(--navbar-height) + 56px)),
+        oklch(0% 0 0 / 0) calc(var(--navbar-height) + 40px));
+  }
+  /* 中段柔晕单独一层：小屏只要覆盖这一个伪元素就能调深浅，不必把顶部那条也抄一遍 */
+  .wallpaper-dim::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
       linear-gradient(180deg,
         oklch(0% 0 0 / 0) 24%,
         oklch(0% 0 0 / 0.06) 33%,
@@ -265,7 +274,6 @@ const slides = single ? images.slice(0, 1) : images;
         oklch(0% 0 0 / 0.13) 60%,
         oklch(0% 0 0 / 0.06) 70%,
         oklch(0% 0 0 / 0) 79%);
-    z-index: 1;
   }
 
   /* 文字内容 */
@@ -504,9 +512,20 @@ const slides = single ? images.slice(0, 1) : images;
   @media (max-width: 1023px) {
     .wallpaper-wrapper { height: 65vh !important; }
 
-    /* 手机端遮罩不再单独覆盖：上面的分段遮罩是像素停靠导航条 + 对称柔晕，
-       首页 88vh / 内页 35vh / 手机 65vh 三种高度都精确对齐，深浅一套到底。
-       （原来这里单独写过一条三段遮罩，峰值 0.20，实测比现在还暗一档，已合并。） */
+    /* 手机上壁纸占屏幕的比例最高（65vh），所以中段柔晕再浅一档（峰值 0.15 → 0.10）：
+       标题本身的分离度主要靠「贴着笔画的窄影」而不是压暗背景（见上面 .wp-title 的说明）。
+       顶部那条像素停靠的导航带和桌面共用，不动。 */
+    .wallpaper-dim::after {
+      background:
+        linear-gradient(180deg,
+          oklch(0% 0 0 / 0) 26%,
+          oklch(0% 0 0 / 0.04) 34%,
+          oklch(0% 0 0 / 0.09) 43%,
+          oklch(0% 0 0 / 0.10) 52%,
+          oklch(0% 0 0 / 0.08) 60%,
+          oklch(0% 0 0 / 0.03) 69%,
+          oklch(0% 0 0 / 0) 78%);
+    }
 
     .header-waves { height: 10vh; min-height: 50px; max-height: 150px; }
     .wp-scroll { display: none; }
