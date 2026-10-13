@@ -52,7 +52,7 @@ const catCounts = categories.map((c) => ({
       </h3>
       <div class="cat-cloud">
         {catCounts.map((c) => (
-          <a class="cat-chip" href={`/search/?q=${encodeURIComponent(c.name)}`}>
+          <a class="cat-chip" href={`/search/?cat=${c.slug}`}>
             {c.name}<em>{c.count}</em>
           </a>
         ))}

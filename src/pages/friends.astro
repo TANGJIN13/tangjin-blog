@@ -3,7 +3,6 @@ import Base from '../layouts/Base.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
-import { site } from '../site';
 
 interface Friend {
   name: string;
@@ -15,6 +14,8 @@ interface Friend {
 const friends: Friend[] = [
   { name: 'today', url: 'https://todaymvp.github.io/', avatar: 'https://avatars.githubusercontent.com/u/228346422?v=4', description: 'pwn手' },
 ];
+
+const applyEmail = '2020556277@qq.com';
 ---
 
 <Base
@@ -22,52 +23,79 @@ const friends: Friend[] = [
   pageBanner
   bannerIcon="link"
   bannerTitle="友链"
-  bannerDesc="交换友链，互相学习"
+  bannerDesc="好的友链，是彼此成长的见证"
 >
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
-      <header class="post-head hide-with-banner">
-        <div class="cover">
-          <div class="cover-placeholder friends-cover">
-            <img class="fr-wallpaper" src="/images/wallpapers/wallpaper-03.svg" alt="" aria-hidden="true" />
-            <div class="fr-wallpaper-dim" aria-hidden="true"></div>
-            <div class="fr-quote">
-              <p class="fr-quote-text">"真正的朋友，是一个灵魂孕育在两个躯体里。"</p>
-              <span class="fr-quote-author">— 亚里士多德</span>
-            </div>
-            <span class="fr-icon-text"><Icon name="link" size="1.2rem" /> 友链</span>
+      <!-- 引言卡：柔和插画底 + 标题 + 副文字 + 申请友链按钮 -->
+      <section class="fr-hero onload-animation">
+        <img class="fr-hero-bg" src="/images/wallpapers/wallpaper-03.svg" alt="" aria-hidden="true" />
+        <div class="fr-hero-veil" aria-hidden="true"></div>
+        <div class="fr-hero-inner">
+          <div class="fr-hero-copy">
+            <h1 class="fr-hero-title">好的友链，是彼此成长的见证</h1>
+            <p class="fr-hero-sub">
+              如果你也在认真记录、乐于分享，欢迎把链接留在这里——<br />
+              让我们在各自的角落里，偶尔互相照亮。
+            </p>
           </div>
+          <a class="fr-apply-btn" href={`mailto:${applyEmail}?subject=${encodeURIComponent('申请友链')}`}>
+            <Icon name="send" size="0.95rem" /> 申请友链
+          </a>
         </div>
-        <h1 class="post-title">友链</h1>
-        <p class="post-desc">交换友链，互相学习</p>
-      </header>
+      </section>
 
-      <div class="post-body custom-md">
-        <div class="friends-grid">
-          {friends.map((f, i) => (
-            <a class="friend-card glass onload-animation" href={f.url} target="_blank" rel="noopener" style={`animation-delay: ${i * 0.08}s`}>
-              <img class="friend-avatar" src={f.avatar} alt={f.name} width="56" height="56" />
-              <div class="friend-info">
-                <h3 class="friend-name">{f.name}</h3>
-                <p class="friend-desc">{f.description}</p>
-              </div>
-              <span class="friend-arrow"><Icon name="external" size="1rem" /></span>
-            </a>
-          ))}
+      <!-- 我的友链 -->
+      <section class="fr-section">
+        <div class="section-head">
+          <h2 class="section-title"><span class="section-index">01 /</span> 我的友链</h2>
+          <span class="section-edition">{friends.length} 位朋友</span>
         </div>
 
-        <div class="card-base friend-apply onload-animation" style="animation-delay: 0.3s">
+        {friends.length > 0 ? (
+          <div class="fr-grid">
+            {friends.map((f, i) => (
+              <a
+                class="fr-card onload-animation"
+                href={f.url}
+                target="_blank"
+                rel="noopener"
+                style={`animation-delay: ${i * 0.07}s`}
+              >
+                <img class="fr-avatar" src={f.avatar} alt={f.name} width="46" height="46" loading="lazy" />
+                <div class="fr-card-info">
+                  <h3 class="fr-card-name">{f.name}</h3>
+                  <p class="fr-card-desc">{f.description}</p>
+                </div>
+                <span class="fr-card-arrow"><Icon name="arrow_right" size="1rem" /></span>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div class="fr-empty">
+            <Icon name="link" size="1.6rem" />
+            <p>还没有友链，来成为第一个吧</p>
+          </div>
+        )}
+      </section>
+
+      <!-- 申请说明 -->
+      <section class="fr-section">
+        <div class="card-base fr-apply onload-animation" style="animation-delay: 0.16s">
           <h3 class="widget-title"><Icon name="send" size="1.05rem" /> 申请友链</h3>
-          <p>如果你想交换友链，请确保：</p>
+          <p>交换之前，想先确认这几件事：</p>
           <ul>
-            <li>网站可以正常访问</li>
-            <li>内容原创，非采集站</li>
-            <li>已经添加了我的友链</li>
+            <li>网站可以正常访问，内容稳定更新</li>
+            <li>内容原创或有自己的思考，非采集站</li>
+            <li>已经把我的站点加进了你的友链</li>
           </ul>
-          <p>联系邮箱：<a href="mailto:2020556277@qq.com">2020556277@qq.com</a></p>
+          <p class="fr-apply-mail">
+            把站点名称、链接、头像与一句简介发到
+            <a href={`mailto:${applyEmail}`}>{applyEmail}</a>
+          </p>
         </div>
-      </div>
+      </section>
     </article>
     <SidebarRight />
   </div>
@@ -75,85 +103,191 @@ const friends: Friend[] = [
 
 <style>
   .post-main { min-width: 0; }
-  .post-head { margin-bottom: 2rem; }
-  .cover img, .cover-placeholder { width: 100%; aspect-ratio: auto; height: clamp(180px, 24vw, 250px); border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
-  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
-  .cover-icon { font-size: 2.5rem; opacity: 0.8; }
-  .post-title { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 1rem 0 0.5rem; letter-spacing: -0.02em; background: var(--gradient-primary); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .post-desc { color: var(--text-soft); font-size: 1.05rem; }
-  .post-body { font-size: 1.02rem; }
 
-  /* 友链封面装饰 */
-  .friends-cover {
+  /* ===== 引言卡 ===== */
+  .fr-hero {
     position: relative;
     overflow: hidden;
-    height: clamp(180px, 24vw, 250px);
-    flex-direction: column;
-    gap: 0.5rem;
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    min-height: 190px;
+    display: flex;
+    align-items: center;
   }
-  .fr-wallpaper {
+  .fr-hero-bg {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 8s ease;
+    transition: transform 10s ease;
   }
-  .friends-cover:hover .fr-wallpaper { transform: scale(1.08); }
-  .fr-wallpaper-dim {
+  .fr-hero:hover .fr-hero-bg { transform: scale(1.06); }
+  /* 亮色页面里用一层浅色纱把插画压淡，保证深色文字可读；
+     暗色主题叠深色纱，文字翻成浅色。 */
+  .fr-hero-veil {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to bottom,
-      oklch(0% 0 0 / 0.14) 0%,
-      oklch(0% 0 0 / 0.42) 100%);
+    background: linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--surface) 88%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 62%, transparent) 52%,
+      color-mix(in srgb, var(--surface) 34%, transparent) 100%
+    );
   }
-  .fr-quote {
+  :global([data-theme='dark'] .fr-hero-veil) {
+    background: linear-gradient(
+      100deg,
+      color-mix(in srgb, var(--surface) 92%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 72%, transparent) 54%,
+      color-mix(in srgb, var(--surface) 46%, transparent) 100%
+    );
+  }
+  .fr-hero-inner {
     position: relative;
     z-index: 1;
-    text-align: center;
-    padding: 2rem 1.5rem 1rem;
-    color: #fff;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.7rem 1.6rem;
   }
-  .fr-quote-text {
-    font-size: clamp(1rem, 2.5vw, 1.35rem);
-    font-weight: 600;
-    line-height: 1.6;
-    margin: 0 0 0.5rem;
-    text-shadow: 0 2px 12px oklch(0% 0 0 / 0.5);
-    letter-spacing: 0.02em;
+  .fr-hero-copy { flex: 1; min-width: 0; }
+  .fr-hero-title {
+    margin: 0;
+    font-size: clamp(1.3rem, 3.4vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+    color: var(--text);
   }
-  .fr-quote-author {
-    font-size: 0.85rem;
-    opacity: 0.85;
-    text-shadow: 0 1px 6px oklch(0% 0 0 / 0.5);
+  .fr-hero-sub {
+    margin: 0.7rem 0 0;
+    font-size: 0.9rem;
+    line-height: 1.75;
+    color: var(--text-soft);
   }
-  .fr-icon-text {
-    position: relative;
-    z-index: 1;
-    display: flex; align-items: center; gap: 0.35rem;
-    font-size: 1rem; font-weight: 500; color: #fff;
-    text-shadow: 0 2px 8px oklch(0% 0 0 / 0.4);
-    margin-bottom: 0.5rem;
+  .fr-apply-btn {
+    flex-shrink: 0;
+    align-self: flex-end;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1.05rem;
+    border-radius: 999px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none !important;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    border: 1px solid transparent;
+    box-shadow: 0 6px 18px oklch(62% 0.14 282 / 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .fr-apply-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 9px 24px oklch(62% 0.14 282 / 0.38);
   }
 
-  .friends-grid { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 2rem; }
-  .friend-card {
-    display: flex; align-items: center; gap: 1rem;
-    padding: 1rem 1.2rem; border-radius: var(--radius-lg);
-    text-decoration: none !important; background: none !important;
-    transition: all 0.25s ease;
+  /* ===== 分区标题 ===== */
+  .fr-section { margin-top: 1.8rem; }
+  .fr-section .section-head { margin-bottom: 0.9rem; }
+
+  /* ===== 友链网格：响应式（宽屏 2 列 / 窄屏 1 列） ===== */
+  .fr-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
   }
-  .friend-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-  .friend-avatar { width: 56px; height: 56px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
-  .friend-info { flex: 1; min-width: 0; }
-  .friend-name { margin: 0; font-size: 1rem; font-weight: 600; }
-  .friend-desc { margin: 0.2rem 0 0; font-size: 0.82rem; color: var(--text-faint); }
-  .friend-arrow { font-size: 1.2rem; color: var(--text-faint); transition: transform 0.2s ease; }
-  .friend-card:hover .friend-arrow { transform: translateX(4px); color: var(--primary); }
+  .fr-card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.95rem 1.05rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm, 0 1px 2px oklch(0% 0 0 / 0.04));
+    text-decoration: none !important;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  }
+  .fr-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow);
+    border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+  }
+  .fr-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border);
+    flex-shrink: 0;
+    background: var(--surface-2);
+  }
+  .fr-card-info { flex: 1; min-width: 0; }
+  .fr-card-name {
+    margin: 0;
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fr-card-desc {
+    margin: 0.22rem 0 0;
+    font-size: 0.8rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .fr-card-arrow {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    color: var(--text-faint);
+    background: var(--surface-2);
+    flex-shrink: 0;
+    transition: transform 0.22s ease, color 0.22s ease, background 0.22s ease;
+  }
+  .fr-card:hover .fr-card-arrow {
+    transform: translateX(3px);
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+  }
 
-  .friend-apply { padding: 1.2rem; }
-  .friend-apply ul { margin: 0.5rem 0; padding-left: 1.2rem; }
-  .friend-apply li { margin-bottom: 0.3rem; font-size: 0.9rem; }
+  .fr-empty {
+    display: grid;
+    place-items: center;
+    gap: 0.5rem;
+    padding: 2.4rem 1rem;
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border);
+    color: var(--text-faint);
+    font-size: 0.86rem;
+  }
 
-  @media (max-width: 860px) { .post-main { min-width: 0; } }
+  /* ===== 申请说明卡 ===== */
+  .fr-apply { padding: 1.2rem 1.25rem; }
+  .fr-apply > p { margin: 0.2rem 0 0.6rem; font-size: 0.9rem; color: var(--text-soft); }
+  .fr-apply ul { margin: 0; padding-left: 1.15rem; }
+  .fr-apply li { margin-bottom: 0.32rem; font-size: 0.89rem; color: var(--text-soft); }
+  .fr-apply-mail { margin-top: 0.8rem !important; }
+  .fr-apply-mail a { font-weight: 700; color: var(--primary-strong); }
+  :global([data-theme='dark'] .fr-apply-mail a) { color: var(--primary-light); }
+
+  /* ===== 响应式 ===== */
+  @media (max-width: 900px) {
+    .fr-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 620px) {
+    .fr-hero-inner { flex-direction: column; align-items: flex-start; padding: 1.35rem 1.15rem; }
+    .fr-apply-btn { align-self: flex-start; }
+    .fr-hero-sub br { display: none; }
+  }
 </style>

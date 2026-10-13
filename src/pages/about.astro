@@ -4,20 +4,21 @@ import GiscusComments from '../components/GiscusComments.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
-import { getPublishedPosts } from '../lib/posts';
 import { profile } from '../data/profile';
 import { site } from '../site';
 
-const allPosts = await getPublishedPosts();
-const totalPosts = allPosts.length;
-const totalWords = allPosts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
-const startDate = new Date(site.startDate);
-const daysSince = Math.max(1, Math.floor((Date.now() - startDate.getTime()) / 86400000));
+// 「技术方向」药丸：取 learning 的方向名（去重、保序）
+const techDirections = [...new Set(profile.learning.map((s) => s.name))];
 
-const stats = [
-  { num: totalPosts, label: '篇文章', icon: 'article' },
-  { num: daysSince, label: '天', icon: 'calendar' },
-  { num: totalWords, label: '字', icon: 'text' },
+// 站内联系列表：GitHub 单列出来做「大卡」，其余走列表
+const githubLink = site.links.find((l) => l.label.toLowerCase().includes('github'));
+const otherLinks = site.links.filter((l) => l !== githubLink);
+
+// 邮箱 / B站 / 微信 —— 有就显示
+const contacts = [
+  { label: '邮箱', value: '2020556277@qq.com', href: 'mailto:2020556277@qq.com', icon: 'mail' },
+  { label: 'B站', value: 'tj 的 B 站', href: 'https://space.bilibili.com/', icon: 'monitor' },
+  { label: '微信', value: '备注：博客交流', href: '', icon: 'link' },
 ];
 ---
 
@@ -31,110 +32,119 @@ const stats = [
   <div class="page-shell">
     <SidebarLeft />
     <article class="post-main">
-      <!-- 顶部封面 -->
-      <header class="post-head hide-with-banner">
-        <div class="cover">
-          <div class="cover-placeholder about-cover">
-            <img class="about-cover-img" src="/images/wallpapers/about-cover.jpg" alt="" aria-hidden="true" />
-            <div class="about-cover-dim" aria-hidden="true"></div>
-            <div class="about-cover-content">
-              <h1 class="post-title">关于我</h1>
-              <p class="post-desc">{profile.headline}</p>
-            </div>
-          </div>
+      <!-- ===== 名片卡 ===== -->
+      <section class="ab-idcard onload-animation">
+        <div class="ab-avatar-wrap">
+          <img class="ab-avatar" src={site.avatar} alt={site.author} width="92" height="92" />
+          <span class="ab-dot" aria-hidden="true"></span>
         </div>
-      </header>
-
-      <div class="post-body custom-md">
-        <!-- 名片 -->
-        <div class="id-card">
-          <div class="id-avatar-ring">
-            <img class="id-avatar" src={site.avatar} alt="头像" width="96" height="96" />
-          </div>
-          <div class="id-main">
-            <h2 class="id-name">{site.author}</h2>
-            <p class="id-headline">{profile.headline}</p>
-            <div class="id-links">
-              {site.links.map((l) => (
-                <a class="id-link" href={l.href} target="_blank" rel="noopener">
-                  <Icon name={l.label.toLowerCase().includes('github') ? 'github' : 'link'} size="0.9rem" />
-                  <span>{l.label}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <!-- 我是谁 -->
-        <h2><Icon name="person" size="1.3rem" /> 我是谁</h2>
-        {profile.intro.map((para) => <p class="intro-p" set:html={para} />)}
-
-        <!-- 数字 -->
-        <div class="stat-row">
-          {stats.map((s) => (
-            <div class="stat-box">
-              <span class="stat-icon"><Icon name={s.icon} size="1rem" /></span>
-              <span class="stat-num">{s.num}</span>
-              <span class="stat-label">{s.label}</span>
-            </div>
-          ))}
-        </div>
-
-        <!-- 技能（skills 为空时整块隐藏，只显示"正在学"） -->
-        {profile.skills.length > 0 && (
-          <>
-            <h2><Icon name="code" size="1.3rem" /> 能上手</h2>
-            <div class="skill-grid">
-              {profile.skills.map((s) => (
-                <div class="skill-card" title={s.note || ''}>
-                  <span class="skill-icon"><Icon name={s.icon} size="1.15rem" /></span>
-                  <span class="skill-name">{s.name}</span>
-                  {s.note && <span class="skill-note">{s.note}</span>}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        <h2><Icon name="sparkle" size="1.3rem" /> 正在学</h2>
-        <div class="skill-grid">
-          {profile.learning.map((s) => (
-            <div class="skill-card is-learning" title={s.note || ''}>
-              <span class="skill-icon"><Icon name={s.icon} size="1.15rem" /></span>
-              <span class="skill-name">{s.name}</span>
-              {s.note && <span class="skill-note">{s.note}</span>}
-            </div>
-          ))}
-        </div>
-
-        <!-- 时间线 -->
-        <h2><Icon name="calendar" size="1.3rem" /> 时间线</h2>
-        <div class="timeline">
-          {profile.timeline.map((t, i) => (
-            <div class="timeline-item onload-animation" style={`animation-delay: ${i * 0.08}s`}>
-              <span class="timeline-dot"><Icon name={t.icon || 'flag'} size="0.55rem" /></span>
-              <div class="timeline-content card-base">
-                <span class="timeline-date">{t.date}</span>
-                <h4>{t.title}</h4>
-                <p>{t.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <!-- 联系 -->
-        <h2><Icon name="mail" size="1.3rem" /> 联系</h2>
-        <div class="contact-grid">
-          {site.links.map((l) => (
-            <a class="contact-card" href={l.href} target="_blank" rel="noopener">
-              <Icon name={l.label.toLowerCase().includes('github') ? 'github' : 'link'} size="1.05rem" />
-              <span>{l.label}</span>
+        <div class="ab-idmain">
+          <h1 class="ab-name">{site.author}</h1>
+          <p class="ab-tagline">
+            基础但不停止探索 —— {profile.headline.replace(' · ', ' · ')}
+          </p>
+          {githubLink && (
+            <a class="ab-github" href={githubLink.href} target="_blank" rel="noopener">
+              <Icon name="github" size="0.95rem" /> GitHub
             </a>
+          )}
+        </div>
+        <div class="ab-sign" aria-hidden="true">
+          <span>代码是工具</span>
+          <span>生活是意义</span>
+        </div>
+      </section>
+
+      <!-- ===== 我是谁 + 引言卡（双列） ===== -->
+      <section class="ab-row">
+        <div class="ab-col">
+          <h2 class="ab-h2"><Icon name="person" size="1.15rem" /> 我是谁</h2>
+          {profile.intro.slice(0, 2).map((para) => (
+            <p class="intro-p" set:html={para} />
           ))}
         </div>
+        <aside class="ab-quotecard">
+          <span class="ab-quote-mark" aria-hidden="true">“</span>
+          <p>从代码中发现世界的规则，在生活中寻找更多的可能。</p>
+          <span class="ab-quote-by">— {site.author}</span>
+        </aside>
+      </section>
 
-        <blockquote class="deco-quote"><p>"{profile.quote}"</p></blockquote>
-      </div>
+      <!-- ===== 技术方向 / 学习轨迹（双列） ===== -->
+      <section class="ab-row ab-row-split">
+        <div class="ab-col">
+          <h2 class="ab-h2"><Icon name="code" size="1.15rem" /> 技术方向</h2>
+          <div class="ab-pills">
+            {techDirections.map((t) => (
+              <span class="ab-pill">{t}</span>
+            ))}
+          </div>
+          <p class="ab-note">
+            专注 Web 安全、渗透测试与 CTF 竞赛，同时也在学习后端开发与系统相关知识，
+            把踩过的坑写成复盘，慢慢攒成自己的知识库。
+          </p>
+        </div>
+
+        <div class="ab-col">
+          <h2 class="ab-h2"><Icon name="sparkle" size="1.15rem" /> 学习轨迹</h2>
+          <ul class="ab-track">
+            {profile.timeline.map((t) => (
+              <li class="ab-track-item">
+                <span class="ab-track-date">{t.date}</span>
+                <span class="ab-track-text">{t.title}</span>
+              </li>
+            ))}
+            <li class="ab-track-item is-now">
+              <span class="ab-track-date">至今</span>
+              <span class="ab-track-text">持续进阶中</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===== 站点与联系 ===== -->
+      <section class="ab-contact-block">
+        <h2 class="ab-h2"><Icon name="link" size="1.15rem" /> 站点与联系</h2>
+        <p class="ab-note">欢迎通过以下方式与我交流或关注我的动态：</p>
+
+        <div class="ab-contact-grid">
+          {githubLink && (
+            <a class="ab-contact-big" href={githubLink.href} target="_blank" rel="noopener">
+              <span class="ab-contact-big-icon"><Icon name="github" size="1.35rem" /></span>
+              <span class="ab-contact-big-body">
+                <strong>GitHub</strong>
+                <em>查看我的项目与开源代码</em>
+              </span>
+              <span class="ab-contact-big-arrow"><Icon name="arrow_right" size="1rem" /></span>
+            </a>
+          )}
+
+          <div class="ab-contact-list">
+            {contacts.map((c) =>
+              c.href ? (
+                <a class="ab-contact-row" href={c.href} target="_blank" rel="noopener">
+                  <span class="ab-contact-ico"><Icon name={c.icon} size="0.95rem" /></span>
+                  <span class="ab-contact-label">{c.label}</span>
+                  <span class="ab-contact-value">{c.value}</span>
+                </a>
+              ) : (
+                <span class="ab-contact-row">
+                  <span class="ab-contact-ico"><Icon name={c.icon} size="0.95rem" /></span>
+                  <span class="ab-contact-label">{c.label}</span>
+                  <span class="ab-contact-value">{c.value}</span>
+                </span>
+              )
+            )}
+            {otherLinks.map((l) => (
+              <a class="ab-contact-row" href={l.href} target="_blank" rel="noopener">
+                <span class="ab-contact-ico"><Icon name="link" size="0.95rem" /></span>
+                <span class="ab-contact-label">{l.label}</span>
+                <span class="ab-contact-value">{l.href.replace(/^https?:\/\//, '')}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <GiscusComments />
     </article>
@@ -144,288 +154,304 @@ const stats = [
 
 <style>
   .post-main { min-width: 0; }
-  .post-head { margin-bottom: 1.75rem; }
-  .cover img, .cover-placeholder { width: 100%; aspect-ratio: 2 / 1; border-radius: var(--radius-xl); box-shadow: var(--shadow-lg); }
-  .cover-placeholder { display: grid; place-items: center; background: var(--gradient-primary); }
 
-  /* ===== 封面 ===== */
-  .about-cover { position: relative; overflow: hidden; min-height: 280px; display: flex; align-items: flex-end; justify-content: flex-start; }
-  .about-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform 8s ease; }
-  .about-cover:hover .about-cover-img { transform: scale(1.05); }
-  .about-cover-dim { position: absolute; inset: 0; background: linear-gradient(to bottom, oklch(0% 0 0 / 0.28) 0%, oklch(0% 0 0 / 0.62) 100%); }
-  .about-cover-content { position: relative; z-index: 1; padding: 2rem 2rem 1.5rem; color: #fff; }
-  .post-title {
-    font-size: clamp(1.5rem, 4vw, 2.1rem);
-    font-weight: 800;
-    margin: 0 0 0.4rem;
-    text-shadow: 0 2px 14px oklch(0% 0 0 / 0.5);
-  }
-  .post-desc { margin: 0; font-size: 0.95rem; opacity: 0.92; text-shadow: 0 1px 8px oklch(0% 0 0 / 0.5); }
-
-  .post-body { font-size: 1.02rem; }
-  .custom-md :global(h2) {
-    font-size: 1.4rem;
-    margin-top: 2.25rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.4rem;
-    border-bottom: 2px solid;
-    border-image: var(--gradient-primary) 1;
-  }
-
-  /* ===== 名片 ===== */
-  .id-card {
+  /* ===== 名片卡 ===== */
+  .ab-idcard {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 1.1rem;
-    padding: 1.25rem 1.4rem;
+    padding: 1.3rem 1.4rem;
     border-radius: var(--radius-xl);
     border: 1px solid var(--border);
     background: var(--surface);
-    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 8px 24px oklch(0% 0 0 / 0.06);
-    position: relative;
+    box-shadow: var(--shadow-sm), 0 10px 30px oklch(0% 0 0 / 0.06);
     overflow: hidden;
     flex-wrap: wrap;
   }
-  :global([data-theme='dark'] .id-card) { box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 8px 24px oklch(0% 0 0 / 0.35); }
-  .id-card::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 4px;
-    background: var(--gradient-primary);
-  }
-  .id-avatar-ring {
-    flex-shrink: 0;
-    padding: 3px;
-    border-radius: 50%;
-    background: var(--gradient-primary);
-    box-shadow: 0 6px 20px oklch(62% 0.14 282 / 0.32);
-    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .id-card:hover .id-avatar-ring { transform: rotate(8deg) scale(1.05); }
-  .id-avatar {
-    width: 88px; height: 88px;
+  :global([data-theme='dark'] .ab-idcard) { box-shadow: var(--shadow-sm), 0 10px 30px oklch(0% 0 0 / 0.4); }
+  .ab-avatar-wrap { position: relative; flex-shrink: 0; }
+  .ab-avatar {
+    width: 92px; height: 92px;
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid var(--surface);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 40%, transparent), 0 8px 22px oklch(62% 0.14 282 / 0.28);
     display: block;
   }
-  .id-main { flex: 1; min-width: 200px; }
-  .id-name {
-    margin: 0 0 0.15rem;
-    font-size: 1.35rem;
+  /* 右下角绿点：在线状态 */
+  .ab-dot {
+    position: absolute;
+    right: 6px; bottom: 6px;
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: oklch(72% 0.17 150);
+    border: 2.5px solid var(--surface);
+    box-shadow: 0 0 0 2px oklch(72% 0.17 150 / 0.25);
+  }
+  .ab-idmain { flex: 1; min-width: 220px; }
+  .ab-name {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
     font-weight: 800;
+    letter-spacing: -0.02em;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  .id-headline { margin: 0 0 0.55rem; font-size: 0.85rem; color: var(--text-faint); }
-  .id-links { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .id-link {
+  .ab-tagline { margin: 0 0 0.7rem; font-size: 0.86rem; line-height: 1.7; color: var(--text-soft); }
+  .ab-github {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    padding: 0.28rem 0.75rem;
+    gap: 0.35rem;
+    padding: 0.34rem 0.9rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    text-decoration: none !important;
+    box-shadow: 0 5px 16px oklch(62% 0.14 282 / 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .ab-github:hover { transform: translateY(-2px); box-shadow: 0 8px 22px oklch(62% 0.14 282 / 0.4); }
+  /* 右侧竖排署名引言 */
+  .ab-sign {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
+    padding-left: 1.1rem;
+    border-left: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: 0.82rem;
     font-weight: 600;
+    letter-spacing: 0.16em;
+    font-style: italic;
+    flex-shrink: 0;
+  }
+  .ab-sign span:last-child { color: color-mix(in srgb, var(--primary) 70%, var(--text-soft)); }
+
+  /* ===== 双列行 ===== */
+  .ab-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 1.1rem;
+    margin-top: 1.9rem;
+  }
+  .ab-row-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .ab-col { min-width: 0; }
+
+  .ab-h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.85rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .ab-h2 :global(.icon) {
+    display: grid;
+    place-items: center;
+    box-sizing: content-box;
+    padding: 0.28rem;
+    border-radius: 0.6rem;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 282 / 0.28);
-    text-decoration: none !important;
-    transition: all 0.18s ease;
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
   }
-  :global([data-theme='dark'] .id-link) { color: var(--primary-light); }
-  .id-link:hover {
-    background: var(--gradient-primary);
+  :global([data-theme='dark']) .ab-h2 :global(.icon) { color: var(--primary-light); }
+
+  .intro-p { margin: 0 0 0.8rem; line-height: 1.85; color: var(--text-soft); font-size: 0.95rem; }
+  .intro-p :global(strong) { color: var(--text); font-weight: 700; }
+  .ab-note { margin: 0.85rem 0 0; font-size: 0.86rem; line-height: 1.75; color: var(--text-faint); }
+
+  /* 引言卡 */
+  .ab-quotecard {
+    position: relative;
+    align-self: start;
+    padding: 1.2rem 1.25rem 1.1rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .ab-quote-mark {
+    font-family: var(--font-serif, Georgia, serif);
+    font-size: 2.4rem;
+    line-height: 0.7;
+    color: color-mix(in srgb, var(--primary) 45%, transparent);
+  }
+  .ab-quotecard p {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--text-soft);
+    font-style: italic;
+  }
+  .ab-quote-by { align-self: flex-end; font-size: 0.76rem; color: var(--text-faint); }
+
+  /* 技术方向药丸 */
+  .ab-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .ab-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.79rem;
+    font-weight: 600;
+    color: var(--text-soft);
+    background: color-mix(in srgb, var(--text) 3.5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  }
+  .ab-pill:hover {
     color: var(--text-on-primary);
+    background: var(--gradient-primary);
     border-color: transparent;
     transform: translateY(-2px);
   }
 
-  .intro-p { line-height: 1.85; color: var(--text-soft); }
-  .intro-p :global(strong) { color: var(--text); font-weight: 700; }
-
-  /* ===== 数字条 ===== */
-  .stat-row {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.7rem;
-    margin: 1.5rem 0 0;
-  }
-  .stat-box {
+  /* 学习轨迹（紧凑带点时间轴） */
+  .ab-track { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.05rem; }
+  .ab-track-item {
     position: relative;
-    text-align: center;
-    padding: 1rem 0.5rem 0.85rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.34rem 0 0.34rem 1rem;
+  }
+  .ab-track-item::before {
+    content: '';
+    position: absolute;
+    left: 3px; top: 0.72rem;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+  }
+  .ab-track-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 5.5px; top: 1.05rem; bottom: -0.15rem;
+    width: 1px;
+    background: var(--border);
+  }
+  .ab-track-date {
+    flex-shrink: 0;
+    font-size: 0.73rem;
+    font-weight: 700;
+    color: var(--primary-strong);
+    font-variant-numeric: tabular-nums;
+    min-width: 3.4rem;
+  }
+  :global([data-theme='dark']) .ab-track-date { color: var(--primary-light); }
+  .ab-track-text { font-size: 0.86rem; line-height: 1.6; color: var(--text-soft); }
+  .ab-track-item.is-now::before { background: oklch(72% 0.17 150); box-shadow: 0 0 0 3px oklch(72% 0.17 150 / 0.18); }
+
+  /* ===== 站点与联系 ===== */
+  .ab-contact-block { margin-top: 1.9rem; }
+  .ab-contact-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.1rem;
+    margin-top: 0.9rem;
+  }
+  .ab-contact-big {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.15rem 1.25rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    text-decoration: none !important;
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+  }
+  .ab-contact-big:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+    box-shadow: 0 10px 26px oklch(62% 0.13 282 / 0.16);
+  }
+  .ab-contact-big-icon {
+    display: grid;
+    place-items: center;
+    width: 46px; height: 46px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+  :global([data-theme='dark']) .ab-contact-big-icon { color: var(--primary-light); }
+  .ab-contact-big-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+  .ab-contact-big-body strong { font-size: 1rem; font-weight: 800; color: var(--text); }
+  .ab-contact-big-body em { font-style: normal; font-size: 0.79rem; color: var(--text-faint); }
+  .ab-contact-big-arrow { color: var(--text-faint); transition: transform 0.2s ease, color 0.2s ease; }
+  .ab-contact-big:hover .ab-contact-big-arrow { transform: translateX(4px); color: var(--primary); }
+
+  .ab-contact-list {
+    display: flex;
+    flex-direction: column;
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     background: var(--surface);
     overflow: hidden;
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
   }
-  .stat-box:hover {
-    transform: translateY(-3px);
-    border-color: oklch(70% 0.14 282 / 0.5);
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.05), 0 14px 30px oklch(62% 0.13 282 / 0.16);
+  .ab-contact-row {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1rem;
+    text-decoration: none !important;
+    color: inherit;
+    transition: background 0.18s ease;
   }
-  :global([data-theme='dark'] .stat-box:hover) { box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 14px 30px oklch(0% 0 0 / 0.45); }
-  .stat-icon {
-    display: inline-grid;
+  .ab-contact-row + .ab-contact-row { border-top: 1px solid var(--border); }
+  a.ab-contact-row:hover { background: var(--surface-2); }
+  .ab-contact-ico {
+    display: grid;
     place-items: center;
     width: 30px; height: 30px;
-    margin-bottom: 0.35rem;
-    border-radius: 10px;
+    flex-shrink: 0;
+    border-radius: 9px;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 282 / 0.25);
   }
-  :global([data-theme='dark'] .stat-icon) { color: var(--primary-light); }
-  .stat-num {
-    display: block;
-    font-size: 1.55rem;
-    font-weight: 800;
-    line-height: 1.2;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-variant-numeric: tabular-nums;
-  }
-  .stat-label { font-size: 0.76rem; color: var(--text-faint); }
-
-  /* ===== 技能卡 ===== */
-  .skill-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 0.6rem;
-  }
-  .skill-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0.85rem 0.95rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    background: var(--surface);
-    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s ease, border-color 0.25s ease;
-  }
-  .skill-card:hover {
-    transform: translateY(-3px);
-    border-color: oklch(70% 0.14 282 / 0.5);
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.05), 0 14px 28px oklch(62% 0.13 282 / 0.15);
-  }
-  :global([data-theme='dark'] .skill-card:hover) { box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 14px 28px oklch(0% 0 0 / 0.45); }
-  .skill-icon {
-    display: inline-grid;
-    place-items: center;
-    width: 34px; height: 34px;
-    margin-bottom: 0.25rem;
-    border-radius: 10px;
-    color: var(--primary-strong);
-    background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 282 / 0.25);
-    transition: transform 0.25s ease;
-  }
-  :global([data-theme='dark'] .skill-icon) { color: var(--primary-light); }
-  .skill-card:hover .skill-icon { transform: scale(1.08) rotate(-6deg); }
-  .skill-name { font-size: 0.9rem; font-weight: 700; color: var(--text); }
-  .skill-note { font-size: 0.72rem; color: var(--text-faint); line-height: 1.45; }
-  /* 正在学：左侧一条虚线，和上手的区分开 */
-  .skill-card.is-learning { border-style: dashed; }
-  .skill-card.is-learning .skill-icon {
+  :global([data-theme='dark']) .ab-contact-ico { color: var(--primary-light); }
+  .ab-contact-label { font-size: 0.82rem; font-weight: 700; color: var(--text); flex-shrink: 0; }
+  .ab-contact-value {
+    margin-left: auto;
+    font-size: 0.79rem;
     color: var(--text-faint);
-    background: var(--surface-2);
-    border-color: var(--border);
-  }
-  .skill-card.is-learning:hover .skill-icon { color: var(--primary-strong); background: var(--primary-soft); }
-
-  /* ===== 时间线 ===== */
-  .timeline { position: relative; padding-left: 1.6rem; }
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 7px; top: 0; bottom: 0;
-    width: 2px;
-    background: linear-gradient(180deg, var(--primary), oklch(70% 0.14 282 / 0.15));
-    border-radius: 999px;
-  }
-  .timeline-item { position: relative; margin-bottom: 1rem; }
-  .timeline-dot {
-    position: absolute;
-    left: -1.6rem; top: 0.75rem;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    display: grid; place-items: center;
-    background: var(--gradient-primary);
-    color: var(--text-on-primary);
-    border: 3px solid var(--surface);
-    box-shadow: 0 2px 8px oklch(62% 0.14 282 / 0.35);
-  }
-  .timeline-content {
-    padding: 0.85rem 1.05rem;
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-  }
-  .timeline-content:hover {
-    transform: translateX(4px);
-    border-color: oklch(70% 0.14 282 / 0.45);
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.05), 0 12px 26px oklch(60% 0.13 282 / 0.14);
-  }
-  .timeline-date {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--primary-strong);
-    background: var(--primary-soft);
-    padding: 0.08rem 0.5rem;
-    border-radius: 999px;
-    font-variant-numeric: tabular-nums;
-  }
-  :global([data-theme='dark'] .timeline-date) { color: var(--primary-light); }
-  .timeline-content h4 { margin: 0.35rem 0 0.2rem; font-size: 1rem; font-weight: 700; }
-  .timeline-content p { margin: 0; font-size: 0.88rem; color: var(--text-soft); line-height: 1.65; }
-
-  /* ===== 联系 ===== */
-  .contact-grid { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-  .contact-card {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.55rem 1.15rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    font-size: 0.88rem;
-    font-weight: 600;
-    text-decoration: none !important;
-    transition: all 0.2s ease;
-  }
-  .contact-card:hover {
-    color: var(--text-on-primary);
-    background: var(--gradient-primary);
-    border-color: transparent;
-    transform: translateY(-2px);
-    box-shadow: 0 5px 16px oklch(62% 0.14 282 / 0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .deco-quote {
-    margin: 2rem 0 0;
-    padding: 1.1rem 1.4rem;
-    border-left: 4px solid;
-    border-image: var(--gradient-primary) 1;
-    background: var(--primary-soft);
-    border-radius: 0 var(--radius) var(--radius) 0;
-    font-style: italic;
-    color: var(--text-soft);
+  /* ===== 响应式 ===== */
+  @media (max-width: 900px) {
+    .ab-row, .ab-row-split { grid-template-columns: 1fr; }
+    .ab-contact-grid { grid-template-columns: 1fr; }
   }
-  .deco-quote p { margin: 0; font-size: 1.02rem; }
-
-  @media (max-width: 860px) {
-    .post-main { min-width: 0; }
-    .about-cover { min-height: 220px; }
-    .about-cover-content { padding: 1.5rem 1.2rem 1.2rem; }
-    .id-card { padding: 1.1rem; }
-    .id-avatar { width: 72px; height: 72px; }
-    .stat-row { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.45rem; }
-    .skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 620px) {
+    .ab-idcard { padding: 1.1rem; gap: 0.9rem; }
+    .ab-avatar { width: 76px; height: 76px; }
+    .ab-name { font-size: 1.3rem; }
+    /* 手机端：署名引言挪到卡片底部整行，别再往右挤 */
+    .ab-sign {
+      flex-basis: 100%;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 0 0;
+      border-left: 0;
+      border-top: 1px solid var(--border);
+      letter-spacing: 0.08em;
+    }
   }
 </style>
