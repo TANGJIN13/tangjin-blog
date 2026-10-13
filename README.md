@@ -13,7 +13,68 @@
 
 📘 内容写作与功能使用手册：[使用指南.md](使用指南.md)
 
-![首页预览](docs/screenshot-home.png)
+### 🖼 界面预览
+
+**[首页](https://tangjin.xyz/)** —— 全屏水彩壁纸轮播 + 置顶文章 + 单列文章列表 + 侧栏（日历 / 分类 / 站点统计）
+
+![首页](docs/screenshot-home.jpg)
+
+<table>
+<tr>
+<td width="50%">
+
+**[文章页](https://tangjin.xyz/posts/2026-10-09-jwt的攻击方法/)**<br>
+壁纸横幅 + 目录 + 代码高亮
+
+![文章页](docs/screenshot-post.jpg)
+
+</td>
+<td width="50%">
+
+**[归档 · 时光长河](https://tangjin.xyz/archive/)**<br>
+贯穿全页的 SVG 河道 + 年份地标
+
+![归档页](docs/screenshot-archive.jpg)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**[相册](https://tangjin.xyz/album/)**<br>
+瀑布流照片墙 + 大图灯箱
+
+![相册页](docs/screenshot-album.jpg)
+
+</td>
+<td width="50%">
+
+**[关于我](https://tangjin.xyz/about/)**<br>
+名片 + 技术方向 / 学习轨迹 + 联系方式
+
+![关于页](docs/screenshot-about.jpg)
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+**[友链](https://tangjin.xyz/friends/)**<br>
+引言卡 + 响应式友链网格
+
+![友链页](docs/screenshot-friends.jpg)
+
+</td>
+<td width="50%">
+
+**[搜索](https://tangjin.xyz/search/)**<br>
+全文搜索 + 分类 / 资源库筛选
+
+![搜索页](docs/screenshot-search.jpg)
+
+</td>
+</tr>
+</table>
 
 ---
 
@@ -21,20 +82,20 @@
 
 | 模块 | 说明 |
 |---|---|
-| 首页 | 分类入口 + 文章卡片网格（16:9 封面 / 日期 / 分类 / 摘要 / 标签）+ 标签区 + 侧栏（日历 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏自动堆叠 |
+| 首页 | 全屏水彩壁纸轮播 + 置顶大卡（左文右图）+「最新文章」单列列表（缩略图 / 标题 / 摘要 / 分类与标签 / 阅读时长）+ 标签区 + 侧栏（头像 / 导航 / 主题 / 搜索 / 日历 / 分类云 / 节假日 / 站点统计 / 活跃度热力图），移动端侧栏自动堆叠 |
 | 文章页 | 顶部横幅 + 自动生成目录 + 阅读进度条 + 上一篇/下一篇 + 文末分享；配图点击放大（再点一下切 1:1 原始尺寸，可拖动看细节） |
 | 说说 | `/says/` 短动态，按时间倒序，支持心情 emoji 与配图；草稿用 `draft: true` 暂不公开 |
 | 相册 | `/album/` 瀑布流照片墙，点击开大图灯箱（← / → 翻页、Esc 关闭） |
-| 关于页 | `/about/` 名片 + 自动统计（篇数 / 天数 / 字数）+ 技能卡 + 时间线 |
+| 关于页 | `/about/` 名片卡（头像 / 简介 / 社交按钮）+「我是谁」+ 引言卡 +「技术方向 / 学习轨迹」双列 +「站点与联系」，手机端自动改为单列 |
 | 评论 | 文章页 / 关于页用 **Giscus**，留言板用自建 **Waline**（免登录匿名留言），见下文 |
 | 音乐播放器 | 本地 + 在线歌单双来源，滚动歌词（LRC 逐行高亮）、失效音源自动跳过 |
 | 主题 | 亮色 / 暗色 / 跟随系统，切换时底部提示当前模式，评论框主题同步 |
 | 特效 | 进入文章时樱花飘落约 10 秒、沉浸阅读模式 |
 | 全站壁纸横幅 | 多张壁纸自动轮播（每隔几秒淡入切换，换页接着上一张继续）。**每个页面顶部都有**：首页大图（88vh），内页压到 35vh 并把页面标题压在壁纸上（电脑端；手机端内页自动隐藏，避免多滑一屏） | |
 | 资源库 | `/downloads/` 文件下载页：文件放 `public/files/`、在 `src/data/downloads.json` 登记一条即可，大小 / 日期 / 图标自动生成，支持外部网盘链接 |
-| 搜索 | `/search/` 全文搜索：文章（标题 / 描述 / 标签 / 分类）+ 资源库文件都能搜到，资源条目点击直接下载 |
-| 归档 | 按年份竖向时间线展示，含总字数统计 |
-| 其他 | 归档 / 分类 / 标签 / 友链 / 留言板 / RSS / Sitemap |
+| 搜索 | `/search/` 全文搜索：文章（标题 / 描述 / 标签 / 分类）+ 资源库文件都能搜到，资源条目点击直接下载；支持 `?cat=` 按分类筛选（全站分类入口都指向这里） |
+| 归档 | 「时光长河」：一条贯穿全页的弯曲 SVG 河道，年份是河道上的地标，文章卡交替漂在两侧；N 篇 / 任意屏宽自适应 |
+| 其他 | 标签 / 友链 / 留言板 / RSS / Sitemap |
 | SEO | `robots.txt` + 自动 sitemap，部署后自动推送（百度主动推送 / IndexNow），详见 [SEO 文档](docs/SEO-搜索引擎提交.md) |
 
 ## 🧱 技术栈
@@ -68,8 +129,8 @@ pnpm preview    # 本地预览构建结果
 | 想改什么 | 改哪里 |
 |---|---|
 | 站点名 / 座右铭 / 备案号 / 社交链接 / 建站日期 / 评论服务地址 | [`src/site.ts`](src/site.ts) |
-| 关于页（自我介绍、技能、时间线、联系方式） | [`src/data/profile.ts`](src/data/profile.ts) |
-| 分类列表 | [`src/data/categories.ts`](src/data/categories.ts) |
+| 关于页（自我介绍、技术方向、学习轨迹、联系方式） | [`src/data/profile.ts`](src/data/profile.ts) |
+| 分类列表（首页右栏分类云的数据源） | [`src/data/categories.ts`](src/data/categories.ts) |
 | 相册清单 | [`src/data/album.json`](src/data/album.json) |
 | 资源库（可下载的工具 / 资料） | 清单 [`src/data/downloads.json`](src/data/downloads.json)，文件本体放 `public/files/` |
 | 首页头像 / 壁纸 | `public/images/avatar.png`、`src/site.ts` 的 `heroImage` |
