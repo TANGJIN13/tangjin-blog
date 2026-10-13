@@ -20,7 +20,9 @@
 //   · 全部纯 CSS（keyframes + 各元素自己的 --ln-d / --sub-d 延迟变量），
 //     组件本体不渲染 DOM、不碰 rAF、不读像素 —— 不会因标签页挂起而卡半途。
 //   · 首帧隐藏样式内联在 Base 的 <head>（见那里），保证不闪一帧完整页面。
-//   · 只在**硬加载**播一次；软导航换页不重播（sessionStorage）。
+//   · **每次硬加载都播一次**（不再用 sessionStorage 记"已看过"）。
+//     用户明确要求："只要重新加载 / 新开页面就播"，这样访客每次打开都有仪式感，
+//     开发时反复刷新也能看到。站内软导航（ClientRouter）换页不重播，保持不打断阅读。
 //   · prefers-reduced-motion → 完全不参与，内容直接可见。
 //   · 播完摘掉 intro-run（让 will-change / 动画终态都退场，页面回到完全静止的常态），
 //     同时挂上 intro-done（放行句尾光标闪烁等"常态动效"）。
@@ -40,7 +42,6 @@
 
 <script is:inline>
   (function () {
-    var KEY = 'intro-played';
     var DONE_AT = 1900; // 最长一段：标题末节延迟 440ms + 1.05s ≈ 1.5s，留 0.4s 余量
     var root = document.documentElement;
 
@@ -53,18 +54,17 @@
     }
 
     // ---- 是否需要播 ----
+    // 只尊重 reduced-motion；**不再**用 sessionStorage 拦"已看过" ——
+    // 每次硬加载都播（用户明确要求），软导航由下面的 softNav 排除。
     var reduce = false;
     try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
-    var seen = false;
-    try { seen = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
 
-    if (reduce || seen) {
-      // 已看过 / 用户要求减少动效 → 直接落到终态
+    if (reduce) {
+      // 用户要求减少动效 → 直接落到终态
       finished = true;
       root.classList.remove('intro-pending', 'intro-run');
       root.classList.add('intro-done');
     } else {
-      try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
       root.classList.add('intro-run');
 
       // 主收尾：定时器（最可靠，不受动画是否真的跑起来影响）
@@ -80,7 +80,7 @@
     // ---- 软导航清理 ----
     // 换页时新文档的 HTML 里也带着 intro-pending（服务端渲染时就写死了类名），
     // 而本脚本在 ClientRouter 的替换流程里**不会重新执行**。
-    // 只服务"从别的页软导航回来"：此时 sessionStorage 已是 '1'，必须立刻落终态，
+    // 站内换页不重播入场，所以必须立刻落终态，
     // 否则整页停在 intro-pending（内容全部 opacity:0）。
     // ⚠️ 首次硬加载时 page-load 也会触发，所以必须用 softNav 把它排除掉（见坑 1）。
     var softNav = false;

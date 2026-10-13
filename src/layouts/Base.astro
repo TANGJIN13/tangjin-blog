@@ -92,12 +92,11 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             : pref;
           document.documentElement.setAttribute('data-theme', resolved);
         } catch (e) {}
-        // ② 首屏入场：已看过 / 用户偏好减少动态 → 什么都不加，内容保持默认可见
+        // ② 首屏入场：**每次硬加载都播一次**（用户明确要求）。
+        //    这里只排除"用户偏好减少动态"这一种情况 —— 不再读 sessionStorage，
+        //    否则同一个标签页刷新几次之后入场就再也不播了（这正是"看不到入场特效"的根因）。
+        //    站内软导航换页不重播，由 StaggerReveal 的 softNav 标志位负责。
         try {
-          if (sessionStorage.getItem('intro-played') === '1') {
-            document.documentElement.classList.add('intro-done');
-            return;
-          }
           if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
             document.documentElement.classList.add('intro-done');
             return;
