@@ -17,6 +17,18 @@ for (const p of posts) {
 }
 const years = [...byYear.keys()].sort((a, b) => b - a);
 const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 0);
+
+// 首屏先输出完整河道；分页后由客户端按当前可见条目重新校准曲线。
+const riverPathFor = (count: number) => {
+  const step = 176;
+  const xAt = (index: number) => (index % 2 === 0 ? 460 : 540);
+  let d = `M ${xAt(0)} ${step / 2}`;
+  for (let i = 1; i < count; i++) {
+    const y = i * step + step / 2;
+    d += ` C ${xAt(i - 1)} ${y - step / 2 + 48}, ${xAt(i)} ${y - 48}, ${xAt(i)} ${y}`;
+  }
+  return d;
+};
 ---
 
 <Base
