@@ -4,11 +4,11 @@ import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
 import Paginate from '../components/Paginate.astro';
-import { getPublishedPosts, formatDate, readingTime } from '../lib/posts';
+import { getPublishedPosts, formatDate } from '../lib/posts';
 
 const posts = await getPublishedPosts();
 
-// 按年份分组
+// 按年份分组（保持日期倒序）
 const byYear = new Map<number, typeof posts>();
 for (const p of posts) {
   const y = p.data.published.getFullYear();
@@ -18,33 +18,56 @@ for (const p of posts) {
 const years = [...byYear.keys()].sort((a, b) => b - a);
 const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 0);
 
-// 首屏先输出完整河道；分页后由客户端按当前可见条目重新校准曲线。
-// 河道是一条平缓蜿蜒的正弦曲线，节点（圆点）落在河上，卡片分列两岸、用虚线支流相连。
-const RIVER_W = 1000;
-const RIVER_STEP = 158;
-const riverNode = (count: number) => {
-  // 条目少时用更短的周期，才摆得出 S 形；多了就放缓，避免锯齿感
-  const period = count <= 3 ? 2 : Math.max(3, Math.min(6, count));
-  const amp = count <= 3 ? 78 : 62;
-  return Array.from({ length: count }, (_, i) => ({
-    x: RIVER_W / 2 + amp * Math.sin((i / period) * Math.PI * 2),
-    y: i * RIVER_STEP + RIVER_STEP / 2,
-  }));
-};
-const riverPathFor = (count: number) => {
-  const pts = riverNode(count);
-  if (!pts.length) return '';
-  const all = [{ x: pts[0].x, y: pts[0].y - 56 }, ...pts, { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y + 56 }];
-  let d = `M ${all[0].x.toFixed(1)} ${all[0].y.toFixed(1)}`;
-  for (let i = 0; i < all.length - 1; i++) {
-    const p0 = all[i - 1] ?? all[i];
-    const p1 = all[i];
-    const p2 = all[i + 1];
-    const p3 = all[i + 2] ?? p2;
-    d += ` C ${(p1.x + (p2.x - p0.x) / 6).toFixed(1)} ${(p1.y + (p2.y - p0.y) / 6).toFixed(1)}, ${(p2.x - (p3.x - p1.x) / 6).toFixed(1)} ${(p2.y - (p3.y - p1.y) / 6).toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
-  }
-  return d;
-};
+// 每一年配一句诗意描述 —— 年份是「时间长河」上的地标，不是普通标题。
+const YEAR_MOTTOS = [
+  '这一年的文字，沿河而来',
+  '往昔的文字，也值得被记起',
+  '水声拂过，旧事仍在',
+  '河床沉淀下来的句子',
+  '远处的灯，还亮着',
+];
+const yearMotto = (i: number) => YEAR_MOTTOS[i] ?? '岁月把文字汇入长河';
+
+/*
+  「时间节点」序列 —— 河道、里程碑、卡片全部由**真实文章数据**驱动。
+
+  首页把第一年的第一条也当作里程碑（当年开篇），所以：
+    第 0 年 → [里程碑, ...全部条目]
+    其余年 → [里程碑, ...全部条目]
+  即每年都以一个里程碑（年份 + 月份）开场，河道在里程碑附近自然加宽、
+  月份刻度落在里程碑处 —— 年份与月份因此都成为河道上的地标。
+*/
+type Node =
+  | { kind: 'mile'; year: number; month: number; label: string; motto: string; anchor: boolean; index: number }
+  | { kind: 'post'; post: typeof posts[number]; date: string; tags: string[]; anchor: boolean; index: number };
+
+const streams = years.map((y, yi) => {
+  const list = byYear.get(y)!;
+  const nodes: Node[] = [];
+  // 年份里程碑：月份取该年最新一条的月份；只有一条时它本身就是锚点
+  const lead = list[0];
+  nodes.push({
+    kind: 'mile',
+    year: y,
+    month: lead.data.published.getMonth() + 1,
+    label: `${lead.data.published.getMonth() + 1} 月`,
+    motto: yearMotto(yi),
+    anchor: list.length === 1,
+    index: 0,
+  });
+  list.forEach((p, i) => {
+    nodes.push({
+      kind: 'post',
+      post: p,
+      date: formatDate(p.data.published),
+      tags: p.data.tags.slice(0, 3),
+      // 只有一条文章的年份，里程碑本身就是那一篇 → 卡牌对齐锚点高度
+      anchor: list.length === 1,
+      index: i,
+    });
+  });
+  return { year: y, count: list.length, motto: yearMotto(yi), nodes, isFirst: yi === 0 };
+});
 ---
 
 <Base
@@ -57,236 +80,532 @@ const riverPathFor = (count: number) => {
   <div class="page-shell">
     <SidebarLeft />
     <div class="page-main">
-    <header class="page-head onload-animation hide-with-banner">
-      <h1><Icon name="archive" size="1.6rem" /> 归档</h1>
-      <p>
-        共 <strong>{posts.length}</strong> 篇文章 · 约 <strong>{(totalWords / 10000).toFixed(1)}</strong> 万字，按时间倒序
-      </p>
-    </header>
+      <div class="river-page">
+        <!-- 河流自身（贯穿整条时间轴的一整条河；仅装饰） -->
+        <svg class="river-svg" aria-hidden="true" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="river-core" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="var(--primary)" stop-opacity=".10" />
+              <stop offset="16%" stop-color="var(--primary)" stop-opacity=".72" />
+              <stop offset="50%" stop-color="var(--primary)" stop-opacity=".88" />
+              <stop offset="86%" stop-color="var(--primary)" stop-opacity=".7" />
+              <stop offset="100%" stop-color="var(--primary)" stop-opacity=".08" />
+            </linearGradient>
+            <!-- 河身的横向光照：中央亮、两岸淡 —— 形成「水」的厚度 -->
+            <linearGradient id="river-skin" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="var(--primary)" stop-opacity="0" />
+              <stop offset="50%" stop-color="var(--primary)" stop-opacity=".5" />
+              <stop offset="100%" stop-color="var(--primary)" stop-opacity="0" />
+            </linearGradient>
+            <linearGradient id="river-haze" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="var(--primary-light)" stop-opacity=".5" />
+              <stop offset="55%" stop-color="var(--primary)" stop-opacity=".34" />
+              <stop offset="100%" stop-color="var(--primary-light)" stop-opacity=".42" />
+            </linearGradient>
+          </defs>
+          <!-- 一层柔雾：整体轮廓，把河流「虚」出去 -->
+          <path class="rl rl-haze" stroke="url(#river-haze)" />
+          <!-- 一层河身：宽而淡，是水的主体 -->
+          <path class="rl rl-skin" stroke="url(#river-skin)" />
+          <!-- 一层亮芯：细，是水流的高光 -->
+          <path class="rl rl-core" stroke="url(#river-core)" />
+          <!-- 支流：从河道优雅地拐向两侧卡片 -->
+          <path class="rl rl-trib" />
+        </svg>
 
-    <div class="timeline">
-      {
-        years.map((y) => (
-          <section class="year" data-paginate-group>
-            <div class="year-node">
-              <span class="year-num">{y}</span>
-              <span class="year-count">{byYear.get(y)!.length} 篇记忆</span>
-              <span class="year-caption">这一年的文字，沿河而来</span>
-            </div>
-            <ul class="year-list">
-              <svg
-                class="river-canvas"
-                aria-hidden="true"
-                preserveAspectRatio="none"
-                viewBox={`0 0 ${RIVER_W} ${Math.max(1, byYear.get(y)!.length * RIVER_STEP)}`}
-              >
-                <defs>
-                  <linearGradient id={`river-gradient-${y}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="var(--primary)" stop-opacity=".1" />
-                    <stop offset="14%" stop-color="var(--primary)" stop-opacity=".78" />
-                    <stop offset="86%" stop-color="var(--primary)" stop-opacity=".7" />
-                    <stop offset="100%" stop-color="var(--primary)" stop-opacity=".1" />
-                  </linearGradient>
-                </defs>
-                <path class="river-glow" stroke={`url(#river-gradient-${y})`} />
-                <path class="river-body" stroke={`url(#river-gradient-${y})`} />
-                <path class="river-line" stroke={`url(#river-gradient-${y})`} d={riverPathFor(byYear.get(y)!.length)} />
-                <path
-                  class="river-trib"
-                  d={riverNode(byYear.get(y)!.length)
-                    .map((p, i) => `M ${p.x.toFixed(1)} ${p.y.toFixed(1)} L ${(i % 2 === 0 ? 420 : 580).toFixed(1)} ${p.y.toFixed(1)}`)
-                    .join(' ')}
-                />
-              </svg>
-              {byYear.get(y)!.map((p, i) => (
-                <li class="tl-item onload-animation paginate-item" style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}>
-                  <span class="tl-dot" aria-hidden="true"></span>
-                  <a class="tl-card" href={`/posts/${p.id}/`}>
-                    <span class="tl-meta">
-                      <time class="tl-date" datetime={p.data.published.toISOString()}>
-                        {formatDate(p.data.published)}
-                      </time>
-                      <span class="tl-index">{String(i + 1).padStart(2, '0')}</span>
-                    </span>
-                    <span class="tl-title">{p.data.title}</span>
-                    {p.data.tags.length > 0 && (
-                      <span class="tl-tags">{p.data.tags.slice(0, 3).map((t) => `#${t}`).join('　')}</span>
-                    )}
-                    <span class="tl-arrow" aria-hidden="true">
-                      <Icon name="next" size="0.9rem" />
-                    </span>
-                  </a>
-                </li>
+        <!-- 沿河漂浮的微光（装饰，JS 注入） -->
+        <div class="river-motes" aria-hidden="true"></div>
+
+        {streams.map((s) => (
+          <section class="stream" data-year={s.year}>
+            <div class="river-track">
+              {s.nodes.map((n) => (
+                <div
+                  class:list={['node', n.kind === 'mile' ? 'node-mile' : 'node-post', n.anchor && 'node-anchor']}
+                  data-index={n.index}
+                >
+                  {n.kind === 'mile' ? (
+                    <>
+                      {n.anchor && <span class="mile-month" aria-hidden="true">{n.label}</span>}
+                      <div class="milestone">
+                        <span class="milestone-rule" aria-hidden="true" />
+                        <div class="milestone-text">
+                          <span class="medallion" aria-hidden="true">
+                            <span class="medallion-ring" />
+                          </span>
+                          <h2 class="year-num">{n.year}</h2>
+                          <p class="year-caption">{n.motto}</p>
+                          <p class="year-count">{s.count} 篇记忆</p>
+                        </div>
+                        <span class="milestone-rule" aria-hidden="true" />
+                      </div>
+                    </>
+                  ) : (
+                    <a class="mem-card" href={`/posts/${n.post.id}/`}>
+                      <span class="mem-side" aria-hidden="true">
+                        <span class="mem-line" />
+                        <span class="mem-node">
+                          <span class="mem-node-core" />
+                          <span class="mem-node-pulse" />
+                        </span>
+                      </span>
+                      <span class="mem-body">
+                        <span class="mem-head">
+                          <span class="mem-month">{n.date}</span>
+                          <span class="mem-index">{String(n.index + 1).padStart(2, '0')}</span>
+                        </span>
+                        <span class="mem-title">{n.post.data.title}</span>
+                        <span class="mem-desc">{n.post.data.description}</span>
+                        <span class="mem-foot">
+                          {n.tags.length > 0 && (
+                            <span class="mem-tags">
+                              {n.tags.map((t) => (
+                                <span class="mem-tag">#{t}</span>
+                              ))}
+                            </span>
+                          )}
+                          <span class="mem-more">
+                            阅读全文
+                            <Icon name="arrow_right" size="0.82rem" />
+                          </span>
+                        </span>
+                      </span>
+                    </a>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
           </section>
-        ))
-      }
-    </div>
+        ))}
 
-    <Paginate pageSize={15} />
+        {posts.length === 0 && (
+          <div class="empty">
+            <p>还没有文章。</p>
+          </div>
+        )}
+      </div>
 
-    {
-      posts.length === 0 && (
-        <div class="empty">
-          <p>还没有文章。</p>
-        </div>
-      )
-    }
+      <Paginate pageSize={15} />
     </div>
     <SidebarRight />
   </div>
 </Base>
 
 <script>
-  // 时光河流：把每个条目的圆点摆在一条平缓蜿蜒的河道上，
-  // 河道用 Catmull-Rom 转三次贝塞尔连成柔弯，再画虚线支流接到两岸的卡片。
+  /*
+    时光长河 —— 河道布局引擎。
+
+    河道是一条贯穿所有年份的纵向连续曲线。它的横向位置由「时间节点」的
+    横向轨迹经 Catmull-Rom 平滑得到；节点自己的 x 又由 y 的相位决定，
+    所以节点天然落在河上，而河在每个节点附近加宽 —— 年份与月份地标正好
+    踩在这些加宽处，看起来像是河道与时间交汇的节点。
+
+    全部尺寸都从 DOM 实测，因此文章数量、字数、屏幕宽度变化时都能自适应。
+  */
   function initRiverArchive() {
-    document.querySelectorAll<HTMLElement>('.year-list').forEach((list) => {
-      if (list.dataset.riverBound === 'true') return;
-      list.dataset.riverBound = 'true';
-      const svg = list.querySelector<SVGSVGElement>('.river-canvas');
-      const line = list.querySelector<SVGPathElement>('.river-line');
-      const glow = list.querySelector<SVGPathElement>('.river-glow');
-      const body = list.querySelector<SVGPathElement>('.river-body');
-      const trib = list.querySelector<SVGPathElement>('.river-trib');
-      if (!svg || !line || !glow) return;
+    const page = document.querySelector<HTMLElement>('.river-page');
+    if (!page) return;
+    const svg = page.querySelector<SVGSVGElement>('.river-svg');
+    const haze = page.querySelector<SVGPathElement>('.rl-haze');
+    const skin = page.querySelector<SVGPathElement>('.rl-skin');
+    const core = page.querySelector<SVGPathElement>('.rl-core');
+    const trib = page.querySelector<SVGPathElement>('.rl-trib');
+    if (!svg || !haze || !skin || !core || !trib) return;
 
-      const smooth = (pts: { x: number; y: number }[]) => {
-        if (!pts.length) return '';
-        if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
-        let d = `M ${pts[0].x} ${pts[0].y}`;
-        for (let i = 0; i < pts.length - 1; i++) {
-          const p0 = pts[i - 1] ?? pts[i];
-          const p1 = pts[i];
-          const p2 = pts[i + 1];
-          const p3 = pts[i + 2] ?? p2;
-          d += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6}, ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6}, ${p2.x} ${p2.y}`;
+    const reduce = (() => {
+      try {
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      } catch {
+        return false;
+      }
+    })();
+
+    /*
+      ⚠️ 入场隐藏必须由 JS「启用」，绝不能在 CSS 里默认把节点藏起来。
+         否则一旦脚本没跑（SEO 爬虫、禁用 JS、打包异常），文章就永远看不见了。
+         这里先加 js-on（此刻节点大多还在视口外，不会闪），
+         随后立刻做一次布局、IntersectionObserver 会把可见的立刻标 is-in。
+    */
+    if (!reduce) page.classList.add('js-on');
+    if (reduce) page.classList.add('river-static');
+
+    // 河道横向轨迹：一条**整体居中**的平缓正弦。
+    // 关键：必须加一个让波形在 x∈[-1,1] 单调递减的相位 φ——
+    // 否则首尾两端会同时停在 sin(c) 上，河道整天粘在同一个 x（早期版本的 bug）。
+    // φ=1.78(102°) 让整条河横向铺得最开，再由居中偏移把它摆到版心中线。
+    const WAVE_PHI = 1.78;
+    let riverX: ((y: number) => number) | null = null;
+    let pts: { x: number; y: number; edge: number | null }[] = [];
+
+    // Catmull-Rom → 三次贝塞尔，得到柔顺的连续曲线
+    const smooth = (p: { x: number; y: number }[]) => {
+      if (p.length < 2) return '';
+      let d = `M ${p[0].x.toFixed(1)} ${p[0].y.toFixed(1)}`;
+      for (let i = 0; i < p.length - 1; i++) {
+        const p0 = p[i - 1] ?? p[i];
+        const p1 = p[i];
+        const p2 = p[i + 1];
+        const p3 = p[i + 2] ?? p2;
+        d +=
+          ` C ${(p1.x + (p2.x - p0.x) / 6).toFixed(1)} ${(p1.y + (p2.y - p0.y) / 6).toFixed(1)},` +
+          ` ${(p2.x - (p3.x - p1.x) / 6).toFixed(1)} ${(p2.y - (p3.y - p1.y) / 6).toFixed(1)},` +
+          ` ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+      }
+      return d;
+    };
+
+    const layout = () => {
+      const pr = page.getBoundingClientRect();
+      if (!pr.width || !pr.height) return;
+      svg.setAttribute('viewBox', `0 0 ${pr.width.toFixed(1)} ${pr.height.toFixed(1)}`);
+
+      /*
+        ⚠️ 断点必须和 CSS 保持一致（都是 760px）。
+        大于 760 时卡片分列两岸、河道走中线；小于等于 760 时卡片单列靠右、
+        河道收到左侧。**如果这里写成 768 而 CSS 是 760**，就会出现
+        「760~768 之间：CSS 已经单列、JS 还以为双列」的错位，
+        实测表现为河道贴在左边缘、而卡片横跨过去压在河上（节点被埋进卡里）。
+      */
+      const mobile = pr.width <= 760;
+      // 桌面端河道在版心中线附近蜿蜒；手机端靠左留出一条单列阅读道
+      const amp = mobile ? 6 : Math.min(56, pr.width * 0.066);
+      // 波数：整页只走 2.5 个周期左右，缓慢而舒展；页面越长波长越长
+      const waves = Math.max(2, Math.min(4, pr.height / 420));
+      const wavelength = pr.height / waves;
+      const theta = (y: number) => (y / wavelength + WAVE_PHI) * Math.PI * 2;
+      const wave = (y: number, a: number) => a * Math.sin(theta(y));
+
+      const nodes = Array.from(page.querySelectorAll<HTMLElement>('.node'));
+
+      /*
+        先量出「河道两侧的可用走廊」，再决定振幅。
+        河道必须始终走在两岸卡片之间的空档里 —— 一旦某张卡片越过了中线，
+        河道就会从卡片身上穿过去（实测 768px 那版就是这样）。
+        所以：把每张卡片靠河那一侧的边缘取出来，取最靠里的一条，
+        让河道最多贴到它再留余量。
+
+        ⚠️ 「卡片在左还是在右」**不能按索引奇偶推断**：CSS 用的是
+        `nth-of-type`，它数的是所有 `.node` 兄弟（里程碑也占一个位），
+        所以 JS 里的 posts 序号和视觉左右是错位的 —— 早期版本就是这么算错的，
+        在 768px 得到 room=0，河道振幅被压成 6px、贴死在左边缘。
+        正确做法：直接比较卡片左右边缘到页面中线的距离，谁近就在那一侧。
+      */
+      let ampSafe = amp;
+      if (!mobile) {
+        let room = (pr.width / 2) * 0.94;
+        for (const el of nodes) {
+          const card = el.querySelector<HTMLElement>('.mem-card');
+          if (!card) continue;
+          const cr = card.getBoundingClientRect();
+          const l = cr.left - pr.left;
+          const r = cr.right - pr.left;
+          // 卡片靠河那一侧 = 离版心中线更近的那条边
+          const toward = Math.abs(l - pr.width / 2) <= Math.abs(r - pr.width / 2) ? l : r;
+          room = Math.min(room, toward);
         }
-        return d;
-      };
+        // 再留 18px 余量，河道绝不贴上卡片
+        ampSafe = Math.max(16, Math.min(amp, room - 18));
+      }
 
-      let frame = 0;
-      const draw = () => {
-        cancelAnimationFrame(frame);
-        frame = requestAnimationFrame(() => {
-          const box = list.getBoundingClientRect();
-          if (!box.width || !box.height) return;
-          svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+      if (mobile) {
+        const mx = Math.min(34, pr.width * 0.085);
+        riverX = (y: number) => mx + wave(y, amp);
+      } else {
+        // 河道在整页内横向居中：把两边余量对半分给振幅
+        const x1 = wave(0, ampSafe);
+        const x2 = wave(pr.height, ampSafe);
+        const center = pr.width / 2 - (x1 + x2) / 2;
+        riverX = (y: number) => center + wave(y, ampSafe);
+      }
+      const rx = riverX;
 
-          const compact = box.width < 641;
-          const items = Array.from(list.querySelectorAll<HTMLElement>('.tl-item:not(.is-hidden)'));
-          const cx = box.width / 2;
-          // 条目少时也要看得出「蜿蜒」：振幅按条目数放大，2 条也能摆出去
-          const amp = Math.min(compact ? 0 : 78, box.width * (items.length <= 3 ? 0.1 : 0.07));
-          const period = items.length <= 3 ? 2 : Math.max(3, Math.min(6, items.length));
+      pts = nodes.map((el) => {
+        const r = el.getBoundingClientRect();
+        const y = r.top + r.height / 2 - pr.top;
+        return { x: rx(y), y, edge: null };
+      });
 
-          const pts = items.map((item, i) => {
-            const r = item.getBoundingClientRect();
-            const y = r.top + r.height / 2 - box.top;
-            // 手机端河道靠左，桌面端在版心中线附近蜿蜒
-            const x = compact ? 22 : cx + amp * Math.sin((i / period) * Math.PI * 2);
-            const dot = item.querySelector<HTMLElement>('.tl-dot');
-            if (dot) dot.style.left = `${(x / box.width) * 100}%`;
+      if (pts.length < 2) {
+        haze.setAttribute('d', '');
+        skin.setAttribute('d', '');
+        core.setAttribute('d', '');
+        trib.setAttribute('d', '');
+        return;
+      }
 
-            let edge: number | null = null;
-            const card = item.querySelector<HTMLElement>('.tl-card');
-            if (card && !compact) {
-              const cr = card.getBoundingClientRect();
-              edge = i % 2 === 0 ? cr.right - box.left : cr.left - box.left;
+      // 河道两端各延出一小段，让河「流进 / 流出」页面
+      const head = { x: rx(0), y: 0 };
+      const last = pts[pts.length - 1];
+      const tail = { x: rx(pr.height), y: pr.height };
+      const d = smooth([head, ...pts, tail]);
+
+      haze.setAttribute('d', d);
+      skin.setAttribute('d', d);
+      core.setAttribute('d', d);
+
+      // 把每个节点摆到河道上，并算出卡片靠河那一侧的边缘 ——
+      // 两者都必须在同一帧里、以同一份河道坐标写出，否则会各算各的。
+      let td = '';
+      nodes.forEach((el, i) => {
+        const y = pts[i].y;
+        const x = pts[i].x;
+        const dot = el.querySelector<HTMLElement>('.mem-node');
+        if (dot) dot.style.setProperty('--nx', `${x.toFixed(1)}px`);
+
+        const card = el.querySelector<HTMLElement>('.mem-card');
+        if (!card) return;
+        const cr = card.getBoundingClientRect();
+        const yc = cr.top + cr.height / 2 - pr.top;
+        const edge = Math.abs(cr.left - pr.left - x) <= Math.abs(cr.right - pr.left - x) ? cr.left - pr.left : cr.right - pr.left;
+        // 支流：从河道上的点，用一条柔弯接到卡片边缘（略微下探，避免机械的直线）
+        const mid = x + (edge - x) * 0.55;
+        td += ` M ${x.toFixed(1)} ${y.toFixed(1)} C ${mid.toFixed(1)} ${y.toFixed(1)}, ${mid.toFixed(1)} ${yc.toFixed(1)}, ${edge.toFixed(1)} ${yc.toFixed(1)}`;
+      });
+      trib.setAttribute('d', td);
+
+      // 沿河漂浮的微光：等距撒在河道的延长线上
+      const motes = page.querySelector<HTMLElement>('.river-motes');
+      if (motes) {
+        const N = Math.max(10, Math.min(30, Math.round(pr.height / 240)));
+        const step = pr.height / (N - 1);
+        let html = '';
+        for (let i = 0; i < N; i++) {
+          const y = step * i;
+          const x = rx(y) + Math.sin(i * 2.4) * 13;
+          const dur = 13 + ((i * 3.7) % 9);
+          const delay = -((i * 2.9) % dur);
+          const size = 2.4 + ((i * 1.7) % 3.4);
+          const sway = 9 + ((i * 2.3) % 11);
+          html += `<i style="--mx:${x.toFixed(1)}px;--my:${y.toFixed(1)}px;--ds:${dur.toFixed(1)}s;--dl:${delay.toFixed(1)}s;--sz:${size.toFixed(1)}px;--sw:${sway.toFixed(1)}px"></i>`;
+        }
+        motes.innerHTML = html;
+      }
+    };
+
+    let raf = 0;
+    const schedule = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(layout);
+    };
+
+    const ro = new ResizeObserver(schedule);
+    ro.observe(page);
+    Array.from(page.querySelectorAll('.node')).forEach((el) => ro.observe(el));
+    window.addEventListener('resize', schedule, { passive: true });
+    if (document.fonts?.ready) document.fonts.ready.then(schedule).catch(() => {});
+    window.addEventListener('load', schedule, { once: true });
+    layout();
+
+    // ===== 滚动时「点亮」阅读位置：当前年份 + 当前节点 =====
+    // 只做 class 切换（不写样式），交给 CSS 处理，避免滚动时的高频样式计算。
+    const marks = Array.from(page.querySelectorAll<HTMLElement>('.stream'));
+    let sraf = 0;
+    const syncScroll = () => {
+      sraf = 0;
+      const probe = window.innerHeight * 0.42;
+      let current: HTMLElement | null = null;
+      for (const m of marks) {
+        const r = m.getBoundingClientRect();
+        if (r.top <= probe && r.bottom > probe) current = m;
+      }
+      for (const m of marks) m.classList.toggle('is-current', m === current);
+    };
+    const onScroll = () => {
+      if (sraf) return;
+      sraf = requestAnimationFrame(syncScroll);
+    };
+    if (!reduce) {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      syncScroll();
+    }
+
+    // ===== 节点逐个「浮出水面」：进入视口的卡片才播入场 =====
+    // rootMargin 上下都留出容差 —— 否则 `is-in` 时元素从 translateY(16px) 归位，
+    // 会触发 ResizeObserver → 重算河道 → 分数像素抖动 → 反复越过 0.08 阈值而闪烁。
+    if (!reduce && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              (e.target as HTMLElement).classList.add('is-in');
+              io.unobserve(e.target);
             }
-            return { x, y, edge };
-          });
-
-          if (!pts.length) {
-            line.setAttribute('d', '');
-            glow.setAttribute('d', '');
-            if (body) body.setAttribute('d', '');
-            if (trib) trib.setAttribute('d', '');
-            return;
           }
-
-          // 首尾各延出一小段，让河流「流进来 / 流出去」
-          const head = { x: pts[0].x, y: pts[0].y - Math.min(52, pts[0].y - 4) };
-          const tail = {
-            x: pts[pts.length - 1].x,
-            y: Math.min(box.height - 4, pts[pts.length - 1].y + 52),
-          };
-          const d = smooth([head, ...pts, tail]);
-          line.setAttribute('d', d);
-          glow.setAttribute('d', d);
-          if (body) body.setAttribute('d', d);
-          if (trib) {
-            let td = '';
-            for (const p of pts) if (p.edge != null) td += ` M ${p.x} ${p.y} L ${p.edge} ${p.y}`;
-            trib.setAttribute('d', td);
-          }
-        });
-      };
-
-      const resizeObserver = new ResizeObserver(draw);
-      resizeObserver.observe(list);
-      list.querySelectorAll('.tl-item').forEach((item) => resizeObserver.observe(item));
-      const mutationObserver = new MutationObserver(draw);
-      mutationObserver.observe(list, { attributes: true, subtree: true, attributeFilter: ['class'] });
-      draw();
-      // 字体/图片载入后高度会变，再校准一次
-      window.addEventListener('load', draw, { once: true });
-    });
+        },
+        { rootMargin: '18% 0px 18% 0px', threshold: 0 },
+      );
+      Array.from(page.querySelectorAll('.node')).forEach((el) => io.observe(el));
+    } else {
+      page.classList.add('river-static');
+    }
   }
+
   document.addEventListener('astro:page-load', initRiverArchive);
   initRiverArchive();
 </script>
 
 <style>
-  .page-head {
-    padding: 2.5rem 0 2rem;
-    text-align: center;
-  }
-  .page-head h1 {
-    font-size: 2rem;
-    letter-spacing: -0.02em;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .page-head h1 :global(.icon) { color: var(--primary); }
-  .page-head p {
-    color: var(--text-soft);
-    margin-top: 0.4rem;
-  }
-  .page-head strong {
-    color: var(--primary-strong);
-    font-weight: 800;
-  }
-  :global([data-theme='dark'] .page-head strong) { color: var(--primary-light); }
-
-  /* ============ 时光河流 ============ */
-  .timeline {
+  /* ============ 时光长河 ============ */
+  .river-page {
     position: relative;
-    max-width: 58rem;
-    margin: 0 auto;
-    padding: 0.5rem 0 2rem;
     isolation: isolate;
+    padding: 0.4rem 0 2.6rem;
   }
-  .year {
-    position: relative;
-    margin: 0 0 2.8rem;
-    padding-top: 0.2rem;
+
+  /* ---- 河道 SVG：贯穿整个时间轴，绝对定位铺满，不接收事件 ---- */
+  .river-svg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
   }
-  .year-node {
-    position: relative;
+  .rl {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  /* 三层叠出「水」的厚度：最外是雾，中间是河身，最里是亮芯。
+     宽度都用 non-scaling-stroke，因此在宽/窄屏上观感一致。 */
+  .rl-haze {
+    stroke-width: 52;
+    opacity: 0.62;
+    filter: blur(15px);
+  }
+  .rl-skin {
+    stroke-width: 24;
+    opacity: 0.55;
+    filter: blur(5px);
+  }
+  .rl-core {
+    stroke-width: 3.6;
+    opacity: 0.95;
+  }
+  .rl-trib {
+    stroke: color-mix(in srgb, var(--primary) 50%, transparent);
+    stroke-width: 1.4;
+    stroke-dasharray: 2 7;
+    opacity: 0.62;
+  }
+
+  /* ---- 沿河漂浮的微光：缓慢上浮 + 横向轻摆 ---- */
+  .river-motes {
+    position: absolute;
+    inset: 0;
     z-index: 1;
+    pointer-events: none;
+  }
+  .river-motes i {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--sz, 3px);
+    height: var(--sz, 3px);
+    margin: calc(var(--sz, 3px) / -2) 0 0 calc(var(--sz, 3px) / -2);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary-light) 78%, white);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 62%, transparent);
+    opacity: 0;
+    transform: translate(var(--mx), var(--my));
+    animation: mote-drift var(--ds, 16s) ease-in-out var(--dl, 0s) infinite;
+  }
+  @keyframes mote-drift {
+    0% {
+      opacity: 0;
+      transform: translate(var(--mx), var(--my)) scale(0.6);
+    }
+    22% {
+      opacity: 0.62;
+    }
+    72% {
+      opacity: 0.42;
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(var(--mx) + var(--sw, 12px)), calc(var(--my) - 78px)) scale(1.05);
+    }
+  }
+
+  /* ---- 每一年的分区：里程碑 + 沿河的节点 ---- */
+  .stream {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 3.4rem;
+  }
+  .river-track {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---- 年份里程碑：河道上的地标 ---- */
+  .node.node-mile {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 1.8rem 0 1.1rem;
+  }
+  .milestone {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    margin: 0 auto 1.2rem;
+    gap: 0.85rem;
+    padding: 0.3rem 0.2rem;
+  }
+  /* 里程碑下方的一小段辉光，让「河与时间交汇」看得见 */
+  .milestone::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -0.5rem;
+    width: 11rem;
+    height: 0.7rem;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse at center, var(--primary-glow), transparent 74%);
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  .milestone-rule {
+    flex: none;
+    width: clamp(1.5rem, 9vw, 4.5rem);
+    height: 1px;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 40%, transparent));
+  }
+  .milestone-rule:last-child {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 40%, transparent), transparent);
+  }
+  .milestone-text {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.28rem;
     text-align: center;
   }
+  /* 年号背后的徽章：同心圆环，克制地暗示「这是时间刻度」。
+     很淡 —— 它的作用是让年号「长在河上」，不是当光斑。 */
+  .medallion {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: clamp(5.4rem, 11vw, 7.4rem);
+    height: clamp(5.4rem, 11vw, 7.4rem);
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 6%, transparent), transparent 66%);
+    pointer-events: none;
+  }
+  .medallion-ring {
+    position: absolute;
+    inset: 12%;
+    border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+    border-radius: 50%;
+  }
   .year-num {
-    font-size: clamp(2rem, 4vw, 2.65rem);
+    position: relative;
+    margin: 0;
+    font-size: clamp(2.2rem, 5.4vw, 3.35rem);
     font-weight: 850;
     letter-spacing: -0.055em;
     line-height: 1;
@@ -294,168 +613,274 @@ const riverPathFor = (count: number) => {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 8px 32px color-mix(in srgb, var(--primary) 18%, transparent);
+    filter: drop-shadow(0 6px 22px color-mix(in srgb, var(--primary) 26%, transparent));
+  }
+  .year-caption {
+    position: relative;
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.8rem;
+    letter-spacing: 0.13em;
   }
   .year-count {
-    align-self: center;
-    color: var(--primary-strong);
-    background: color-mix(in srgb, var(--surface) 72%, transparent);
-    border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-light));
-    border-radius: 999px;
-    padding: 0.22rem 0.72rem;
-    font-size: 0.74rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-  }
-  :global([data-theme='dark'] .year-count) { color: var(--primary-light); }
-  .year-caption {
-    flex-basis: 100%;
-    color: var(--text-faint);
-    font-size: 0.78rem;
-    letter-spacing: 0.12em;
-  }
-
-  .year-list {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 1.6rem;
-    list-style: none;
     margin: 0;
-    padding: 0.9rem 0;
-  }
-  .river-canvas {
-    position: absolute;
-    z-index: 0;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    overflow: visible;
-    pointer-events: none;
-  }
-  .river-line, .river-glow, .river-body, .river-trib {
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-  }
-  /* 三层叠出「水」的厚度：宽柔光 → 河身 → 亮芯 */
-  .river-line { stroke-width: 2.6; opacity: 0.9; }
-  .river-body { stroke-width: 9; opacity: 0.16; }
-  .river-glow { stroke-width: 22; opacity: 0.12; filter: blur(7px); }
-  /* 支流：从河道牵一条虚线到两岸的卡片 */
-  .river-trib {
-    stroke: color-mix(in srgb, var(--primary) 52%, transparent);
-    stroke-width: 1.3;
-    stroke-dasharray: 1 6;
-    opacity: 0.75;
-  }
-
-  .tl-item {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    min-height: 132px;
-  }
-  .tl-item:nth-of-type(odd) { justify-content: flex-start; }
-  .tl-item:nth-of-type(even) { justify-content: flex-end; }
-  .tl-dot {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 2;
-    width: 15px;
-    height: 15px;
-    border: 3px solid color-mix(in srgb, var(--primary) 74%, white);
-    border-radius: 50%;
-    background: var(--surface);
-    box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent), 0 0 22px color-mix(in srgb, var(--primary) 42%, transparent);
-    transform: translate(-50%, -50%);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, left 0.5s cubic-bezier(.2,.75,.25,1);
-  }
-  .tl-item:hover .tl-dot {
-    background: var(--primary);
-    box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary) 14%, transparent), 0 0 30px color-mix(in srgb, var(--primary) 56%, transparent);
-    transform: translate(-50%, -50%) scale(1.12);
-  }
-  .tl-card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.62rem;
-    width: 42%;
-    min-width: 0;
-    min-height: 104px;
-    padding: 1rem 1.2rem 1.05rem;
-    overflow: hidden;
-    color: var(--text);
-    text-decoration: none !important;
-    border: 1px solid color-mix(in srgb, var(--primary) 15%, var(--border));
-    border-radius: 1.2rem;
-    background: color-mix(in srgb, var(--surface) 80%, transparent);
-    box-shadow: 0 8px 30px color-mix(in srgb, var(--primary) 7%, transparent), inset 0 1px 0 color-mix(in srgb, white 58%, transparent);
-    backdrop-filter: blur(14px) saturate(135%);
-    transition: transform 0.32s cubic-bezier(.2,.75,.25,1), border-color 0.32s ease, box-shadow 0.32s ease, background 0.32s ease;
-  }
-  .tl-card::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    background: linear-gradient(180deg, transparent, var(--primary), color-mix(in srgb, var(--primary) 20%, transparent), transparent);
-    opacity: 0.55;
-    transition: opacity 0.3s ease;
-  }
-  .tl-item:nth-of-type(even) .tl-card::before { inset: 0 0 0 auto; }
-  .tl-card:hover {
-    transform: translateY(-4px);
-    border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
-    background: color-mix(in srgb, var(--surface) 92%, transparent);
-    box-shadow: 0 16px 38px color-mix(in srgb, var(--primary) 14%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
-  }
-  .tl-card:hover::before { opacity: 1; }
-  .tl-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-  .tl-date {
+    padding: 0.14rem 0.6rem;
     color: var(--primary-strong);
-    font-size: 0.73rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.025em;
-  }
-  :global([data-theme='dark'] .tl-date) { color: var(--primary-light); }
-  .tl-index {
-    color: var(--text-faint);
+    background: color-mix(in srgb, var(--surface) 62%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, var(--border-light));
+    border-radius: 999px;
     font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.16em;
-    opacity: 0.72;
+    letter-spacing: 0.04em;
   }
-  .tl-title {
+  :global([data-theme='dark'] .year-count) {
+    color: var(--primary-light);
+  }
+  /* 滚动到当前年份 → 徽章亮一些、河段被点亮 */
+  .stream.is-current .medallion {
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 15%, transparent), transparent 66%);
+  }
+  .stream.is-current .medallion-ring {
+    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  }
+
+  /* 锚点年份（只有一条文章）的月份刻度 */
+  .mile-month {
+    position: absolute;
+    z-index: 1;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    padding: 0.12rem 0.5rem;
+    color: var(--primary-strong);
+    background: color-mix(in srgb, var(--surface) 74%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border-light));
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  :global([data-theme='dark'] .mile-month) {
+    color: var(--primary-light);
+  }
+
+  /* ---- 文章节点：河道一侧的卡片 + 朝向河道的连接 ---- */
+  .node.node-post {
+    position: relative;
+    display: flex;
+    padding: 0.5rem 0;
+    /* align-self 让卡片停在河道的某一侧：odd 在左、even 在右 */
+  }
+  .node-post:nth-of-type(odd) {
+    justify-content: flex-start;
+  }
+  .node-post:nth-of-type(even) {
+    justify-content: flex-end;
+  }
+
+  /* 卡片：毛玻璃 + 极轻的边框，保证正文清晰可读 */
+  .mem-card {
+    position: relative;
+    display: block;
+    width: min(48%, 26rem);
+    min-width: 0;
+    padding: 0;
+    color: var(--text);
+    text-decoration: none !important;
+    border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+    border-radius: 1.15rem;
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
+    box-shadow: 0 10px 34px color-mix(in srgb, var(--primary) 8%, transparent), inset 0 1px 0 color-mix(in srgb, white 60%, transparent);
+    backdrop-filter: blur(14px) saturate(130%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.32s ease, box-shadow 0.32s ease,
+      background 0.32s ease;
+  }
+  .mem-card:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: 0 20px 46px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 color-mix(in srgb, white 74%, transparent);
+  }
+
+  /* 朝向河道的连接臂 */
+  .mem-side {
+    position: absolute;
+    top: 50%;
+    display: block;
+    width: 1.9rem;
+    height: 2px;
+    transform: translateY(-50%);
+  }
+  .node-post:nth-of-type(odd) .mem-side {
+    left: 100%;
+  }
+  .node-post:nth-of-type(even) .mem-side {
+    right: 100%;
+  }
+  .mem-line {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent), color-mix(in srgb, var(--primary) 52%, transparent));
+  }
+  .node-post:nth-of-type(even) .mem-line {
+    background: linear-gradient(270deg, color-mix(in srgb, var(--primary) 12%, transparent), color-mix(in srgb, var(--primary) 52%, transparent));
+  }
+
+  /* 记忆节点：同心圆 + 柔和光晕 + 微弱脉冲。
+     --nx 由 JS 写入 —— 节点必须落在河道（蜿蜒）上，不能按卡片中线摆。 */
+  .mem-node {
+    position: absolute;
+    top: 50%;
+    left: var(--nx, 0px);
+    width: 11px;
+    height: 11px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    border: 2px solid color-mix(in srgb, var(--primary) 72%, white);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent), 0 0 16px color-mix(in srgb, var(--primary) 46%, transparent);
+  }
+  .mem-node-core {
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary) 70%, white);
+    opacity: 0.85;
+  }
+  .mem-node-pulse {
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--primary) 52%, transparent);
+    animation: node-pulse 3.6s ease-out infinite;
+  }
+  @keyframes node-pulse {
+    0% {
+      opacity: 0.7;
+      transform: scale(1);
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(2.4);
+    }
+  }
+  .node-post:hover .mem-node {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--primary) 15%, transparent), 0 0 26px color-mix(in srgb, var(--primary) 66%, transparent);
+  }
+
+  /* ---- 卡片内部排版：正文优先，装饰绝不压到标题 ---- */
+  .mem-body {
+    display: block;
+    padding: 0.95rem 1.15rem 1rem;
+  }
+  .mem-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 0.42rem;
+  }
+  .mem-month {
+    color: var(--primary-strong);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+  }
+  :global([data-theme='dark'] .mem-month) {
+    color: var(--primary-light);
+  }
+  .mem-index {
+    color: var(--text-faint);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    opacity: 0.7;
+  }
+  .mem-title {
+    display: block;
+    margin-bottom: 0.34rem;
+    color: var(--text);
+    font-size: clamp(0.95rem, 1.35vw, 1.06rem);
+    font-weight: 700;
+    line-height: 1.5;
+    transition: color 0.22s ease;
+  }
+  .mem-card:hover .mem-title {
+    color: var(--primary-strong);
+  }
+  :global([data-theme='dark'] .mem-card:hover .mem-title) {
+    color: var(--primary-light);
+  }
+  .mem-desc {
     display: -webkit-box;
     overflow: hidden;
-    color: var(--text);
-    font-size: clamp(0.92rem, 1.3vw, 1.04rem);
-    font-weight: 700;
-    line-height: 1.55;
+    color: var(--text-soft);
+    font-size: 0.79rem;
+    line-height: 1.5;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
-    transition: color 0.2s ease;
   }
-  .tl-card:hover .tl-title { color: var(--primary-strong); }
-  :global([data-theme='dark'] .tl-card:hover .tl-title) { color: var(--primary-light); }
-  .tl-tags { overflow: hidden; color: var(--text-faint); font-size: 0.7rem; white-space: nowrap; text-overflow: ellipsis; }
-  .tl-arrow {
-    position: absolute;
-    right: 1rem;
-    bottom: 0.85rem;
+  .mem-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+  }
+  .mem-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    min-width: 0;
+  }
+  .mem-tag {
+    color: var(--text-faint);
+    font-size: 0.67rem;
+    white-space: nowrap;
+  }
+  .mem-more {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.24rem;
     color: var(--primary);
+    font-size: 0.72rem;
+    font-weight: 600;
     opacity: 0;
-    transform: translateX(-5px);
-    transition: opacity 0.22s ease, transform 0.22s ease;
+    transform: translateX(-4px);
+    transition: opacity 0.24s ease, transform 0.24s ease;
   }
-  .tl-card:hover .tl-arrow { opacity: 1; transform: translateX(0); }
+  .mem-card:hover .mem-more {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  /* ---- 入场：进入视口的节点才「浮出水面」 ---- */
+  .js-on .node {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.72s cubic-bezier(0.16, 1, 0.3, 1), transform 0.72s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .js-on .node.is-in {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* ---- 静态 / reduced-motion：一切可见、不动 ---- */
+  .river-static .river-motes {
+    display: none;
+  }
+  .river-static .mem-node-pulse {
+    animation: none;
+  }
+  .river-static .node {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 
   .empty {
     padding: 3rem;
@@ -465,22 +890,76 @@ const riverPathFor = (count: number) => {
     border: 1px dashed var(--border);
     border-radius: var(--radius-lg);
   }
-  @media (max-width: 900px) {
-    .tl-card { width: 44%; }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 1023px) {
+    .mem-card {
+      width: min(56%, 24rem);
+    }
   }
-  @media (max-width: 640px) {
-    .timeline { padding: 0.3rem 0.1rem 1.5rem; }
-    .year { margin-bottom: 2rem; }
-    .year-node { margin-bottom: 0.75rem; }
-    .year-caption { font-size: 0.7rem; }
-    .year-list { gap: 1.1rem; padding: 0.5rem 0; }
-    .tl-item { min-height: 112px; justify-content: flex-end !important; }
-    .tl-dot, .tl-item:nth-of-type(even) .tl-dot { left: 22px; }
-    .tl-card { width: calc(100% - 54px); min-height: 96px; padding: 0.85rem 0.95rem; border-radius: 1rem; }
-    .tl-item:nth-of-type(even) .tl-card::before { inset: 0 auto 0 0; }
-    .tl-tags { display: none; }
+
+  /* 手机：河道收成左侧一条，卡片单列铺满 —— 不再保留桌面端的左右交错 */
+  @media (max-width: 760px) {
+    .river-page {
+      padding-bottom: 1.6rem;
+    }
+    .stream {
+      margin-bottom: 2.2rem;
+    }
+    .node.node-mile {
+      justify-content: flex-start;
+      padding: 1.2rem 0 0.7rem 1.5rem;
+    }
+    .mile-month {
+      left: 1.5rem;
+    }
+    .milestone {
+      gap: 0.6rem;
+    }
+    .milestone-rule {
+      display: none;
+    }
+    .milestone-text {
+      align-items: flex-start;
+      text-align: left;
+    }
+    .node.node-post {
+      padding: 0.4rem 0;
+      /* 卡片从河道右侧铺开，左侧留出节点与连接臂的宽度 */
+      justify-content: flex-end !important;
+    }
+    .mem-card {
+      width: calc(100% - 2.1rem);
+    }
+    .node-post:nth-of-type(odd) .mem-side {
+      left: auto;
+      right: 100%;
+    }
+    .node-post:nth-of-type(odd) .mem-line {
+      background: linear-gradient(270deg, color-mix(in srgb, var(--primary) 12%, transparent), color-mix(in srgb, var(--primary) 52%, transparent));
+    }
+    .mem-side {
+      width: 1.5rem;
+    }
+    .rl-haze {
+      stroke-width: 40;
+    }
+    .rl-skin {
+      stroke-width: 18;
+    }
   }
+
   @media (prefers-reduced-motion: reduce) {
-    .tl-card, .tl-dot { transition: none; }
+    .mem-card,
+    .mem-more {
+      transition: none;
+    }
+    .mem-node-pulse {
+      animation: none;
+    }
+    .river-motes i {
+      animation: none;
+      opacity: 0.4;
+    }
   }
 </style>
