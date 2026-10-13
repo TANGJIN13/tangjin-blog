@@ -298,30 +298,87 @@ const streams = years.map((y, yi) => {
         正确做法：直接比较卡片左右边缘到页面中线的距离，谁近就在那一侧。
       */
       let ampSafe = amp;
+      let center = pr.width / 2;
+      let corridor: { lo: number; hi: number } | null = null;
       if (!mobile) {
-        let room = (pr.width / 2) * 0.94;
+        // 走廊 = 两岸卡片靠河那一侧边缘之间、可以安全行船的区域。
+        // 左侧卡片给出一条右边界 lo，右侧卡片给出一条左边界 hi。
+        let lo = 0;
+        let hi = pr.width;
         for (const el of nodes) {
           const card = el.querySelector<HTMLElement>('.mem-card');
           if (!card) continue;
           const cr = card.getBoundingClientRect();
           const l = cr.left - pr.left;
           const r = cr.right - pr.left;
-          // 卡片靠河那一侧 = 离版心中线更近的那条边
-          const toward = Math.abs(l - pr.width / 2) <= Math.abs(r - pr.width / 2) ? l : r;
-          room = Math.min(room, toward);
+          // ⚠️ 判据是「哪条边离版心中线更近」：
+          //   左边缘更近 → 卡片在**右**侧 → 它的左边缘是走廊右界 hi
+          //   右边缘更近 → 卡片在**左**侧 → 它的右边缘是走廊左界 lo
+          // （早期版本把这两个分支写反了，lo 被推到 813.8、hi 归 0，
+          //   走廊倒置 → 振幅被钳到 4px，河道塌成一条直线。）
+          if (Math.abs(l - pr.width / 2) <= Math.abs(r - pr.width / 2)) {
+            hi = Math.min(hi, l);
+          } else {
+            lo = Math.max(lo, r);
+          }
         }
-        // 再留 26px 余量，河道绝不贴上卡片（实测取 18px 时仍有 0.2px 的擦边）
-        ampSafe = Math.max(16, Math.min(amp, room - 26));
+        // 留 9px 余量，河道边缘不贴上卡片（河身本身还有 ~24px 的模糊宽度，
+        // 因此这个「几何余量」不必太大，视觉上已经很安全）
+        const pad = 9;
+        corridor = { lo: lo + pad, hi: hi - pad };
+        const halfWidth = Math.max(10, (corridor.hi - corridor.lo) / 2);
+        ampSafe = Math.max(6, Math.min(amp, halfWidth));
+        center = (corridor.lo + corridor.hi) / 2;
       }
 
       if (mobile) {
-        const mx = Math.min(34, pr.width * 0.085);
-        riverX = (y: number) => mx + wave(y, amp);
+        // 手机端：河道是左侧一条「运河」，必须整条走在卡片左边缘之外。
+        // 卡片左边缘由最高的那张卡实测得到（不能写死）。
+        let cardLeft = pr.width;
+        for (const el of nodes) {
+          const card = el.querySelector<HTMLElement>('.mem-card');
+          if (!card) continue;
+          cardLeft = Math.min(cardLeft, card.getBoundingClientRect().left - pr.left);
+        }
+        const rail = Math.max(10, Math.min(30, cardLeft - 12));
+        riverX = (y: number) => rail + wave(y, amp);
       } else {
-        // 河道在整页内横向居中：把两边余量对半分给振幅
-        const x1 = wave(0, ampSafe);
-        const x2 = wave(pr.height, ampSafe);
-        const center = pr.width / 2 - (x1 + x2) / 2;
+        /*
+          ⚠️ 河道必须**真正居中在走廊里**，而不是「用首尾两点的均值近似」。
+          早期版本用 center = W/2 - (wave(0)+wave(H))/2 —— 只要页面长度不是
+          波长的整数倍，首尾相位就不对称，(x1+x2)/2 ≠ 波形的真实均值，
+          河道会整体漂向一侧（实测 1440 下偏了约 54px，直接压到右侧卡片上）。
+          正确做法：对河道实际采样，用采样值的真实均值来居中。
+          同时对振幅做一次「包络回夹」：若采样后发现越界，按超出比例缩振幅，
+          保证河道整条都在走廊内（各台阶恰好落在走廊边界时也不会擦到卡片）。
+        */
+        const H = pr.height;
+        const SAMPLES = 96;
+        const build = (a: number) => {
+          const xs: number[] = [];
+          for (let i = 0; i <= SAMPLES; i++) xs.push(wave((H * i) / SAMPLES, a));
+          return xs;
+        };
+        let env = build(ampSafe);
+        // 第 1 步：用真实均值居中
+        const mean = env.reduce((s, v) => s + v, 0) / env.length;
+        center = (corridor!.lo + corridor!.hi) / 2 - mean;
+        // 第 2 步：把居中后的越界量回夹到振幅上
+        let over = 0;
+        for (const v of env) {
+          const x = center + v;
+          over = Math.max(over, corridor!.lo - x, x - corridor!.hi);
+        }
+        if (over > 0) {
+          const span = Math.max(...env) - Math.min(...env);
+          if (span > 0.5) {
+            const k = Math.max(0, (span - 2 * over) / span);
+            ampSafe = Math.max(4, ampSafe * k);
+            env = build(ampSafe);
+            const mean2 = env.reduce((s, v) => s + v, 0) / env.length;
+            center = (corridor!.lo + corridor!.hi) / 2 - mean2;
+          }
+        }
         riverX = (y: number) => center + wave(y, ampSafe);
       }
       const rx = riverX;
@@ -376,17 +433,10 @@ const streams = years.map((y, yi) => {
         // 让河道在年份处自然加宽，年份因此成为河道上的阶段标记。
         if (el.classList.contains('node-mile')) {
           el.style.setProperty('--nx', `${x.toFixed(1)}px`);
-          const lr = (mobile ? 30 : Math.min(58, pr.width * 0.085)).toFixed(1);
-          const lh = (mobile ? 13 : 19).toFixed(1);
-          // 透镜形状：一段很扁的椭圆，用两段对称的贝塞尔画出来
-          lens +=
-            ` M ${(x - +lr).toFixed(1)} ${y.toFixed(1)}` +
-            ` C ${(x - +lr * 0.45).toFixed(1)} ${(y - +lh * 0.5).toFixed(1)},` +
-            ` ${(x + +lr * 0.45).toFixed(1)} ${(y - +lh * 0.5).toFixed(1)},` +
-            ` ${(x + +lr).toFixed(1)} ${y.toFixed(1)}` +
-            ` C ${(x + +lr * 0.45).toFixed(1)} ${(y + +lh * 0.5).toFixed(1)},` +
-            ` ${(x - +lr * 0.45).toFixed(1)} ${(y + +lh * 0.5).toFixed(1)},` +
-            ` ${(x - +lr).toFixed(1)} ${y.toFixed(1)} Z`;
+          // 只画一条很短的横向线段 —— 配合 CSS 的宽描边 + 重度模糊，
+          // 渲染成一片「水在这里铺开」的柔光带，克制而不喧宾夺主。
+          const lr = (mobile ? 26 : Math.min(52, pr.width * 0.075)).toFixed(1);
+          lens += ` M ${(x - +lr).toFixed(1)} ${y.toFixed(1)} L ${(x + +lr).toFixed(1)} ${y.toFixed(1)}`;
         }
 
         const card = el.querySelector<HTMLElement>('.mem-card');
@@ -527,12 +577,16 @@ const streams = years.map((y, yi) => {
     stroke-dasharray: 2 7;
     opacity: 0.62;
   }
-  /* 年份处的「水面透镜」：河道在里程碑附近加宽成一片横向的浅水，
-     年份因此坐在水上，成为河道上的阶段标记。非常淡，只是水的厚度变化。 */
+  /* 年份处的「水面透镜」：河道在里程碑附近加宽成一片横向的浅水。
+     做法是一条很宽、很模糊、极淡的横向「笔画」—— 看起来就是这里的水
+     铺开变浅，而不是一块实心色块（早期用实心 fill 出来是个深色椭圆，很难看）。 */
   .rl-lenses path {
-    fill: color-mix(in srgb, var(--primary) 26%, transparent);
-    filter: blur(7px);
-    opacity: 0.6;
+    fill: none;
+    stroke: color-mix(in srgb, var(--primary-light) 42%, transparent);
+    stroke-width: 12;
+    stroke-linecap: round;
+    filter: blur(11px);
+    opacity: 0.5;
   }
   /* 流光：几条短高光段沿河道缓缓推进，是"水在流"的主要线索。
      非常克制 —— 只有 0.5 的不透明度、14s 走完一轮，远看只是水面上的一点游光。 */
@@ -669,38 +723,50 @@ const streams = years.map((y, yi) => {
     gap: 0.28rem;
     text-align: center;
   }
-  /* 年号背后的徽章：同心圆环，克制地暗示「这是时间刻度」。
-     环要让年号「长在河上」—— 因此环线略实、内侧再补一圈细环，
-     但整体依旧很淡，绝不当光斑把年号糊掉。 */
+  /* 年号背后的徽章：同心圆环 —— 年份是河道上的「阶段地标」，
+     所以它必须真的看得出来是一个落在水上的刻度盘，而不只是一行字。
+     做法：一圈清晰的细环 + 内侧极淡的水色填充 + 一段被河点亮的高光弧。
+     不透明度都压在「看得见但不抢字」的区间内。 */
   .medallion {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: clamp(6rem, 12.5vw, 8.4rem);
-    height: clamp(6rem, 12.5vw, 8.4rem);
+    width: clamp(6.2rem, 13vw, 8.8rem);
+    height: clamp(6.2rem, 13vw, 8.8rem);
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 9%, transparent), transparent 64%);
+    /* 圆盘中心是一层「浅浅的水面」—— 把河道在年号处轻轻托住，
+       让年份看起来坐在水上，而不是被河划过去。 */
+    background: radial-gradient(
+      circle,
+      color-mix(in srgb, var(--surface) 78%, transparent) 0%,
+      color-mix(in srgb, var(--surface) 42%, transparent) 46%,
+      color-mix(in srgb, var(--primary) 13%, transparent) 72%,
+      transparent 100%
+    );
+    backdrop-filter: blur(2px);
     pointer-events: none;
   }
   .medallion-ring {
     position: absolute;
-    inset: 4%;
-    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    inset: 0;
+    border: 1.5px solid color-mix(in srgb, var(--primary) 44%, transparent);
     border-radius: 50%;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+    box-shadow:
+      inset 0 0 14px color-mix(in srgb, var(--primary) 14%, transparent),
+      0 0 20px color-mix(in srgb, var(--primary) 12%, transparent);
   }
   /* 环上再补一段「被河点亮的弧」—— 让年份看起来是河道穿过的节点 */
   .medallion-ring::after {
     content: '';
     position: absolute;
-    inset: -3px;
+    inset: -4px;
     border-radius: 50%;
-    border: 1.5px solid transparent;
-    border-top-color: color-mix(in srgb, var(--primary-light) 70%, transparent);
-    border-right-color: color-mix(in srgb, var(--primary-light) 34%, transparent);
+    border: 2px solid transparent;
+    border-top-color: color-mix(in srgb, var(--primary-light) 88%, transparent);
+    border-right-color: color-mix(in srgb, var(--primary-light) 46%, transparent);
     transform: rotate(-38deg);
-    opacity: 0.8;
+    opacity: 0.85;
   }
   .year-num {
     position: relative;
@@ -779,13 +845,17 @@ const streams = years.map((y, yi) => {
     position: relative;
     display: flex;
     padding: 0.5rem 0;
-    /* align-self 让卡片停在河道的某一侧：odd 在左、even 在右 */
   }
+  /* 卡片停在河道某一侧，并向版心让出一条「行船的水道」——
+     odd 在左（向右让），even 在右（向左让）。
+     让出的宽度就是中央河道可以蜿蜒的走廊，实测约 6.5%（≈52px @ 814）。 */
   .node-post:nth-of-type(odd) {
     justify-content: flex-start;
+    padding-right: 6.5%;
   }
   .node-post:nth-of-type(even) {
     justify-content: flex-end;
+    padding-left: 6.5%;
   }
 
   /* 卡片：毛玻璃 + 极轻的边框，保证正文清晰可读 */
@@ -1036,6 +1106,8 @@ const streams = years.map((y, yi) => {
       padding: 0.4rem 0;
       /* 卡片从河道右侧铺开，左侧留出节点与连接臂的宽度 */
       justify-content: flex-end !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
     }
     .mem-card {
       width: calc(100% - 2.1rem);
