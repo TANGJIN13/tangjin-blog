@@ -61,15 +61,15 @@ const recentPosts = posts.slice(0, 5);
         )}
       </div>
 
-      <!-- 标签为空时给一条替代路径：先按分类逛 -->
+      <!-- 标签为空时给一条替代路径：先按分类筛选 -->
       <section class="tg-alt">
         <div class="section-head">
           <h2 class="section-title"><span class="section-index">01 /</span> 先按分类看看</h2>
-          <a class="section-more" href="/categories/">全部分类 <Icon name="arrow_right" size="0.85rem" /></a>
+          <a class="section-more" href="/search/">全部分类 <Icon name="arrow_right" size="0.85rem" /></a>
         </div>
         <div class="tg-alt-grid">
           {catCounts.map((c) => (
-            <a class="tg-alt-card" href={`/categories/${c.slug}/`}>
+            <a class="tg-alt-card" href={`/search/?cat=${c.slug}`}>
               <span class="tg-alt-icon"><Icon name={c.icon || 'folder'} size="1.15rem" /></span>
               <span class="tg-alt-name">{c.name}</span>
               <span class="tg-alt-count">{c.count} 篇</span>
@@ -103,7 +103,7 @@ const recentPosts = posts.slice(0, 5);
 
       <nav class="tg-back">
         <a href="/archive/"><Icon name="archive" size="0.9rem" />全部归档</a>
-        <a href="/categories/"><Icon name="folder" size="0.9rem" />按分类看</a>
+        <a href="/search/"><Icon name="folder" size="0.9rem" />按分类筛选</a>
         <a href="/search/"><Icon name="search" size="0.9rem" />去搜索</a>
       </nav>
     </div>

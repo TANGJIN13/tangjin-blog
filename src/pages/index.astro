@@ -29,11 +29,6 @@ const fallbackCovers = [
 ];
 const featuredCover = featured?.data.cover ?? fallbackCovers[0];
 const recentPosts = featured ? ordered.slice(1) : ordered;
-
-const catCounts = categories.map((c) => ({
-  ...c,
-  count: posts.filter((p) => p.data.category === c.slug).length,
-}));
 ---
 
 <Base banner>
@@ -52,35 +47,6 @@ const catCounts = categories.map((c) => ({
       <SidebarLeft />
       <!-- 主内容 -->
       <main class="ref-main" id="main-content" aria-label="文章列表">
-        <!-- 快捷导航条：首页 + 归档 -->
-        <section class="block onload-animation" data-reveal style="--rv: 2350ms">
-          <div class="cat-card card-base" id="category-bar">
-            <div class="cat-bar-inner">
-              <a class="cat-pill cat-pill-home is-active" href="/" aria-label="首页">
-                <Icon name="home" size="1.125rem" />
-              </a>
-              <a class="cat-pill" href="/archive/">
-                归档<span class="pill-count">{posts.length}</span>
-              </a>
-              <span class="cat-divider" aria-hidden="true"></span>
-              <div class="cat-scroll-area">
-                <div class="cat-scroll-fade cat-scroll-fade-left" aria-hidden="true"></div>
-                <div class="cat-scroll">
-                  {catCounts.map((c) => (
-                    <a class="cat-pill" href={`/categories/${c.slug}/`}>
-                      {c.name}<span class="pill-count">{c.count}</span>
-                    </a>
-                  ))}
-                </div>
-                <div class="cat-scroll-fade cat-scroll-fade-right" aria-hidden="true"></div>
-              </div>
-              <a class="cat-pill cat-more" href="/categories/" aria-label="查看全部分类">
-                更多<Icon name="arrow_right" size="0.875rem" />
-              </a>
-            </div>
-          </div>
-        </section>
-
         <!-- 文章主编精选 + 最近更新 -->
         {featured && (
           <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 2500ms">
@@ -139,30 +105,6 @@ const catCounts = categories.map((c) => ({
             </div>
           </section>
         )}
-        <script>
-          // 分类条左右渐隐：滚到最左时隐藏左遮罩，滚到最右时隐藏右遮罩
-          (function () {
-            function setup() {
-              const bar = document.getElementById('category-bar');
-              if (!bar || bar.dataset.bound) return;
-              bar.dataset.bound = '1';
-              const scroll = bar.querySelector('.cat-scroll');
-              const fadeL = bar.querySelector('.cat-scroll-fade-left');
-              const fadeR = bar.querySelector('.cat-scroll-fade-right');
-              if (!scroll) return;
-              function update() {
-                const max = scroll.scrollWidth - scroll.clientWidth;
-                if (fadeL) fadeL.style.opacity = scroll.scrollLeft > 4 ? '1' : '0';
-                if (fadeR) fadeR.style.opacity = scroll.scrollLeft < max - 4 ? '1' : '0';
-              }
-              update();
-              scroll.addEventListener('scroll', update, { passive: true });
-              window.addEventListener('resize', update);
-            }
-            setup();
-            document.addEventListener('astro:page-load', setup);
-          })();
-        </script>
       </main>
 
       <!-- 右侧栏 -->
@@ -393,10 +335,8 @@ const catCounts = categories.map((c) => ({
   .section-more:hover { transform: translateX(3px); }
 
   /* 分区之间的定向间距（用户要求"贴近一些"）：
-       · 分类条 → 最新手记：留 0.35rem 的呼吸，不再另加虚线分隔下的大留白
        · 最新手记 → 继续阅读：卡片底部到下一个标题，0.9rem 就够（原来 56~80px）
        · 继续阅读 → 底部分页：留 1.5rem 收尾 */
-  .ref-main > section:has(#category-bar) { margin-bottom: 0; }
   .editorial-feed { margin-bottom: 0.9rem; }
   .recent-feed { margin-bottom: 1.5rem; }
   .editorial-feed .section-head, .recent-feed .section-head {
@@ -453,166 +393,6 @@ const catCounts = categories.map((c) => ({
     .section-edition { font-size: 0.55rem; letter-spacing: 0.04em; }
   }
 
-  /* ===== 分类导航条 =====
-     视觉语言：与站内其他卡片一致 —— 玻璃质感 + 细描边 + 柔和主色，
-     而不是「一排实心药丸」。
-
-     ⚠️ 为什么之前看着丑：药丸的底色用了
-        `color-mix(in srgb, var(--btn-content) 6%, transparent)`，
-        而 --btn-content 是**高饱和紫** oklch(0.55 0.12 282)。
-        6% 的紫压在近白 surface 上会渲染成一层**发灰的藕荷色**，
-        远看像"脏了"；再叠 1px 同色描边，整排药丸显得又胖又闷。
-        激活态又是**整块实心紫**，在浅色水彩页面里格外突兀。
-     改法：底色回归中性（几乎不用紫），主色只出现在**文字/图标和细描边**上；
-        激活态从"实心块"降级为"淡紫底 + 主色字 + 内描边"，重量感立刻下来。 */
-  .cat-card {
-    padding: 0.6rem;
-    border-radius: 1rem;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-  }
-  /* 手机端：整个分类条下移贴近文章 + 整体变窄 */
-  @media (max-width: 767px) {
-    .cat-card { margin-top: 1.25rem; margin-bottom: 0; padding: 0.4rem 0.5rem; }
-    .cat-bar-inner { gap: 0.3rem; }
-    .cat-pill { padding: 0.2rem 0.7rem; font-size: 0.78rem; gap: 0.25rem; }
-    .cat-pill-home { padding: 0.2rem 0.5rem; }
-    .pill-count { font-size: 0.62rem; }
-    .cat-divider { height: 1.1rem; }
-    /* 手机端：分类条与「最新手记」也要贴近，但不要再叠负 margin
-       （容器 gap 已收到 0.5rem，这里只需抹掉多余的自定义间距） */
-    .ref-main > section:has(#category-bar) { margin-bottom: 0; }
-    .ref-main > section:has(#category-bar) + section { margin-top: 0.25rem; }
-  }
-
-  .cat-bar-inner {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-  }
-  /* 首页：宽椭圆图标按钮 */
-  .cat-pill-home {
-    padding: 0.375rem 0.75rem;
-    flex-shrink: 0;
-    color: var(--text-soft);
-    background: transparent;
-    border-color: transparent;
-  }
-  .cat-pill {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.375rem;
-    flex-shrink: 0;
-    padding: 0.375rem 0.95rem;
-    border-radius: 9999px;
-    /* 底色用中性 text 的极淡值（不是主色）→ 不会发藕荷色 */
-    border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
-    background: color-mix(in srgb, var(--text) 3.5%, transparent);
-    color: var(--text-soft);
-    font-size: 0.86rem;
-    font-weight: 500;
-    text-decoration: none !important;
-    white-space: nowrap;
-    transition: background 0.18s ease-out, color 0.18s ease-out, border-color 0.18s ease-out;
-  }
-  .cat-pill:hover {
-    color: var(--primary-strong);
-    background: color-mix(in srgb, var(--primary) 9%, transparent);
-    border-color: color-mix(in srgb, var(--primary) 26%, transparent);
-  }
-  :global([data-theme='dark'] .cat-pill:hover) { color: var(--primary-light); }
-  /* 激活态：淡紫底 + 主色字 + 主色内描边（不再整块实心，重量轻很多） */
-  .cat-pill.is-active {
-    color: var(--primary-strong);
-    background: color-mix(in srgb, var(--primary) 12%, transparent);
-    border-color: color-mix(in srgb, var(--primary) 32%, transparent);
-    font-weight: 600;
-  }
-  :global([data-theme='dark'] .cat-pill.is-active) { color: var(--primary-light); }
-  .cat-pill.is-active:hover {
-    background: color-mix(in srgb, var(--primary) 17%, transparent);
-  }
-  .cat-pill.is-active :global(.icon) { color: var(--primary); }
-  /* 数量徽标：极淡底 + 弱化字，不抢注意力 */
-  .pill-count {
-    font-size: 0.68rem;
-    font-weight: 600;
-    line-height: 1;
-    padding: 0.1rem 0.34rem;
-    border-radius: 9999px;
-    background: color-mix(in srgb, var(--text) 7%, transparent);
-    color: var(--text-faint, var(--text-soft));
-    opacity: 0.85;
-  }
-  .cat-pill.is-active .pill-count {
-    background: color-mix(in srgb, var(--primary) 20%, transparent);
-    color: var(--primary-strong);
-    opacity: 1;
-  }
-  :global([data-theme='dark'] .cat-pill.is-active .pill-count) { color: var(--primary-light); }
-  /* 主页按钮激活态：与其它激活药丸同一套语言 */
-  .cat-pill-home.is-active {
-    color: var(--primary-strong) !important;
-    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
-    border-color: color-mix(in srgb, var(--primary) 32%, transparent) !important;
-  }
-  .cat-pill-home.is-active :global(.icon) { color: var(--primary) !important; }
-  :global([data-theme='dark'] .cat-pill-home.is-active) { color: var(--primary-light) !important; }
-
-  /* 归档与分类之间的竖线分隔 */
-  .cat-divider {
-    width: 1px;
-    align-self: stretch;
-    margin: 0 0.15rem;
-    background: color-mix(in srgb, var(--text) 12%, transparent);
-    flex-shrink: 0;
-  }
-  /* 更多按钮：普通 pill 样式，末尾固定 */
-  .cat-more { margin-left: auto; }
-
-    /* 可横向滚动的分类区 */
-  .cat-scroll-area {
-    flex: 1;
-    min-width: 0;
-    position: relative;
-  }
-  .cat-scroll {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-    scroll-behavior: smooth;
-  }
-  .cat-scroll::-webkit-scrollbar { display: none; }
-
-  /* 手机端药丸更紧凑 */
-  @media (max-width: 767px) {
-  }
-  /* 左右渐隐遮罩 */
-  .cat-scroll-fade {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 2.5rem;
-    pointer-events: none;
-    z-index: 1;
-    transition: opacity 0.3s ease;
-  }
-  .cat-scroll-fade-left {
-    left: 0;
-    background: linear-gradient(to left, transparent, var(--surface));
-    opacity: 0;
-  }
-  .cat-scroll-fade-right {
-    right: 0;
-    background: linear-gradient(to right, transparent, var(--surface));
-    opacity: 1;
-  }
-  :global([data-theme='dark'] .cat-scroll-fade-left) { background: linear-gradient(to left, transparent, var(--surface)); }
-  :global([data-theme='dark'] .cat-scroll-fade-right) { background: linear-gradient(to right, transparent, var(--surface)); }
-
   /* ===== 标签云 ===== */
   .tag-card { padding: 1rem; }
   .tag-cloud { display: flex; flex-wrap: wrap; gap: 0.35rem; }
@@ -648,81 +428,6 @@ const catCounts = categories.map((c) => ({
   }
   .cloud-tag:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
 
-  /* ===== 左侧栏分类列表 ===== */
-  .cat-widget { padding: 0.75rem 0.8rem 0.6rem; }
-  .cat-list {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    transition: max-height 0.35s ease;
-  }
-  .cat-row {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.44rem 0.55rem;
-    border-radius: var(--radius-sm);
-    color: var(--text-soft);
-    font-size: 0.82rem;
-    text-decoration: none !important;
-    /* 占比直接用一条柔和的主色填充铺在行底（--pct 由发布数算出）。
-       不再另加一根横条：名称+胶囊+横条三层结构看着碎，0 篇的分类还会留下一条空线。 */
-    background-image: linear-gradient(90deg,
-      var(--primary-soft) 0 var(--pct, 0%),
-      transparent var(--pct, 0%) 100%);
-    background-repeat: no-repeat;
-    transition: background-color 0.18s ease, color 0.18s ease;
-  }
-  .cat-row:hover { background-color: var(--surface-2); color: var(--primary-strong); }
-  :global([data-theme='dark'] .cat-row:hover) { color: var(--primary-light); }
-  .cat-row-name {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    text-align: left;
-  }
-  .cat-row-count {
-    font-size: 0.68rem;
-    font-weight: 700;
-    padding: 0.08rem 0.45rem;
-    border-radius: 999px;
-    background: var(--surface-2);
-    color: var(--text-faint);
-    flex-shrink: 0;
-    min-width: 1.4rem;
-    text-align: center;
-    transition: background 0.18s ease, color 0.18s ease;
-  }
-  .cat-row:hover .cat-row-count {
-    background: var(--gradient-primary);
-    color: var(--text-on-primary);
-  }
-  /* 折叠：超过 5 条时隐藏 */
-  .cat-list.is-collapsed .cat-row:nth-child(n+6) { display: none; }
-  /* 展开/收起按钮 */
-  .cat-toggle {
-    width: 100%;
-    margin-top: 0.3rem;
-    padding: 0.3rem 0.5rem;
-    border: none;
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--text-faint);
-    font-size: 0.72rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    transition: color 0.15s ease, background 0.15s ease;
-  }
-  .cat-toggle:hover { color: var(--primary); background: var(--surface-2); }
-  .cat-toggle.is-open .cat-toggle-text::after { content: '收起'; }
-  .cat-toggle:not(.is-open) .cat-toggle-text::after { content: '更多'; }
-
   /* 首页文章网格：固定两列（一行两篇），窄屏回退单列
      grid-auto-rows: 1fr —— 让【所有行】都取同一高度（按内容最多的那张算），
      这样无论有没有摘要、摘要长短、电脑端还是手机端单列，卡片都完全等高 */
@@ -746,17 +451,3 @@ const catCounts = categories.map((c) => ({
     .post-list { grid-template-columns: 1fr; }
   }
 </style>
-
-<script>
-  // 左侧栏分类折叠/展开
-  (function () {
-    const list = document.getElementById('cat-list');
-    const btn = document.getElementById('cat-toggle');
-    if (!list || !btn) return;
-    list.classList.add('is-collapsed');
-    btn.addEventListener('click', () => {
-      list.classList.toggle('is-collapsed');
-      btn.classList.toggle('is-open');
-    });
-  })();
-</script>

@@ -84,7 +84,7 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
         <Icon name="calendar" size="0.72rem" /><time datetime={published.toISOString()}>{formatDateTime(published)}</time>
       </span>
       {cat && (
-        <a class="meta-chip is-link" href={`/categories/${cat.slug}/`}>
+        <a class="meta-chip is-link" href={`/search/?cat=${cat.slug}`}>
           <Icon name={cat.icon || 'folder'} size="0.72rem" />{cat.name}
         </a>
       )}

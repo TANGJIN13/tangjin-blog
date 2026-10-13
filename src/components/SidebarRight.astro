@@ -20,6 +20,12 @@ const { full = false } = Astro.props;
 
 const posts = await getPublishedPosts();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
+
+// 分类 + 每个分类的文章数（首页右栏「分类」卡用）
+const catCounts = categories.map((c) => ({
+  ...c,
+  count: posts.filter((p) => p.data.category === c.slug).length,
+}));
 ---
 
 <aside class="ref-sidebar-right" data-variant={full ? 'full' : 'compact'}>
@@ -36,9 +42,27 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
     <CalendarWidget />
   </div>
 
+  <!-- 分类：药丸式分类云（名称 + 计数），最多两行，超出用「全部」进搜索页筛选。
+       全站已无独立分类页，所以这里也走 /search/?q=<分类名>。 -->
+  {catCounts.length > 0 && (
+    <div class="card-base widget-card" data-reveal style="--rv: 2410ms">
+      <h3 class="widget-title">
+        <Icon name="folder" size="1.05rem" /> 分类
+        <a class="widget-more" href="/search/">全部 <Icon name="arrow_right" size="0.72rem" /></a>
+      </h3>
+      <div class="cat-cloud">
+        {catCounts.map((c) => (
+          <a class="cat-chip" href={`/search/?q=${encodeURIComponent(c.name)}`}>
+            {c.name}<em>{c.count}</em>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
   {
     full && (
-      <div class="card-base widget-card" data-reveal style="--rv: 2410ms">
+      <div class="card-base widget-card" data-reveal style="--rv: 2540ms">
         <h3 class="widget-title">
           <Icon name="clock" size="1.05rem" /> 节假日
         </h3>
@@ -47,7 +71,7 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
     )
   }
 
-  <div class="card-base widget-card" data-reveal style="--rv: 2540ms">
+  <div class="card-base widget-card" data-reveal style="--rv: 2670ms">
     <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
     <SiteStats
       postsCount={posts.length}
@@ -60,3 +84,76 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
 
   <slot />
 </aside>
+
+<style>
+  /* 「分类」卡右侧的「全部」链接：吃进 widget-title 的 flex，
+     把那条渐隐细线（::after）让位给链接本身。 */
+  .widget-title .widget-more {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--text-faint);
+    text-decoration: none;
+    padding: 0.16rem 0.42rem;
+    border-radius: 999px;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+  .widget-title .widget-more:hover {
+    color: var(--primary-strong);
+    background: var(--surface-2);
+  }
+  :global([data-theme='dark']) .widget-title .widget-more:hover {
+    color: var(--primary-light);
+  }
+  /* 「全部」占了右侧空间，标题后的渐隐线就没必要了 */
+  .widget-title:has(.widget-more)::after { display: none; }
+
+  /* 药丸式分类云：中性极淡底 + 细描边，主色只落在文字/计数上，
+     避免高饱和实心块在浅色水彩页面里过重。 */
+  .cat-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.34rem;
+    /* 最多两行：第 3 行起的药丸裁掉，视觉上就是"两行封顶" */
+    max-height: calc(2 * 1.68rem + 0.34rem);
+    overflow: hidden;
+  }
+  .cat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.26rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--text-soft);
+    text-decoration: none !important;
+    background: color-mix(in srgb, var(--text) 3.5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+    transition: color 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  }
+  .cat-chip em {
+    font-style: normal;
+    font-size: 0.62rem;
+    font-weight: 700;
+    padding: 0 0.28rem;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-faint);
+  }
+  .cat-chip:hover {
+    color: var(--text-on-primary);
+    background: var(--gradient-primary);
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px oklch(62% 0.14 282 / 0.28);
+  }
+  .cat-chip:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
+</style>
