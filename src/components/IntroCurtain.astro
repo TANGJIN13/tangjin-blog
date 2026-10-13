@@ -1,0 +1,543 @@
+---
+// 入站动画 —— 「水墨开卷」
+//
+// 一条完整的时间轴，约 3.4s，四段：
+//   ①  0.00s 墨滴落纸：一滴墨从正中落下，在宣纸上晕开（canvas 粒子 + 纸纹）
+//   ②  0.35s 游丝走笔：墨丝沿标题字形游走，把轮廓「描」出来
+//   ③  0.35s 落笔成题：站点名按笔顺自左向右写实，下方小字与细线依次浮出
+//   ④  2.30s 卷帘上掀：整幕向上卷起，主页随之「推近 → 回落」，完成镜头交接
+//
+// 为什么用 canvas 而不是纯 CSS：
+//   纯 CSS 做不到「墨滴在随机方向游走」「纸纹颗粒」这类有机形态；
+//   而逐帧对齐也更容易——canvas 里 rAF 自己掌握时间轴，不存在 CSS 交错延迟算错帧的问题。
+//
+// 设计约束（每一条都踩过坑）：
+//   · 只在**硬加载**播一次；SPA 软导航（ClientRouter）换页不重播 —— sessionStorage 记标记
+//   · 尊重 prefers-reduced-motion：直接跳过，不做任何遮挡
+//   · 幕布在 HTML 里就是完整一屏（100dvh），不靠 CSS 动画撑开，避免首帧露缝
+//   · 播放期间锁滚动；结束 remove()，不留 DOM / rAF 残留
+//   · 点击 / Esc / Enter 可随时跳过
+import { site } from '../site';
+
+const title = site.title;
+
+// ⚠️ 为什么这段 CSS 不写在下面 <style> 里：
+//    Astro 会把 <style> 打包成**外链** CSS 文件，而上面 Base.astro 里那段「抢首帧」的
+//    内联脚本走的是同步路径 —— 内联脚本执行时外链 CSS 还没下载解析完，
+//    html.intro-pending 那一刻命中的是「没有任何样式」的裸 HTML，于是会先画一帧白底 +
+//    没有定位的裸文字，再被样式追上。表现就是「闪一下白」。所以这里把**首帧必需**的
+//    几条规则（幕布底色 / 铺满 / 盖住一切 / 藏住标题）作为 style 内联输出，
+//    先于任何渲染生效；其余非首帧关键的规则继续留在 <style> 里。
+const criticalCss = `
+.intro-curtain{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;overflow:hidden;cursor:pointer;background:var(--bg)}
+.ic-paper{position:absolute;inset:0;display:block;width:100%;height:100%}
+.ic-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:.95rem;padding-inline:1.5rem;text-align:center;transform:translateY(-2vh);min-height:9rem;justify-content:center}
+.ic-title{position:relative;margin:0;font-family:var(--font-display);font-size:clamp(2.4rem,8.4vw,5.4rem);font-weight:600;letter-spacing:-.025em;line-height:1.14;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--text) 42%,transparent);white-space:nowrap}
+/* 关键：给标题一个「写完后的最终占位」。::after 的实心字是绝对定位、宽度跟着 clip-path 走，
+   但底层描边的宽度是**固定的完整标题宽度** —— 只要拿它做占位，整个 flex 舞台在书写过程中
+   就不会因为「当前写到第几个字」而反复重新居中（那会让标题一路往右上漂）。 */
+.ic-title::after,
+.ic-title::before{pointer-events:none}
+.ic-veil{position:absolute;inset:0;background:transparent;pointer-events:none;border-radius:0}
+.ic-title::after{content:attr(data-text);position:absolute;inset:0;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;-webkit-text-stroke:0;clip-path:inset(0 100% 0 0)}
+.ic-title::before{content:'';position:absolute;top:-8%;bottom:-8%;left:0;width:2px;background:linear-gradient(180deg,transparent,var(--primary),transparent);opacity:0}
+`;
+---
+
+<div id="intro-curtain" class="intro-curtain" role="presentation">
+  <style is:inline set:html={criticalCss}></style>
+  <!-- 纸面：极淡的纸纹 + 中心柔光，整个动画的底 -->
+  <canvas class="ic-paper" aria-hidden="true"></canvas>
+
+  <!-- 舞台：标题 / 小字 / 细线，用 CSS 做「书写」 -->
+  <div class="ic-stage">
+    <h1 class="ic-title" data-text={title}>{title}</h1>
+    <p class="ic-sub">WEB SECURITY &nbsp;·&nbsp; CTF &nbsp;·&nbsp; JOURNAL</p>
+    <span class="ic-line" aria-hidden="true"></span>
+  </div>
+
+  <!-- 卷帘：动画最后向上掀起的那一整块。
+       ⚠️ 关键：它必须**透明**。它盖在 canvas 之上（canvas 没有 z-index，
+       而它是后来者、又带 position，所以天然压在 canvas 上面），
+       如果给它不透明底色，墨滴和游丝就被整块糊掉了 —— 表现为「每帧都在画但什么都看不见」。
+       幕布的整体底色交给 .intro-curtain 自己，卷帘只负责最后那一刻的位移。 -->
+  <div class="ic-veil" aria-hidden="true"></div>
+
+  <span class="ic-skip">点击任意处跳过</span>
+</div>
+
+<script is:inline>
+  (function () {
+    var KEY = 'intro-played';
+    var el = document.getElementById('intro-curtain');
+    if (!el) { document.documentElement.classList.remove('intro-pending'); return; }
+
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    var seen = false;
+    try { seen = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+
+    // 已看过 / 用户偏好减少动态 → 立刻移除，不做任何遮挡
+    if (reduce || seen) {
+      el.remove();
+      document.documentElement.classList.remove('intro-pending');
+      return;
+    }
+    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+
+    document.documentElement.classList.add('intro-lock');
+    el.classList.add('is-running');
+    document.documentElement.classList.add('is-intro');
+
+    /* ================= 时间轴（ms） =================
+       节奏原则：墨滴与书写**重叠**推进，而不是排队。
+       总长约 2.4s（含 0.9s 揭幕），比原先砍掉近三分之一 —— 入站动画的黄金法则是
+       「看一眼就完」，多留 1 秒都是在惩罚回访者。 */
+    var T = {
+      blot: 0,        // 墨滴落下
+      thread: 200,    // 游丝开始走（和书写几乎同时，边落墨边写字）
+      write: 460,     // 书写开始
+      lift: 1580,     // 卷帘上掀
+      end: 2500
+    };
+
+    var dots = window.innerWidth < 640 ? 520 : window.innerWidth < 1024 ? 720 : 900;
+    el.style.setProperty('--ic-stroke', dots + '');
+    var titleEl = el.querySelector('.ic-title');
+    var titleChars = ((titleEl && titleEl.getAttribute('data-text')) || '').replace(/\s/g, '').length || 8;
+    // 书写时长跟字数走：字多给宽一点，保证「一笔一笔」看得出来
+    var writeMs = Math.max(700, Math.min(1050, titleChars * 78));
+    el.style.setProperty('--ic-write', writeMs + 'ms');
+    var writeDelay = T.write;
+
+    /* ================= canvas：墨滴 + 游丝 + 纸纹 ================= */
+    var cv = el.querySelector('.ic-paper');
+    var ctx = cv && cv.getContext ? cv.getContext('2d') : null;
+    var W = 0, H = 0, DPR = 1;
+
+    // 主题色：从 CSS 变量里读，亮/暗自动跟着走。
+    // ⚠️ canvas 的 fillStyle 不认 oklch()，也不认 color-mix() —— 直接丢进去会被**静默忽略**，
+    //    结果就是「每一帧都在画，但什么都看不见」。所以这里先把变量交给浏览器解析成
+    //    rgb() 三通道，再由我们自己拼 rgba()。
+    var cs = getComputedStyle(document.documentElement);
+    function channels(name, fallback) {
+      var raw = (cs.getPropertyValue(name) || '').trim() || fallback;
+      var probe = document.createElement('span');
+      probe.style.color = raw;
+      document.body.appendChild(probe);
+      var rgb = getComputedStyle(probe).color; // 浏览器已归一为 "rgb(r, g, b)"
+      probe.remove();
+      var m = rgb.match(/[\d.]+/g) || [];
+      if (m.length < 3) return [110, 92, 200];
+      return [+m[0], +m[1], +m[2]];
+    }
+    var INK = channels('--primary', 'oklch(61% 0.105 282)');
+    var WARM = channels('--accent', 'oklch(72% 0.09 15)');
+    // 纸纹颗粒的色相要跟着主题走：亮色纸上是淡紫灰，暗色纸上必须换成浅色才看得见
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var GRAIN = dark ? 'rgba(210,206,240,0.055)' : 'rgba(96,88,140,0.05)';
+    var GLOW = dark ? 0.16 : 0.42;   // 中心柔光的强度
+    function ink(a, warm) {
+      var c = warm ? WARM : INK;
+      return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
+    }
+
+    function resize() {
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      W = window.innerWidth;
+      H = window.innerHeight;
+      cv.width = Math.round(W * DPR);
+      cv.height = Math.round(H * DPR);
+      cv.style.width = W + 'px';
+      cv.style.height = H + 'px';
+      if (ctx) ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    }
+
+    // 墨丝：从中心向外游走的短笔触，速度带噪声，越远越淡
+    var threads = [];
+    function seedThreads() {
+      threads = [];
+      var n = W < 640 ? 26 : 46;
+      var maxR = Math.hypot(W, H) * 0.46;
+      for (var i = 0; i < n; i++) {
+        var a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
+        threads.push({
+          a: a,
+          // 每个笔触单独的速度 / 长度 / 弯曲
+          sp: 0.34 + Math.random() * 0.5,
+          len: maxR * (0.42 + Math.random() * 0.62),
+          curve: (Math.random() - 0.5) * 0.9,
+          w: 0.7 + Math.random() * 1.7,
+          warm: Math.random() < 0.28,        // 少量取杏粉色，避免整片死紫
+          delay: Math.random() * 0.22
+        });
+      }
+    }
+
+    // 纸纹：一次性烘到离屏画布上，每帧只 drawImage，省算力
+    var paper = document.createElement('canvas');
+    function bakePaper() {
+      paper.width = Math.round(W * DPR);
+      paper.height = Math.round(H * DPR);
+      var pc = paper.getContext('2d');
+      pc.setTransform(DPR, 0, 0, DPR, 0, 0);
+      // 底板：一张接近纸色的浅底，让后面的墨有「纸」可落
+      pc.clearRect(0, 0, W, H);
+      // 中心柔光：四角略沉，中心微亮（暗色主题下要弱得多，否则整块发灰）
+      var g = pc.createRadialGradient(W / 2, H * 0.46, 0, W / 2, H * 0.46, Math.max(W, H) * 0.72);
+      g.addColorStop(0, 'rgba(255,255,255,' + GLOW + ')');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      pc.fillStyle = g;
+      pc.fillRect(0, 0, W, H);
+      // 颗粒：稀疏散布的小点，模拟宣纸的纤维感（不需要逐像素循环，几万个点足够）
+      var n = Math.round(W * H / 26);
+      pc.fillStyle = GRAIN;
+      for (var i = 0; i < n; i++) {
+        var x = Math.random() * W;
+        var y = Math.random() * H;
+        var r = Math.random() < 0.82 ? 0.6 : 1.1;
+        pc.fillRect(x, y, r, r);
+      }
+    }
+
+    function ease(t) { return 1 - Math.pow(1 - t, 3); }
+
+    var start = 0;
+    var raf = 0;
+    var done = false;
+
+    function draw(now) {
+      if (!start) start = now;
+      var e = now - start;               // 已过去的时间
+      var t = Math.min(1, Math.max(0, (e - T.blot) / 900));       // 墨滴进度
+      var tt = Math.min(1, Math.max(0, (e - T.thread) / 1500));   // 游丝进度
+      var cx = W / 2, cy = H * 0.46;
+      var maxR = Math.hypot(W, H) * 0.46;
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.drawImage(paper, 0, 0, W, H);
+
+      // ---- 墨团：一团软墨，先浓后匀 ----
+      var inK = ease(t);
+      if (inK > 0) {
+        var r0 = (W < 640 ? 0.30 : 0.22) * Math.min(W, H) * (0.35 + inK * 1.5);
+        var a0 = 0.34 * inK * (1 - Math.max(0, (e - 1500) / 1400) * 0.55);
+        var rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r0);
+        rg.addColorStop(0, ink(a0));
+        rg.addColorStop(0.45, ink(a0 * 0.5));
+        rg.addColorStop(1, ink(0));
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // ---- 游丝：一支一支从中心甩出去 ----
+      if (tt > 0) {
+        ctx.lineCap = 'round';
+        for (var i = 0; i < threads.length; i++) {
+          var s = threads[i];
+          var p = Math.min(1, Math.max(0, (tt - s.delay) / (1 - s.delay || 1)));
+          if (p <= 0) continue;
+          var pe = ease(p);
+          var len = s.len * pe;
+          var fade = Math.sin(Math.PI * Math.min(1, pe * 1.05)); // 两头淡中间浓
+          ctx.beginPath();
+          var steps = 26;
+          for (var k = 0; k <= steps; k++) {
+            var q = (k / steps) * len;
+            var ang = s.a + s.curve * (q / maxR) * 1.5;
+            var x = cx + Math.cos(ang) * q;
+            var y = cy + Math.sin(ang) * q * 0.9;
+            if (k === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = ink(0.22 * fade, s.warm);
+          ctx.lineWidth = s.w;
+          ctx.stroke();
+        }
+      }
+
+      if (!done) raf = requestAnimationFrame(draw);
+    }
+
+    /* ================= 起播 ================= */
+    if (ctx) {
+      resize();
+      bakePaper();
+      seedThreads();
+      raf = requestAnimationFrame(draw);
+    } else {
+      el.classList.add('no-canvas'); // 极老浏览器：只留 CSS 那部分
+    }
+    window.addEventListener('resize', function () {
+      if (!ctx || done) return;
+      resize(); bakePaper();
+    });
+
+    /* ================= 收尾 =================
+       只有一条收尾路径（teardown），由三处共同驱动：
+         · 时间轴走到 T.lift → 正常揭幕
+         · 用户点击 / 按键 → 跳过
+         · 兜底定时器 → 标签页被挂起导致 rAF 停摆时保底
+       三者都可能先到，所以用 `torn` 做**幂等**闸门：第一个到的执行，后面的直接返回。
+       ⚠️ 之前这里有一个「跳过失效」的坑：闸门用的是 `done`，而时间轴回调先把 done 置 true
+          再走自己的收尾分支 —— 于是 T.lift 之后用户再点，skip() 里的 finish() 看到 done=true
+          立刻 return，幕布永远留在页面上（实测 curtain:true / pending:true）。 */
+    var torn = false;
+    var endTimer = 0;
+    var fallbackTimer = 0;
+    function teardown(instant) {
+      if (torn) return;
+      torn = true;
+      done = true;
+      if (raf) cancelAnimationFrame(raf);
+      if (endTimer) clearTimeout(endTimer);
+      if (fallbackTimer) clearTimeout(fallbackTimer);
+
+      // 放行挂起队列里的动画（标题书写 → 小字 / 细线 → 卷帘上掀）
+      el.classList.add('ic-live');
+      document.documentElement.classList.remove('intro-lock');
+      document.documentElement.classList.remove('is-intro');
+
+      // 跳过时不要让人干等 1s 的书写动画：直接跳到揭幕
+      var hold = instant ? 0 : writeMs + 200;
+      window.setTimeout(function () {
+        // 兜底：万一 animationend 没来（标签页切走等），也把幕布摘掉
+        var removed = false;
+        function drop() {
+          if (removed) return;
+          removed = true;
+          el.remove();
+          document.documentElement.classList.remove('intro-pending');
+        }
+        el.addEventListener('animationend', function (ev) {
+          if (ev.animationName === 'ic-curtain-up') drop();
+        });
+        el.classList.add('is-gone');
+        window.setTimeout(drop, 900);
+      }, hold);
+    }
+
+    // 时间轴到点：正常揭幕
+    endTimer = window.setTimeout(function () { teardown(false); }, T.lift);
+
+    // 跳过 = 直接到终点
+    function skip() { teardown(true); }
+    el.addEventListener('click', skip);
+    window.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') skip();
+    });
+
+    // 兜底：标签页被挂起导致 rAF 停摆时，也要收尾
+    fallbackTimer = window.setTimeout(function () {
+      if (!el.isConnected) return;
+      if (!torn) teardown(false);
+    }, T.lift + 2600);
+
+    // SPA 软导航（ClientRouter）的收尾 —— 这里有个容易漏掉的坑：
+    //   换页时新页面的 HTML 会被整体替换进来，其中**也包含一份** #intro-curtain。
+    //   新节点上的 <script is:inline> 在 ClientRouter 的替换流程里**不会重新执行**
+    //   （内联脚本只在整页加载时跑），所以那份幕布会以「可见、满屏」的状态留在页面上
+    //   （实测：切到 /archive/ 后 count:1、h:900）。
+    //   因此必须自己监听 astro:page-load —— 它每次换页都会触发 —— 把多余的幕布清掉。
+    function sweep() {
+      if (!document.documentElement.classList.contains('intro-pending')) {
+        var stale = document.querySelectorAll('#intro-curtain');
+        for (var i = 0; i < stale.length; i++) stale[i].remove();
+        document.documentElement.classList.remove('intro-lock', 'is-intro');
+      }
+    }
+    document.addEventListener('astro:before-swap', sweep);
+    document.addEventListener('astro:page-load', sweep);
+  })();
+</script>
+
+<style>
+  /* ===== 根上挂一个「动画未定」标记，供首屏防抖用 =====
+     ⚠️ html / body 上**只能有一个** overflow:hidden！
+     这里同时给 html 和 body 挂 overflow，会命中一个老坑：
+     body 一旦被设成 overflow:hidden，它自身仍会按内容撑高；
+     而 .intro-curtain 是 position:fixed —— fixed 元素的包含块是**最近的、带 transform 的祖先**。
+     播放期间 body 正好带 transform（ic-page-in 镜头推近），于是幕布不再以视口为参照，
+     而是以 body 的**整个文档高度**为参照 → 它在布局里被撑成 1845px（视口才 900），
+     居中的标题跟着跑到 y=827，直接被裁到屏幕外。
+     解法：只锁 html。body 不设 overflow，幕布就老老实实贴合视口。 */
+  html.intro-pending,
+  html.intro-lock { overflow: hidden; }
+  /* ===== 幕布本体 / 纸面 / 舞台 / 标题 / 卷帘的**首帧关键样式**已内联在组件顶部
+     （见 criticalCss，原因写在那边），这里只放「非首帧必需」的部分。 ===== */
+
+  .intro-curtain.no-canvas .ic-paper {
+    background: radial-gradient(120% 90% at 50% 44%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 70%);
+  }
+
+  /* 上层实心字：clip-path 自左向右「写」出来 */
+  .ic-title::after {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  /* 笔尖：跟着书写进度游走的一小束光 */
+  .ic-title::before {
+    content: '';
+    position: absolute;
+    top: -8%;
+    bottom: -8%;
+    left: 0;
+    width: 2px;
+    background: linear-gradient(180deg, transparent, var(--primary), transparent);
+    box-shadow: 0 0 20px 5px color-mix(in srgb, var(--primary) 50%, transparent);
+    opacity: 0;
+  }
+  /* 时间轴到达后由 JS 加 .ic-live，才把这两段动画挂上（避免首帧就抢跑） */
+  .intro-curtain.ic-live .ic-title::after {
+    animation: ic-write var(--ic-write, 900ms) cubic-bezier(0.66, 0.02, 0.3, 1) both;
+  }
+  .intro-curtain.ic-live .ic-title::before {
+    animation: ic-pen var(--ic-write, 900ms) cubic-bezier(0.66, 0.02, 0.3, 1) both;
+  }
+  @keyframes ic-write {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0 0 0); }
+  }
+  @keyframes ic-pen {
+    0%   { left: 0%; opacity: 0; }
+    10%  { opacity: 0.95; }
+    90%  { opacity: 0.9; }
+    100% { left: 100%; opacity: 0; }
+  }
+
+  .ic-sub {
+    margin: 0;
+    color: var(--text-soft);
+    font-family: var(--font-mono);
+    font-size: clamp(0.56rem, 1.5vw, 0.7rem);
+    letter-spacing: 0.4em;
+    /* 字距是加在**每个字后面**的，末字多出一份 → 用 text-indent 补回来，视觉才真正居中。
+       另外书写阶段标题宽度是「变化中」的，父级 flex 会跟着抖；
+       这里给一行不许换行的宽度约束，避免小字被挤到左边贴边。 */
+    text-indent: 0.4em;
+    white-space: nowrap;
+    opacity: 0;
+  }
+  .intro-curtain.ic-live .ic-sub {
+    animation: ic-sub-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ic-write, 900ms) * 0.62) both;
+  }
+  @keyframes ic-sub-in {
+    from { opacity: 0; transform: translateY(10px); letter-spacing: 0.6em; filter: blur(5px); }
+    to   { opacity: 1; transform: translateY(0); letter-spacing: 0.4em; filter: blur(0); }
+  }
+
+  .ic-line {
+    display: block;
+    width: min(56vw, 21rem);
+    height: 1px;
+    margin-top: 0.35rem;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--primary) 58%, transparent), transparent);
+    transform: scaleX(0);
+    transform-origin: center;
+  }
+  .intro-curtain.ic-live .ic-line {
+    animation: ic-line-out 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ic-write, 900ms) * 0.4) both;
+  }
+  @keyframes ic-line-out {
+    from { transform: scaleX(0); opacity: 0; }
+    to   { transform: scaleX(1); opacity: 1; }
+  }
+
+  /* ===== 跳过提示：淡入得晚、消失得早，不打扰 ===== */
+  .ic-skip {
+    position: absolute;
+    left: 50%;
+    bottom: clamp(1.6rem, 5vh, 3rem);
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    color: var(--text-faint);
+    opacity: 0;
+    animation: ic-skip-in 0.8s ease 1.6s both;
+    pointer-events: none;
+  }
+  @keyframes ic-skip-in { to { opacity: 0.6; } }
+
+  /* 底下的「字痕」在书写阶段就是主角：墨把字写出来之前，读者先看到字的骨架。
+     太淡会像没画完，太浓又抢实心字的戏 —— 42% 是实测下来「看得出字形、又不与实心字打架」的位置。
+     实心字写满后，这层描边会被完全盖住，不会留双线。 */
+
+  /* 暗色主题：墨底是深蓝紫，描边要用更亮的色，否则字形糊在纸里。
+     ⚠️ Astro 的 scoped <style> 会把 `[data-theme='dark'] .foo` 这种**前缀写法**整条丢掉
+     （编译后选择器里根本不存在）。必须把整条包进 :global(...)，见本项目既有约定。 */
+  :global([data-theme='dark'] .ic-title) {
+    -webkit-text-stroke-color: color-mix(in srgb, var(--text) 58%, transparent);
+  }
+
+  /* ===== ④ 卷帘上掀 =====
+     .ic-veil 是**透明**的（原因见组件顶部注释：它压在 canvas 之上，不透明会把墨全糊掉），
+     所以抬升必须由幕布本体自己完成 —— 连同它身上的纸色一起向上卷走。
+     veil 只补一个底缘圆角，让抬起的那一瞬像纸被卷起来，而不是一块硬板滑走。 */
+  .intro-curtain.ic-live {
+    animation: ic-curtain-up 0.92s cubic-bezier(0.72, 0, 0.2, 1) var(--ic-write, 900ms) both;
+  }
+  .intro-curtain.ic-live .ic-veil {
+    animation: ic-veil-round 0.92s cubic-bezier(0.72, 0, 0.2, 1) var(--ic-write, 900ms) both;
+  }
+  @keyframes ic-curtain-up {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-101.5%); }
+  }
+  @keyframes ic-veil-round {
+    from { border-radius: 0 0 0 0; }
+    to   { border-radius: 0 0 52% 52% / 0 0 11% 11%; }
+  }
+
+  /* 幕布升起的同时，主页「推近 → 回落」，形成镜头交接。
+     时长 1.5s 比上掀的 0.92s 略长 —— 让主页的回落落后于幕布一拍，
+     结束时刚好稳下来，不会有「拉过头再弹回」的滞涩感。
+
+     ⚠️⚠️ 这段「推近」**不能**作用在 <html> 或 <body> 上 —— 这是本项目踩得最深的一个坑：
+       给 html / body 任何一个加 transform（或 filter / perspective），
+        它就会成为 position:fixed 元素的**包含块**。
+       而幕布 .intro-curtain 正是 fixed + inset:0，本该贴合视口（900px）。
+       一旦 html 成了包含块，幕布改按**整个文档盒**计尺寸 → 实测被撑到 1845~1928px
+       （body.scrollHeight 的高度），居中后的标题掉到 y≈827，被整个推到屏幕外。
+       实测对照：documentElement 去掉 is-intro → 幕布高度立刻从 1848px 回到 900px。
+
+     正确做法：推近挂在 #page 这个内层包壳上（它只包内容、不包幕布）。
+     幕布的包含块因此仍是视口，位置永远准。 */
+  html.is-intro .main-layout {
+    animation: ic-page-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transform-origin: 50% 30%;
+  }
+  @keyframes ic-page-in {
+    from { transform: scale(1.045); filter: saturate(0.78) brightness(1.05); }
+    to   { transform: scale(1); filter: none; }
+  }
+
+  /* 播放期间禁滚动：只锁 html（原因见上面 intro-pending 的注释），body 保持原样 */
+
+  /* 收尾：整幕再退一次场，避免揭幕瞬间的硬切 */
+  .intro-curtain.is-gone {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
+  }
+
+  /* 减少动态偏好：完全不参与（JS 已提前 return，这里再兜一层） */
+  @media (prefers-reduced-motion: reduce) {
+    .intro-curtain { display: none !important; }
+  }
+
+  /* 小屏：标题不许换行、字距收一档 */
+  @media (max-width: 640px) {
+    .ic-title { font-size: clamp(1.9rem, 10.5vw, 3rem); letter-spacing: -0.01em; }
+    .ic-stage { transform: translateY(-3vh); gap: 0.8rem; }
+  }
+</style>

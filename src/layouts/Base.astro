@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { site } from '../site';
 import Icon from '../components/Icon.astro';
+import IntroCurtain from '../components/IntroCurtain.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
 import ImageZoom from '../components/ImageZoom.astro';
 import SakuraEffect from '../components/SakuraEffect.astro';
@@ -75,6 +76,18 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 入站动画在首屏绘制前就把标记挂上：这样浏览器不会先画一帧首页再盖上幕布，
+         也不会因为幕布还没进场而先滑出滚动条。脚本是同步的，解析到这里立即生效。
+         sessionStorage 里已有标记（软导航 / 本会话看过）时立刻撤掉，不做任何遮挡。 -->
+    <script is:inline>
+      (function () {
+        try {
+          if (sessionStorage.getItem('intro-played') === '1') return;
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        } catch (e) {}
+        document.documentElement.classList.add('intro-pending');
+      })();
+    </script>
     <!-- 首屏壁纸预加载：让首页大图在解析 body 之前就开始下载，做到「秒出」。
          注意：这里的第一张要和 WallpaperBanner 默认 images 数组的第一张保持一致。 -->
     <link rel="preload" as="image" type="image/avif" href="/images/wallpapers/banner-pastel-01.avif" fetchpriority="high" />
@@ -112,6 +125,11 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <ClientRouter />
   </head>
   <body class:list={[{ 'has-banner': hasBanner }]}>
+    <!-- 入站动画：必须是 body 的第一个元素，才能压住导航与浮动按钮（硬加载时只播一次）。
+         它靠 position:fixed + inset:0 铺满视口，所以播放期间 **html 和 body 都不许带
+         transform / filter / perspective**（详见 IntroCurtain.astro 里的说明）。 -->
+    <IntroCurtain />
+
     <!-- 阅读进度条 -->
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
 

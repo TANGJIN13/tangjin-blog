@@ -35,14 +35,10 @@ const catCounts = categories.map((c) => ({
 ---
 
 <Base banner>
-  <WallpaperBanner height="clamp(410px, 60vh, 620px)" mobileHeight="clamp(350px, 58vh, 510px)">
-    <div class="home-hero">
-      <span class="home-hero-eyebrow">TJ'S JOURNAL · 2026</span>
-      <h1>把每一次好奇，<br /><em>写成自己的故事。</em></h1>
-      <p>Web 安全 · CTF · 日常碎片</p>
-      <a class="home-hero-link" href="#latest-notes">往下看看 <Icon name="arrow_down" size="0.9rem" /></a>
-    </div>
-  </WallpaperBanner>
+  <!-- 壁纸文字：交给 WallpaperBanner 自带的「书法潦草句子」轮播（内容来自 site.mottos）。
+       之前这里塞了自定义的 <slot>（「把每一次好奇…」+ 一行 Web 安全·CTF），
+       把原来那套有哲理的书法句子顶掉了 —— 现在撤掉 slot，恢复成原来那种。 -->
+  <WallpaperBanner height="clamp(410px, 60vh, 620px)" mobileHeight="clamp(350px, 58vh, 510px)" />
 
   <!-- 三栏内容 -->
   <div class="container">
