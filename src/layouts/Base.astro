@@ -42,7 +42,9 @@ const {
 } = Astro.props;
 
 // 只有真实媒体横幅才启用覆盖导航；普通页面使用编辑式标题区。
-const hasBanner = banner;
+// ⚠️ 内页（pageBanner）现在也渲染 WallpaperBanner，所以同样要让导航"悬浮其上"，
+//    否则会在壁纸上多留一条导航高度的白边。两种横幅都算 hasBanner。
+const hasBanner = banner || pageBanner;
 
 // 全站统一的 WebSite 结构化数据（帮助搜索引擎理解站点）
 const websiteLd = {
@@ -264,10 +266,19 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
               内容会暗一段再亮回来，观感是"发灰"。让错峰只发生在**一层**里，才不会打架。
          内页（没有独立区块错峰的）由 .main-layout 兜底淡入，见 <head> 里的 CSS。 -->
     <main class="main-layout">
-      <!-- 内页共享标题区：柔和留白让内容优先，横幅只留给首页与文章封面 -->
+      <!-- 内页横幅：与首页**同一套**水彩轮播壁纸 + 底部波浪。
+           用户要求"其他页面也要和首页一样有壁纸"，所以这里不再用纯文字的 .page-intro，
+           而是直接复用 WallpaperBanner（slot 模式，放本页的图标 + 标题 + 描述）。
+           复用同一个组件的好处：轮播 / 波浪 / 渐变 / 星光(非 slot 模式才开) / 关掉冲突动画
+           这些逻辑只有一份，内页自动跟首页保持一致。
+           高度比首页矮（不抢内容），且手机端也保留（用户希望所有页面都有）。 -->
       {pageBanner && (
-        <section class="page-intro">
-          <div class="page-intro-inner container">
+        <WallpaperBanner
+          height="clamp(300px, 42vh, 460px)"
+          mobileHeight="clamp(230px, 34vh, 340px)"
+          mobile
+        >
+          <div class="wp-page-head">
             <span class="page-intro-kicker">TJ'S BLOG <span aria-hidden="true">/</span> EXPLORE</span>
             <div class="page-intro-title-row">
               {bannerIcon && <span class="page-intro-icon"><Icon name={bannerIcon} size="1.2rem" /></span>}
@@ -275,7 +286,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             </div>
             {bannerDesc && <p class="page-intro-desc">{bannerDesc}</p>}
           </div>
-        </section>
+        </WallpaperBanner>
       )}
       <slot />
 
@@ -864,6 +875,43 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     color: oklch(100% 0 0 / 0.9);
     text-shadow: 0 1px 12px oklch(0% 0 0 / 0.5);
     line-height: 1.6;
+  }
+
+  /* 内页横幅里的文字：.page-intro-* 原本是**深色纸面**上的排版（浅底深字），
+     现在被放进壁纸里，必须整体翻成"浅底白字 + 描边影"，否则在深色水彩上看不清。
+     注意 kicker / desc 的 --text-faint / --text-soft 在浅色主题是深灰，
+     压在壁纸上几乎不可读，所以这里逐条覆盖（不是改原规则，避免影响别处）。
+     ⚠️ 锚点必须是 `.wp-page-head`（Base 自己模板里的节点，带 Base 的 scope），
+     不能写 `.wallpaper-wrapper` —— 那是 WallpaperBanner 子组件渲染的节点，
+     带的是**子组件的** data-astro-cid，父组件 scope 命中不了，
+     整条规则会被编译成 `.wallpaper-wrapper[data-astro-cid-父] ...` 而永远失配（本坑已踩过一次）。 */
+  .wp-page-head .page-intro-kicker {
+    justify-content: center;
+    color: oklch(100% 0 0 / 0.72);
+    text-shadow: 0 1px 8px oklch(0% 0 0 / 0.45);
+  }
+  .wp-page-head .page-intro-kicker i,
+  .wp-page-head .page-intro-kicker span { color: inherit; }
+  .wp-page-head .page-intro-title-row { gap: 0.75rem; margin-top: 0.55rem; }
+  .wp-page-head .page-intro-title {
+    color: #fff;
+    font-size: clamp(1.9rem, 4.2vw, 3.4rem);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 4px 26px rgba(0, 0, 0, 0.5);
+  }
+  .wp-page-head .page-intro-icon {
+    color: #fff;
+    border-color: oklch(100% 0 0 / 0.35);
+    background: oklch(100% 0 0 / 0.14);
+    backdrop-filter: blur(8px);
+  }
+  .wp-page-head .page-intro-desc {
+    color: oklch(100% 0 0 / 0.88);
+    text-shadow: 0 1px 10px oklch(0% 0 0 / 0.5);
+  }
+  /* 内页横幅也走首屏分镜：标题从下方升起，和首页一致的手感。
+     ⚠️ 只在内页横幅（.wp-page-head）上挂，首页的书法标题有自己的揭幕逻辑，不冲突。 */
+  html.intro-run .wp-page-head {
+    animation: wp-page-reveal 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
   }
 
   /* ============ 页脚 ============ */

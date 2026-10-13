@@ -103,17 +103,23 @@ const splitLine = (text) => {
               </div>
             ))}
           </div>
+
+          <!-- 向下浏览引导。
+               ⚠️ 必须**跟在句子后面、走正常的文档流**，不能再用 `position:absolute;
+                  bottom:178px` —— 那个固定偏移在矮视口（笔记本 720p）会翻车：
+                  横幅高度是 clamp(410px,60vh,620px)，视口一矮横幅就跟着变矮，
+                  而居中的标题块只是往下挪了一点点，于是固定 178px 的鼠标图案
+                  正好压在副标题上（实测 1280×720 时重叠 89px，整个副标题被盖住；
+                  1440×900 也重叠 42px）。
+                  改成流式布局后，指示器**永远**悬在句子下方的固定间距处，
+                  高度怎么变都不会撞上文字。 -->
+          <a class="wp-scroll" href="#main-content" aria-label="向下浏览">
+            <span class="wp-mouse"><i></i></span>
+            <span class="wp-scroll-text">向下浏览</span>
+          </a>
         </>
       )}
     </div>
-
-    <!-- 向下浏览引导 -->
-    {!hasSlot && (
-      <a class="wp-scroll" href="#main-content" aria-label="向下浏览">
-        <span class="wp-mouse"><i></i></span>
-        <span class="wp-scroll-text">向下浏览</span>
-      </a>
-    )}
   </div>
 
   <!-- 底部海浪：4 层同色波浪错速流动，颜色 = 页面背景色，与内容区无缝衔接 -->
@@ -425,6 +431,11 @@ const splitLine = (text) => {
     text-align: center;
     gap: 0.75rem;
   }
+  /* 句子块与「向下浏览」之间的固定间距。
+     ⚠️ 这里用的是**流式**间距，不是绝对定位偏移 —— 见模板里那段注释。
+     .wp-quotes 在 grid 里换句时高度可能略有浮动，给它一个稳定的下边距，
+     指示器就不会随句子长短上下跳。 */
+  .wp-inner > .wp-quotes { margin-bottom: 0.35rem; }
 
   /* ===== ③ 标题逐行揭幕 =====
      结构是 .wp-line（overflow:hidden 的裁切窗） > .wp-line-inner（位移层）。
@@ -491,17 +502,18 @@ const splitLine = (text) => {
   .wp-links       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.5s both; }
 
 
-  /* ===== 向下浏览引导 ===== */
+  /* ===== 向下浏览引导 =====
+     ⚠️ 现在是**文档流**里的普通块（.wp-inner 的 flex 子项），不再是 absolute。
+     历史坑：原先是 `position:absolute; bottom:178px`。横幅高度是
+     clamp(410px,60vh,620px)，矮视口下横幅变矮、而居中的标题块只下移一点点，
+     固定 178px 的图案就压在副标题上（1280×720 重叠 89px、1440×900 重叠 42px）。
+     流式后间距恒定，任何高度都不会撞字。 */
   .wp-scroll {
-    position: absolute;
-    left: 50%;
-    bottom: 178px;
-    transform: translateX(-50%);
-    z-index: 5;
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     align-items: center;
     gap: 0.35rem;
+    margin-top: 0.15rem;
     color: oklch(100% 0 0 / 0.8);
     text-decoration: none !important;
     animation: wp-reveal 1.2s ease 1.9s both;

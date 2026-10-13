@@ -199,8 +199,13 @@ const catCounts = categories.map((c) => ({
     gap: 0.75rem;
   }
 
-  /* 主内容分区间距 */
-  .ref-main { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+  /* 主内容分区间距
+     用户明确要求：分类条与「最新手记」贴近、文章卡片与「继续阅读」贴近。
+     原先这里 gap: 1.5rem（24px），再叠上 .editorial-feed / .recent-feed 自己的
+     margin-bottom: clamp(2rem,4vw,3.5rem)（32~56px），两段间距被加到 56~80px，非常空。
+     改法：① 容器 gap 收到 0.5rem（只作最小兜底）；
+           ② 各 section 改用**定向 margin**，不再用统一的大 margin-bottom。 */
+  .ref-main { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
   .block { scroll-margin-top: 80px; min-width: 0; }
 
   /* ===== 个人资料卡 ===== */
@@ -387,11 +392,17 @@ const catCounts = categories.map((c) => ({
   }
   .section-more:hover { transform: translateX(3px); }
 
-  .editorial-feed, .recent-feed { margin-bottom: clamp(2rem, 4vw, 3.5rem); }
+  /* 分区之间的定向间距（用户要求"贴近一些"）：
+       · 分类条 → 最新手记：留 0.35rem 的呼吸，不再另加虚线分隔下的大留白
+       · 最新手记 → 继续阅读：卡片底部到下一个标题，0.9rem 就够（原来 56~80px）
+       · 继续阅读 → 底部分页：留 1.5rem 收尾 */
+  .ref-main > section:has(#category-bar) { margin-bottom: 0; }
+  .editorial-feed { margin-bottom: 0.9rem; }
+  .recent-feed { margin-bottom: 1.5rem; }
   .editorial-feed .section-head, .recent-feed .section-head {
     align-items: baseline;
-    margin-bottom: 1rem;
-    padding-bottom: 0.7rem;
+    margin-bottom: 0.85rem;
+    padding-bottom: 0.6rem;
     border-bottom: 1px solid var(--border);
   }
   .editorial-feed .section-title, .recent-feed .section-title {
@@ -442,12 +453,23 @@ const catCounts = categories.map((c) => ({
     .section-edition { font-size: 0.55rem; letter-spacing: 0.04em; }
   }
 
-  /* ===== 分类导航条 ===== */
+  /* ===== 分类导航条 =====
+     视觉语言：与站内其他卡片一致 —— 玻璃质感 + 细描边 + 柔和主色，
+     而不是「一排实心药丸」。
+
+     ⚠️ 为什么之前看着丑：药丸的底色用了
+        `color-mix(in srgb, var(--btn-content) 6%, transparent)`，
+        而 --btn-content 是**高饱和紫** oklch(0.55 0.12 282)。
+        6% 的紫压在近白 surface 上会渲染成一层**发灰的藕荷色**，
+        远看像"脏了"；再叠 1px 同色描边，整排药丸显得又胖又闷。
+        激活态又是**整块实心紫**，在浅色水彩页面里格外突兀。
+     改法：底色回归中性（几乎不用紫），主色只出现在**文字/图标和细描边**上；
+        激活态从"实心块"降级为"淡紫底 + 主色字 + 内描边"，重量感立刻下来。 */
   .cat-card {
-    padding: 0.75rem;
+    padding: 0.6rem;
     border-radius: 1rem;
     margin-top: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
   }
   /* 手机端：整个分类条下移贴近文章 + 整体变窄 */
   @media (max-width: 767px) {
@@ -457,21 +479,23 @@ const catCounts = categories.map((c) => ({
     .cat-pill-home { padding: 0.2rem 0.5rem; }
     .pill-count { font-size: 0.62rem; }
     .cat-divider { height: 1.1rem; }
+    /* 手机端：分类条与「最新手记」也要贴近，但不要再叠负 margin
+       （容器 gap 已收到 0.5rem，这里只需抹掉多余的自定义间距） */
     .ref-main > section:has(#category-bar) { margin-bottom: 0; }
-    .ref-main > section:has(#category-bar) + section { margin-top: -1rem; }
+    .ref-main > section:has(#category-bar) + section { margin-top: 0.25rem; }
   }
 
   .cat-bar-inner {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.375rem;
   }
-  /* 首页：宽椭圆图标按钮，激活时主色实心 */
+  /* 首页：宽椭圆图标按钮 */
   .cat-pill-home {
     padding: 0.375rem 0.75rem;
     flex-shrink: 0;
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    color: var(--text-soft);
+    background: transparent;
     border-color: transparent;
   }
   .cat-pill {
@@ -480,59 +504,68 @@ const catCounts = categories.map((c) => ({
     justify-content: center;
     gap: 0.375rem;
     flex-shrink: 0;
-    padding: 0.375rem 1rem;
+    padding: 0.375rem 0.95rem;
     border-radius: 9999px;
-    border: 1px solid color-mix(in srgb, var(--btn-content) 12%, transparent);
-    background: color-mix(in srgb, var(--btn-content) 6%, transparent);
-    color: var(--btn-content);
-    font-size: 0.875rem;
+    /* 底色用中性 text 的极淡值（不是主色）→ 不会发藕荷色 */
+    border: 1px solid color-mix(in srgb, var(--text) 9%, transparent);
+    background: color-mix(in srgb, var(--text) 3.5%, transparent);
+    color: var(--text-soft);
+    font-size: 0.86rem;
     font-weight: 500;
     text-decoration: none !important;
     white-space: nowrap;
-    transition: background 0.15s ease-out, color 0.15s ease-out, border-color 0.15s ease-out;
+    transition: background 0.18s ease-out, color 0.18s ease-out, border-color 0.18s ease-out;
   }
   .cat-pill:hover {
-    color: var(--primary);
-    background: color-mix(in srgb, var(--primary) 15%, transparent);
-    border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+    color: var(--primary-strong);
+    background: color-mix(in srgb, var(--primary) 9%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 26%, transparent);
   }
   :global([data-theme='dark'] .cat-pill:hover) { color: var(--primary-light); }
+  /* 激活态：淡紫底 + 主色字 + 主色内描边（不再整块实心，重量轻很多） */
   .cat-pill.is-active {
-    background: var(--primary);
-    color: #fff;
-    border-color: transparent;
+    color: var(--primary-strong);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 32%, transparent);
+    font-weight: 600;
   }
-  .cat-pill.is-active:hover { opacity: 0.9; background: var(--primary); }
-  .cat-pill.is-active :global(.icon) { color: #fff; }
-  /* 数量徽标 */
+  :global([data-theme='dark'] .cat-pill.is-active) { color: var(--primary-light); }
+  .cat-pill.is-active:hover {
+    background: color-mix(in srgb, var(--primary) 17%, transparent);
+  }
+  .cat-pill.is-active :global(.icon) { color: var(--primary); }
+  /* 数量徽标：极淡底 + 弱化字，不抢注意力 */
   .pill-count {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     line-height: 1;
-    padding: 0.05rem 0.35rem;
+    padding: 0.1rem 0.34rem;
     border-radius: 9999px;
-    background: color-mix(in srgb, var(--btn-content) 10%, transparent);
-    opacity: 0.5;
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+    color: var(--text-faint, var(--text-soft));
+    opacity: 0.85;
   }
   .cat-pill.is-active .pill-count {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    opacity: 0.9;
+    background: color-mix(in srgb, var(--primary) 20%, transparent);
+    color: var(--primary-strong);
+    opacity: 1;
   }
-  /* 主页按钮激活态：实心蓝（兜底，确保盖过 .cat-pill-home 的灰底） */
+  :global([data-theme='dark'] .cat-pill.is-active .pill-count) { color: var(--primary-light); }
+  /* 主页按钮激活态：与其它激活药丸同一套语言 */
   .cat-pill-home.is-active {
-    background: var(--primary) !important;
-    color: #fff !important;
-    box-shadow: 0 4px 12px -2px var(--primary-glow);
+    color: var(--primary-strong) !important;
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    border-color: color-mix(in srgb, var(--primary) 32%, transparent) !important;
   }
-  .cat-pill-home.is-active :global(.icon) { color: #fff !important; }
+  .cat-pill-home.is-active :global(.icon) { color: var(--primary) !important; }
+  :global([data-theme='dark'] .cat-pill-home.is-active) { color: var(--primary-light) !important; }
 
   /* 归档与分类之间的竖线分隔 */
   .cat-divider {
     width: 1px;
     align-self: stretch;
-    background: rgba(0, 0, 0, 0.08);
-    opacity: 0.5;
+    margin: 0 0.15rem;
+    background: color-mix(in srgb, var(--text) 12%, transparent);
     flex-shrink: 0;
   }
   /* 更多按钮：普通 pill 样式，末尾固定 */
