@@ -108,6 +108,8 @@ const streams = years.map((y, yi) => {
           <path class="rl rl-skin" stroke="url(#river-skin)" />
           <!-- 一层亮芯：细，是水流的高光 -->
           <path class="rl rl-core" stroke="url(#river-core)" />
+          <!-- 年份处的「水面透镜」：河道在里程碑附近自然加宽，形成阶段标记 -->
+          <g class="rl-lenses"></g>
           <!-- 一层流光：沿河缓慢推进的短高光段，让水「在动」 -->
           <path class="rl rl-flow" />
           <!-- 支流：从河道优雅地拐向两侧卡片 -->
@@ -212,7 +214,8 @@ const streams = years.map((y, yi) => {
     const core = page.querySelector<SVGPathElement>('.rl-core');
     const flow = page.querySelector<SVGPathElement>('.rl-flow');
     const trib = page.querySelector<SVGPathElement>('.rl-trib');
-    if (!svg || !haze || !skin || !core || !flow || !trib) return;
+    const lenses = page.querySelector<SVGGElement>('.rl-lenses');
+    if (!svg || !haze || !skin || !core || !flow || !trib || !lenses) return;
 
     const reduce = (() => {
       try {
@@ -307,8 +310,8 @@ const streams = years.map((y, yi) => {
           const toward = Math.abs(l - pr.width / 2) <= Math.abs(r - pr.width / 2) ? l : r;
           room = Math.min(room, toward);
         }
-        // 再留 18px 余量，河道绝不贴上卡片
-        ampSafe = Math.max(16, Math.min(amp, room - 18));
+        // 再留 26px 余量，河道绝不贴上卡片（实测取 18px 时仍有 0.2px 的擦边）
+        ampSafe = Math.max(16, Math.min(amp, room - 26));
       }
 
       if (mobile) {
@@ -335,6 +338,7 @@ const streams = years.map((y, yi) => {
         core.setAttribute('d', '');
         flow.setAttribute('d', '');
         trib.setAttribute('d', '');
+        lenses.innerHTML = '';
         return;
       }
 
@@ -361,11 +365,29 @@ const streams = years.map((y, yi) => {
       // 把每个节点摆到河道上，并算出卡片靠河那一侧的边缘 ——
       // 两者都必须在同一帧里、以同一份河道坐标写出，否则会各算各的。
       let td = '';
+      let lens = '';
       nodes.forEach((el, i) => {
         const y = pts[i].y;
         const x = pts[i].x;
         const dot = el.querySelector<HTMLElement>('.mem-node');
         if (dot) dot.style.setProperty('--nx', `${x.toFixed(1)}px`);
+
+        // 里程碑（年份）→ 在河道上铺一片横向的「水面透镜」，
+        // 让河道在年份处自然加宽，年份因此成为河道上的阶段标记。
+        if (el.classList.contains('node-mile')) {
+          el.style.setProperty('--nx', `${x.toFixed(1)}px`);
+          const lr = (mobile ? 30 : Math.min(58, pr.width * 0.085)).toFixed(1);
+          const lh = (mobile ? 13 : 19).toFixed(1);
+          // 透镜形状：一段很扁的椭圆，用两段对称的贝塞尔画出来
+          lens +=
+            ` M ${(x - +lr).toFixed(1)} ${y.toFixed(1)}` +
+            ` C ${(x - +lr * 0.45).toFixed(1)} ${(y - +lh * 0.5).toFixed(1)},` +
+            ` ${(x + +lr * 0.45).toFixed(1)} ${(y - +lh * 0.5).toFixed(1)},` +
+            ` ${(x + +lr).toFixed(1)} ${y.toFixed(1)}` +
+            ` C ${(x + +lr * 0.45).toFixed(1)} ${(y + +lh * 0.5).toFixed(1)},` +
+            ` ${(x - +lr * 0.45).toFixed(1)} ${(y + +lh * 0.5).toFixed(1)},` +
+            ` ${(x - +lr).toFixed(1)} ${y.toFixed(1)} Z`;
+        }
 
         const card = el.querySelector<HTMLElement>('.mem-card');
         if (!card) return;
@@ -377,6 +399,7 @@ const streams = years.map((y, yi) => {
         td += ` M ${x.toFixed(1)} ${y.toFixed(1)} C ${mid.toFixed(1)} ${y.toFixed(1)}, ${mid.toFixed(1)} ${yc.toFixed(1)}, ${edge.toFixed(1)} ${yc.toFixed(1)}`;
       });
       trib.setAttribute('d', td);
+      if (lenses) lenses.innerHTML = lens ? `<path d="${lens}" />` : '';
 
       // 沿河漂浮的微光：等距撒在河道的延长线上
       const motes = page.querySelector<HTMLElement>('.river-motes');
@@ -504,6 +527,13 @@ const streams = years.map((y, yi) => {
     stroke-dasharray: 2 7;
     opacity: 0.62;
   }
+  /* 年份处的「水面透镜」：河道在里程碑附近加宽成一片横向的浅水，
+     年份因此坐在水上，成为河道上的阶段标记。非常淡，只是水的厚度变化。 */
+  .rl-lenses path {
+    fill: color-mix(in srgb, var(--primary) 26%, transparent);
+    filter: blur(7px);
+    opacity: 0.6;
+  }
   /* 流光：几条短高光段沿河道缓缓推进，是"水在流"的主要线索。
      非常克制 —— 只有 0.5 的不透明度、14s 走完一轮，远看只是水面上的一点游光。 */
   .rl-flow {
@@ -595,12 +625,31 @@ const streams = years.map((y, yi) => {
     content: '';
     position: absolute;
     left: 50%;
-    bottom: -0.5rem;
-    width: 11rem;
-    height: 0.7rem;
+    bottom: -0.72rem;
+    width: 13rem;
+    height: 0.85rem;
     transform: translateX(-50%);
     background: radial-gradient(ellipse at center, var(--primary-glow), transparent 74%);
-    opacity: 0.32;
+    opacity: 0.46;
+    pointer-events: none;
+  }
+  /* 年份两侧各一道短横线，与河道垂直相交 —— 这是「年轮刻度」本身的形状 */
+  .milestone::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -0.72rem;
+    width: 7.2rem;
+    height: 1px;
+    transform: translateX(-50%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--primary) 55%, transparent) 26%,
+      color-mix(in srgb, var(--primary) 55%, transparent) 74%,
+      transparent
+    );
+    opacity: 0.85;
     pointer-events: none;
   }
   .milestone-rule {
@@ -621,23 +670,37 @@ const streams = years.map((y, yi) => {
     text-align: center;
   }
   /* 年号背后的徽章：同心圆环，克制地暗示「这是时间刻度」。
-     很淡 —— 它的作用是让年号「长在河上」，不是当光斑。 */
+     环要让年号「长在河上」—— 因此环线略实、内侧再补一圈细环，
+     但整体依旧很淡，绝不当光斑把年号糊掉。 */
   .medallion {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: clamp(5.4rem, 11vw, 7.4rem);
-    height: clamp(5.4rem, 11vw, 7.4rem);
+    width: clamp(6rem, 12.5vw, 8.4rem);
+    height: clamp(6rem, 12.5vw, 8.4rem);
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 6%, transparent), transparent 66%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 9%, transparent), transparent 64%);
     pointer-events: none;
   }
   .medallion-ring {
     position: absolute;
-    inset: 12%;
-    border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+    inset: 4%;
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
     border-radius: 50%;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+  /* 环上再补一段「被河点亮的弧」—— 让年份看起来是河道穿过的节点 */
+  .medallion-ring::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 1.5px solid transparent;
+    border-top-color: color-mix(in srgb, var(--primary-light) 70%, transparent);
+    border-right-color: color-mix(in srgb, var(--primary-light) 34%, transparent);
+    transform: rotate(-38deg);
+    opacity: 0.8;
   }
   .year-num {
     position: relative;
@@ -676,10 +739,19 @@ const streams = years.map((y, yi) => {
   }
   /* 滚动到当前年份 → 徽章亮一些、河段被点亮 */
   .stream.is-current .medallion {
-    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 15%, transparent), transparent 66%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 20%, transparent), transparent 64%);
   }
   .stream.is-current .medallion-ring {
-    border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 56%, transparent);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--primary) 20%, transparent),
+      0 0 22px color-mix(in srgb, var(--primary) 26%, transparent);
+  }
+  .stream.is-current .medallion-ring::after {
+    opacity: 1;
+  }
+  .stream.is-current .year-num {
+    filter: drop-shadow(0 6px 26px color-mix(in srgb, var(--primary) 46%, transparent));
   }
 
   /* 锚点年份（只有一条文章）的月份刻度 */
