@@ -1,14 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import PostCard from '../components/PostCard.astro';
-import ThemeToggle from '../components/ThemeToggle.astro';
-import HeatmapWidget from '../components/HeatmapWidget.astro';
-import SearchWidget from '../components/SearchWidget.astro';
-import CalendarWidget from '../components/CalendarWidget.astro';
-import HolidayWidget from '../components/HolidayWidget.astro';
-import SiteStats from '../components/SiteStats.astro';
 import Paginate from '../components/Paginate.astro';
 import Icon from '../components/Icon.astro';
+import SidebarLeft from '../components/SidebarLeft.astro';
+import SidebarRight from '../components/SidebarRight.astro';
 import { formatDate, getPublishedPosts, getTags, pinToTop, readingTime } from '../lib/posts';
 import { categories } from '../data/categories';
 import { site } from '../site';
@@ -28,9 +24,6 @@ const catCounts = categories.map((c) => ({
   ...c,
   count: posts.filter((p) => p.data.category === c.slug).length,
 }));
-// 分类占比条的基准（最多的那个分类占满）
-const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
-
 ---
 
 <Base>
@@ -58,49 +51,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
   <div class="container">
     <div class="ref-layout">
       <!-- 左侧栏 -->
-      <aside class="ref-sidebar-left">
-        <div class="card-base profile-card onload-animation">
-          <div class="avatar-ring">
-            <img class="profile-avatar" src={site.avatar} alt="头像" width="78" height="78" />
-            <span class="avatar-status" title="在线"></span>
-          </div>
-          <h3 class="profile-name">{site.title}</h3>
-          <p class="profile-bio">Web 安全 / CTF / 生活趣事</p>
-          <nav class="profile-nav">
-            <a href="/" class="nav-item active"><span class="nav-icon"><Icon name="home" size="0.95rem" /></span><span>首页</span></a>
-            <a href="/archive/" class="nav-item"><span class="nav-icon"><Icon name="archive" size="0.95rem" /></span><span>归档</span></a>
-            <a href="/album/" class="nav-item"><span class="nav-icon"><Icon name="photo" size="0.95rem" /></span><span>相册</span></a>
-            <a href="/says/" class="nav-item"><span class="nav-icon"><Icon name="comment" size="0.95rem" /></span><span>说说</span></a>
-            <a href="/about/" class="nav-item"><span class="nav-icon"><Icon name="person" size="0.95rem" /></span><span>关于</span></a>
-          </nav>
-        </div>
-
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
-          <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
-          <ThemeToggle />
-        </div>
-
-        <!-- 分类列表（竖向排列） -->
-        <div class="card-base widget-card cat-widget onload-animation" style="animation-delay: 0.15s">
-          <h3 class="widget-title"><Icon name="folder" size="1.05rem" /> 分类</h3>
-          <div class="cat-list" id="cat-list" data-collapsed="5">
-            {catCounts.map((c, i) => (
-              <a class="cat-row" href={`/categories/${c.slug}/`} data-index={i}
-                 style={`--pct: ${Math.round((c.count / maxCatCount) * 100)}%`}>
-                <span class="cat-row-name">{c.name}</span>
-                <span class="cat-row-count">{c.count}</span>
-              </a>
-            ))}
-          </div>
-          {catCounts.length > 5 && (
-            <button class="cat-toggle" id="cat-toggle" type="button">
-              <span class="cat-toggle-text">更多</span>
-              <Icon name="arrow_down" size="0.8rem" />
-            </button>
-          )}
-        </div>
-      </aside>
-
+      <SidebarLeft />
       <!-- 主内容 -->
       <main class="ref-main" id="main-content" aria-label="文章列表">
         <!-- 快捷导航条：首页 + 归档 -->
@@ -217,33 +168,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
       </main>
 
       <!-- 右侧栏 -->
-      <aside class="ref-sidebar-right">
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
-          <h3 class="widget-title"><Icon name="search" size="1.05rem" /> 搜索</h3>
-          <SearchWidget />
-        </div>
-
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
-          <h3 class="widget-title"><Icon name="calendar" size="1.05rem" /> 日历</h3>
-          <CalendarWidget />
-        </div>
-
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.3s">
-          <h3 class="widget-title"><Icon name="clock" size="1.05rem" /> 节假日</h3>
-          <HolidayWidget />
-        </div>
-
-        <div class="card-base widget-card onload-animation" style="animation-delay: 0.4s">
-          <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
-          <SiteStats
-            postsCount={posts.length}
-            categoriesCount={categories.length}
-            totalWords={totalWords}
-          />
-        </div>
-
-        <HeatmapWidget />
-      </aside>
+      <SidebarRight />
     </div>
   </div>
 </Base>

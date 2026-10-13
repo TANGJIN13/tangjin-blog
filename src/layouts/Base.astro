@@ -40,8 +40,8 @@ const {
   jsonLd = null,
 } = Astro.props;
 
-// 有任一横幅 → 导航栏悬浮在壁纸上（透明 → 滚动后变实）
-const hasBanner = banner || pageBanner;
+// 只有真实媒体横幅才启用覆盖导航；普通页面使用编辑式标题区。
+const hasBanner = banner;
 
 // 全站统一的 WebSite 结构化数据（帮助搜索引擎理解站点）
 const websiteLd = {
@@ -158,17 +158,19 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
 
     <!-- 主内容 -->
     <main class="main-layout">
-      <!-- 内页统一横幅：和首页同一套轮播壁纸，压到 35vh，只在电脑端出现 -->
+      <!-- 内页章节题签：以编号、细线与衬线标题建立层级，不复用首页主视觉 -->
       {pageBanner && (
-        <WallpaperBanner height="clamp(240px, 35vh, 420px)" mobile={false}>
-          <div class="wp-page-head">
-            {bannerIcon && (
-              <span class="wp-page-icon"><Icon name={bannerIcon} size="1.35rem" /></span>
-            )}
-            <h1 class="wp-page-title">{bannerTitle ?? title ?? site.title}</h1>
-            {bannerDesc && <p class="wp-page-desc">{bannerDesc}</p>}
+        <section class="page-intro">
+          <div class="page-intro-inner container">
+            <div class="page-intro-kicker"><span>FIELD NOTES</span><i aria-hidden="true"></i><span>SECTION / {bannerIcon ?? 'INDEX'}</span></div>
+            <div class="page-intro-title-row">
+              <h1 class="page-intro-title">{bannerTitle ?? title ?? site.title}</h1>
+              {bannerIcon && <span class="page-intro-icon"><Icon name={bannerIcon} size="1.25rem" /></span>}
+            </div>
+            {bannerDesc && <p class="page-intro-desc">{bannerDesc}</p>}
+            <span class="page-intro-index" aria-hidden="true">TJ—2026</span>
           </div>
-        </WallpaperBanner>
+        </section>
       )}
       <slot />
 
