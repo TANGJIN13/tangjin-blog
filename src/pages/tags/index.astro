@@ -4,10 +4,17 @@ import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import SidebarLeft from '../../components/SidebarLeft.astro';
 import SidebarRight from '../../components/SidebarRight.astro';
-import { getTags } from '../../lib/posts';
+import { formatDate, getTags, getPublishedPosts } from '../../lib/posts';
+import { categories } from '../../data/categories';
 
 const tags = await getTags();
 const max = Math.max(...tags.map((t) => t.count), 1);
+const posts = await getPublishedPosts();
+const catCounts = categories.map((c) => ({
+  ...c,
+  count: posts.filter((p) => p.data.category === c.slug).length,
+}));
+const recentPosts = posts.slice(0, 5);
 ---
 
 <Base
@@ -20,7 +27,7 @@ const max = Math.max(...tags.map((t) => t.count), 1);
 >
   <div class="page-shell">
     <SidebarLeft />
-    <article class="post-main">
+    <div class="page-main">
       <header class="tg-hero hide-with-banner">
         <span class="tg-hero-icon"><Icon name="tag" size="1.5rem" /></span>
         <div>
@@ -44,22 +51,68 @@ const max = Math.max(...tags.map((t) => t.count), 1);
             })}
           </div>
         ) : (
-          <p class="tg-empty">还没有标签，写篇文章加上 tags 就会出现在这里。</p>
+          <div class="tg-empty">
+            <span class="tg-empty-icon"><Icon name="tag" size="1.7rem" /></span>
+            <h2 class="tg-empty-title">标签还空着</h2>
+            <p class="tg-empty-desc">
+              给文章的 frontmatter 加一行 <code>tags: ['关键词']</code>，它们就会像河底的卵石一样，一颗颗浮上来。
+            </p>
+          </div>
         )}
       </div>
+
+      <!-- 标签为空时给一条替代路径：先按分类逛 -->
+      <section class="tg-alt">
+        <div class="section-head">
+          <h2 class="section-title"><span class="section-index">01 /</span> 先按分类看看</h2>
+          <a class="section-more" href="/categories/">全部分类 <Icon name="arrow_right" size="0.85rem" /></a>
+        </div>
+        <div class="tg-alt-grid">
+          {catCounts.map((c) => (
+            <a class="tg-alt-card" href={`/categories/${c.slug}/`}>
+              <span class="tg-alt-icon"><Icon name={c.icon || 'folder'} size="1.15rem" /></span>
+              <span class="tg-alt-name">{c.name}</span>
+              <span class="tg-alt-count">{c.count} 篇</span>
+              <span class="tg-alt-arrow"><Icon name="arrow_right" size="0.85rem" /></span>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {recentPosts.length > 0 && (
+        <section class="tg-recent">
+          <div class="section-head">
+            <h2 class="section-title"><span class="section-index">02 /</span> 最近带标签的文章</h2>
+            <a class="section-more" href="/archive/">全部归档 <Icon name="arrow_right" size="0.85rem" /></a>
+          </div>
+          <div class="tg-recent-list">
+            {recentPosts.map((p) => (
+              <a class="tg-recent-item" href={`/posts/${p.id}/`}>
+                <span class="tg-recent-title">{p.data.title}</span>
+                <span class="tg-recent-meta">
+                  <time datetime={p.data.published.toISOString()}>{formatDate(p.data.published)}</time>
+                  {p.data.tags.slice(0, 2).map((tag) => (
+                    <em>#{tag}</em>
+                  ))}
+                </span>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
 
       <nav class="tg-back">
         <a href="/archive/"><Icon name="archive" size="0.9rem" />全部归档</a>
         <a href="/categories/"><Icon name="folder" size="0.9rem" />按分类看</a>
         <a href="/search/"><Icon name="search" size="0.9rem" />去搜索</a>
       </nav>
-    </article>
+    </div>
     <SidebarRight />
   </div>
 </Base>
 
 <style>
-  .post-main { min-width: 0; }
+  .page-main { min-width: 0; }
 
   .tg-hero { display: flex; align-items: center; gap: 0.9rem; margin-bottom: 1.25rem; }
   .tg-hero-icon {
@@ -68,8 +121,8 @@ const max = Math.max(...tags.map((t) => t.count), 1);
     display: grid; place-items: center;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 158 / 0.25);
-    box-shadow: 0 4px 14px oklch(62% 0.14 158 / 0.18);
+    border: 1px solid oklch(70% 0.14 282 / 0.25);
+    box-shadow: 0 4px 14px oklch(62% 0.14 282 / 0.18);
     flex-shrink: 0;
   }
   :global([data-theme='dark'] .tg-hero-icon) { color: var(--primary-light); }
@@ -91,7 +144,7 @@ const max = Math.max(...tags.map((t) => t.count), 1);
     font-weight: 700;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 158 / 0.25);
+    border: 1px solid oklch(70% 0.14 282 / 0.25);
     padding: 0.14rem 0.6rem;
     border-radius: 999px;
   }
@@ -103,11 +156,15 @@ const max = Math.max(...tags.map((t) => t.count), 1);
     display: inline-flex;
     align-items: baseline;
     gap: 0.3rem;
+    padding: 0.28rem 0.7rem 0.32rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--surface);
     font-weight: 700;
     color: var(--text-soft);
     text-decoration: none !important;
     line-height: 1.4;
-    transition: color 0.18s ease, transform 0.18s ease;
+    transition: color 0.18s ease, transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   }
   .tg-item em {
     font-style: normal;
@@ -121,12 +178,163 @@ const max = Math.max(...tags.map((t) => t.count), 1);
   .tg-item:hover {
     color: var(--primary);
     transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 10%, transparent);
   }
   .tg-item:hover em { background: var(--primary-soft); color: var(--primary-strong); }
 
-  .tg-empty { margin: 0; font-size: 0.88rem; color: var(--text-faint); }
+  .tg-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 2.2rem 1rem 2.4rem;
+    text-align: center;
+  }
+  .tg-empty-icon {
+    display: grid;
+    width: 3.2rem;
+    height: 3.2rem;
+    place-items: center;
+    margin-bottom: 0.2rem;
+    border-radius: 50%;
+    color: var(--primary);
+    background: var(--primary-soft);
+    border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  }
+  .tg-empty-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .tg-empty-desc {
+    max-width: 26rem;
+    margin: 0;
+    color: var(--text-soft);
+    font-size: 0.84rem;
+    line-height: 1.85;
+  }
+  .tg-empty-desc code {
+    padding: 0.1rem 0.35rem;
+    border-radius: 0.3rem;
+    background: var(--surface-2);
+    color: var(--primary-strong);
+    font-size: 0.78rem;
+  }
+  :global([data-theme='dark'] .tg-empty-desc code) { color: var(--primary-light); }
 
-  .tg-back { display: flex; gap: 0.6rem; margin-top: 1.25rem; flex-wrap: wrap; }
+  /* 替代路径：分类快捷入口 */
+  .tg-alt { margin-top: 2rem; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    margin: 0;
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .section-index { color: var(--primary); font-size: 0.68rem; letter-spacing: 0.05em; }
+  .section-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    color: var(--primary);
+    font-size: 0.76rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    transition: transform 0.18s ease;
+  }
+  .section-more:hover { transform: translateX(3px); }
+  .tg-alt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.7rem; }
+  .tg-alt-card {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    text-decoration: none !important;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .tg-alt-card:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+  .tg-alt-icon {
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 0.55rem;
+    color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .tg-alt-name { font-weight: 700; font-size: 0.88rem; }
+  .tg-alt-count { margin-left: auto; color: var(--text-faint); font-size: 0.72rem; font-variant-numeric: tabular-nums; }
+  .tg-alt-arrow { color: var(--text-faint); display: grid; place-items: center; }
+  .tg-alt-card:hover .tg-alt-arrow { color: var(--primary); }
+
+  .tg-recent { margin-top: 2rem; }
+  .tg-recent-list { display: flex; flex-direction: column; gap: 0.55rem; }
+  .tg-recent-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    text-decoration: none !important;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+  }
+  .tg-recent-item:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--primary) 10%, transparent);
+  }
+  .tg-recent-title {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .tg-recent-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-faint);
+    font-size: 0.7rem;
+  }
+  .tg-recent-meta em {
+    font-style: normal;
+    padding: 0.08rem 0.4rem;
+    border-radius: 999px;
+    color: var(--primary-strong);
+    background: var(--primary-soft);
+    font-weight: 650;
+  }
+
+  .tg-back { display: flex; gap: 0.6rem; margin-top: 1.5rem; flex-wrap: wrap; }
   .tg-back a {
     display: inline-flex;
     align-items: center;
@@ -141,5 +349,5 @@ const max = Math.max(...tags.map((t) => t.count), 1);
     text-decoration: none !important;
     transition: all 0.18s ease;
   }
-  .tg-back a:hover { color: var(--primary); border-color: oklch(70% 0.14 158 / 0.45); transform: translateY(-2px); }
+  .tg-back a:hover { color: var(--primary); border-color: oklch(70% 0.14 282 / 0.45); transform: translateY(-2px); }
 </style>

@@ -5,9 +5,9 @@ import Paginate from '../components/Paginate.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
+import WallpaperBanner from '../components/WallpaperBanner.astro';
 import { formatDate, getPublishedPosts, getTags, pinToTop, readingTime } from '../lib/posts';
 import { categories } from '../data/categories';
-import { site } from '../site';
 
 const posts = await getPublishedPosts();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
@@ -17,7 +17,15 @@ const tags = await getTags();
 const ordered = pinToTop(posts);
 const featured = ordered[0] ?? null;
 const featuredCategory = featured ? categories.find((c) => c.slug === featured.data.category) : null;
-const featuredCover = featured?.data.cover ?? '/images/covers/cover-01.jpg';
+// 文章没写 cover 时，用站点同色系的水彩壁纸兜底，避免混进不相干的素材图
+const fallbackCovers = [
+  '/images/wallpapers/banner-pastel-01.webp',
+  '/images/wallpapers/banner-pastel-02.webp',
+  '/images/wallpapers/banner-pastel-03.webp',
+  '/images/wallpapers/banner-pastel-04.webp',
+  '/images/wallpapers/banner-pastel-05.webp',
+];
+const featuredCover = featured?.data.cover ?? fallbackCovers[0];
 const recentPosts = featured ? ordered.slice(1) : ordered;
 
 const catCounts = categories.map((c) => ({
@@ -26,26 +34,15 @@ const catCounts = categories.map((c) => ({
 }));
 ---
 
-<Base>
-  <!-- 顶部全宽壁纸 -->
-  <section class="home-masthead" aria-label="个人博客介绍">
-    <div class="masthead-inner">
-      <div class="masthead-kicker"><span class="masthead-rule"></span> WEB SECURITY · CTF · FIELD NOTES <span class="masthead-edition">个人研究手记 / 2026</span></div>
-      <h1>把好奇心，<br /><em>写成可追溯的答案。</em></h1>
-      <p>这里记录漏洞复现、CTF 解题与一路上的真实思考。<br class="desktop-break" />不追热点，认真留下每一次理解。</p>
-      <div class="masthead-links">
-        <a class="masthead-primary" href="#latest-notes">读最新文章 <Icon name="arrow_down" size="0.95rem" /></a>
-        <a class="masthead-secondary" href="/about/">认识作者 <Icon name="arrow_right" size="0.85rem" /></a>
-      </div>
-      <span class="masthead-index" aria-hidden="true">01</span>
+<Base banner>
+  <WallpaperBanner height="clamp(410px, 60vh, 620px)" mobileHeight="clamp(350px, 58vh, 510px)">
+    <div class="home-hero">
+      <span class="home-hero-eyebrow">TJ'S JOURNAL · 2026</span>
+      <h1>把每一次好奇，<br /><em>写成自己的故事。</em></h1>
+      <p>Web 安全 · CTF · 日常碎片</p>
+      <a class="home-hero-link" href="#latest-notes">往下看看 <Icon name="arrow_down" size="0.9rem" /></a>
     </div>
-    <div class="masthead-art" aria-hidden="true">
-      <span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-core"></span>
-      <span class="art-caption">OBSERVE<br />·<br />UNDERSTAND</span>
-      <span class="art-coordinate">N 25°16′ · E 110°17′</span>
-    </div>
-    <div class="masthead-bottom"><span>INDEPENDENT NOTES / VOL. 01</span><span>SCROLL TO EXPLORE ↓</span><span>EST. 2026</span></div>
-  </section>
+  </WallpaperBanner>
 
   <!-- 三栏内容 -->
   <div class="container">
@@ -92,7 +89,7 @@ const catCounts = categories.map((c) => ({
             </div>
             <a class="featured-note" href={`/posts/${featured.id}/`}>
               <div class="featured-copy">
-                <span class="featured-kicker"><span class="featured-mark"></span> EDITOR'S PICK · {featuredCategory?.name ?? 'LATEST NOTE'}</span>
+                <span class="featured-kicker"><span class="featured-mark"></span> 最新文章 · {featuredCategory?.name ?? '随笔'}</span>
                 <h3>{featured.data.title}</h3>
                 <p>{featured.data.description || featured.body.replace(/\s+/g, ' ').slice(0, 150)}</p>
                 <div class="featured-meta">
@@ -103,7 +100,7 @@ const catCounts = categories.map((c) => ({
               </div>
               <div class="featured-image">
                 <img src={featuredCover} alt="" fetchpriority="high" />
-                <span class="featured-image-index">FIELD NOTE / 001</span>
+                <span class="featured-image-index">LATEST / 01</span>
                 <span class="featured-image-arrow"><Icon name="arrow_right" size="1.15rem" /></span>
               </div>
             </a>
@@ -168,63 +165,64 @@ const catCounts = categories.map((c) => ({
       </main>
 
       <!-- 右侧栏 -->
-      <SidebarRight />
+      <SidebarRight full />
     </div>
   </div>
 </Base>
 
 <style>
-  .home-masthead {
-    position: relative;
-    width: 100vw;
-    min-height: clamp(440px, 58vh, 650px);
-    margin-left: calc(50% - 50vw);
-    padding: clamp(5rem, 9vh, 7.5rem) max(5vw, calc((100vw - 100rem) / 2 + 2rem)) 3.7rem;
-    overflow: hidden;
-    color: oklch(22% 0.025 175);
-    background:
-      radial-gradient(ellipse at 82% 52%, oklch(72% 0.07 152 / 0.12), transparent 38%),
-      linear-gradient(112deg, oklch(95.5% 0.018 82), oklch(92.5% 0.022 78) 54%, oklch(95% 0.02 84));
-    border-bottom: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  .home-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
+    padding: 0 1rem 3rem;
+    color: #fff;
+    /* 标题压在浅色水彩上，只靠大面积柔光会发飘 —— 近距实影 + 远距柔光各一层 */
+    text-shadow: 0 1px 2px rgb(24 22 46 / 0.85), 0 4px 14px rgb(24 22 46 / 0.45);
   }
-  :global([data-theme='dark'] .home-masthead) {
-    color: var(--text);
-    background:
-      radial-gradient(ellipse at 82% 52%, oklch(50% 0.06 155 / 0.18), transparent 38%),
-      linear-gradient(112deg, oklch(20% 0.02 190), oklch(23% 0.022 180) 54%, oklch(20% 0.02 190));
+  .home-hero-eyebrow {
+    display: block;
+    margin-bottom: 1.3rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid rgb(255 255 255 / 0.5);
+    border-radius: 999px;
+    color: #fff;
+    background: rgb(30 26 52 / 0.36);
+    backdrop-filter: blur(6px);
+    font: 600 0.72rem/1 var(--font-sans);
+    letter-spacing: 0.14em;
+    text-shadow: 0 1px 3px rgb(20 18 40 / 0.7);
   }
-  .masthead-inner { position: relative; z-index: 1; max-width: 72rem; margin-inline: auto; }
-  .masthead-kicker, .masthead-bottom, .masthead-edition, .masthead-index, .art-caption, .art-coordinate, .featured-kicker, .featured-image-index, .section-edition, .section-index {
-    font-family: var(--font-mono);
-    font-size: 0.68rem;
-    letter-spacing: 0.13em;
+  .home-hero h1 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 4.9rem);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgb(18 16 38 / 0.92), 0 3px 8px rgb(18 16 38 / 0.72), 0 12px 34px rgb(18 16 38 / 0.4);
   }
-  .masthead-kicker { display: flex; align-items: center; gap: 0.75rem; color: color-mix(in srgb, var(--text) 66%, transparent); }
-  .masthead-rule { width: 2rem; height: 1px; background: var(--primary); }
-  .masthead-edition { margin-left: 0.5rem; color: var(--text-faint); }
-  .masthead-inner h1 { margin: 2.5rem 0 1.15rem; font-size: clamp(3rem, 6.8vw, 6.4rem); line-height: 1.13; letter-spacing: -0.065em; font-weight: 500; color: inherit; }
-  .masthead-inner h1 em { color: var(--primary-strong); font-style: normal; }
-  :global([data-theme='dark'] .masthead-inner h1 em) { color: var(--primary-light); }
-  .masthead-inner > p { color: color-mix(in srgb, var(--text) 70%, transparent); font-size: clamp(0.95rem, 1.3vw, 1.08rem); line-height: 1.9; }
-  .masthead-links { display: flex; align-items: center; gap: 1.5rem; margin-top: 1.8rem; }
-  .masthead-primary, .masthead-secondary { display: inline-flex; align-items: center; gap: 0.55rem; text-decoration: none !important; font-size: 0.86rem; font-weight: 650; }
-  .masthead-primary { padding: 0.75rem 1.05rem; color: oklch(98% 0.008 86) !important; background: oklch(34% 0.055 165); border: 1px solid oklch(34% 0.055 165); border-radius: 0.22rem; transition: background 0.2s ease, transform 0.2s ease; }
-  .masthead-primary:hover { background: oklch(28% 0.05 165); transform: translateY(-2px); }
-  .masthead-secondary { color: var(--text-soft); }
-  .masthead-secondary:hover { color: var(--primary-strong); }
-  .masthead-index { position: absolute; right: 0; top: 0.4rem; color: var(--text-faint); }
-  .masthead-art { position: absolute; right: max(7vw, calc((100vw - 100rem) / 2 + 5rem)); top: 50%; width: clamp(230px, 28vw, 410px); aspect-ratio: 1; transform: translateY(-44%); border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); border-radius: 50%; opacity: 0.78; }
-  .masthead-art::before, .masthead-art::after { content: ''; position: absolute; inset: 12%; border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); border-radius: 50%; }
-  .masthead-art::after { inset: 25%; border-style: dashed; opacity: 0.65; }
-  .art-orbit { position: absolute; inset: -8% 18%; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 50%; transform: rotate(47deg); }
-  .orbit-two { inset: 17% -7%; transform: rotate(-42deg); border-color: color-mix(in srgb, var(--primary) 24%, transparent); }
-  .art-core { position: absolute; inset: 38%; border-radius: 50%; background: radial-gradient(circle at 32% 28%, oklch(79% 0.08 118), oklch(53% 0.075 157) 54%, oklch(32% 0.06 178)); box-shadow: 0 0 55px color-mix(in srgb, var(--primary) 25%, transparent), inset -12px -16px 24px rgb(21 42 34 / 0.18); }
-  .art-caption { position: absolute; left: 2%; top: 35%; color: var(--primary-strong); line-height: 1.8; }
-  .art-coordinate { position: absolute; right: 1%; bottom: 18%; color: var(--text-faint); font-size: 0.56rem; }
-  .masthead-bottom { position: absolute; right: max(5vw, calc((100vw - 100rem) / 2 + 2rem)); bottom: 1.15rem; left: max(5vw, calc((100vw - 100rem) / 2 + 2rem)); display: flex; justify-content: space-between; padding-top: 0.75rem; color: var(--text-faint); border-top: 1px solid color-mix(in srgb, var(--text) 12%, transparent); font-size: 0.6rem; }
-  .masthead-bottom span:nth-child(2) { color: var(--primary-strong); }
+  .home-hero h1 em { font-style: normal; }
+  .home-hero p { margin: 1rem 0 0; color: #fff; font-size: clamp(0.86rem, 1.2vw, 1.05rem); letter-spacing: 0.12em; text-shadow: 0 1px 3px rgb(18 16 38 / 0.9), 0 4px 14px rgb(18 16 38 / 0.55); }
+  .home-hero-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-top: 1.6rem;
+    padding: 0.5rem 0.2rem;
+    color: #fff !important;
+    border-bottom: 1px solid rgb(255 255 255 / 0.7);
+    text-decoration: none !important;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: gap 0.2s ease, border-color 0.2s ease;
+  }
+  .home-hero-link:hover { gap: 0.8rem; border-color: #fff; }
 
-  /* 三栏布局保持组件功能，视觉系统由全局刊物版式统一 */
+  /* 内容区域 */
   .ref-layout {
     display: grid;
     grid-template-columns: 1fr;
@@ -278,7 +276,7 @@ const catCounts = categories.map((c) => ({
     width: 130px;
     height: 130px;
     border-radius: 50%;
-    background: radial-gradient(circle, oklch(70% 0.15 158 / 0.16), transparent 68%);
+    background: radial-gradient(circle, oklch(70% 0.15 282 / 0.16), transparent 68%);
     pointer-events: none;
   }
 
@@ -289,7 +287,7 @@ const catCounts = categories.map((c) => ({
     border-radius: 50%;
     padding: 3px;
     background: var(--gradient-primary);
-    box-shadow: 0 6px 20px oklch(62% 0.14 158 / 0.35);
+    box-shadow: 0 6px 20px oklch(62% 0.14 282 / 0.35);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
   /* 头像右下角的在线状态点（呼吸扩散） */
@@ -420,7 +418,7 @@ const catCounts = categories.map((c) => ({
     font-weight: 700;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 158 / 0.25);
+    border: 1px solid oklch(70% 0.14 282 / 0.25);
     padding: 0.12rem 0.6rem;
     border-radius: 999px;
     flex-shrink: 0;
@@ -482,22 +480,10 @@ const catCounts = categories.map((c) => ({
   .featured-image-index { position: absolute; z-index: 1; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
   .featured-image-arrow { position: absolute; z-index: 1; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
   .recent-feed .post-list { gap: 0.9rem; }
-  @media (max-width: 900px) {
-    .home-masthead { min-height: 430px; padding-top: 6rem; }
-    .masthead-art { right: -2rem; width: 34vw; opacity: 0.48; }
-    .masthead-inner { max-width: 100%; }
-  }
   @media (max-width: 640px) {
-    .home-masthead { min-height: 480px; padding: 6.7rem 1.3rem 4.6rem; }
-    .masthead-kicker { flex-wrap: wrap; gap: 0.45rem; font-size: 0.56rem; }
-    .masthead-edition { flex-basis: 100%; margin-left: 2.7rem; }
-    .masthead-inner h1 { position: relative; z-index: 2; margin-top: 2.4rem; font-size: clamp(2.55rem, 12vw, 4rem); }
-    .masthead-inner > p { position: relative; z-index: 2; max-width: 22rem; font-size: 0.88rem; }
-    .desktop-break { display: none; }
-    .masthead-art { top: 58%; right: -5.5rem; width: 62vw; opacity: 0.25; }
-    .masthead-index { right: 0; top: -2.2rem; }
-    .masthead-bottom { right: 1.3rem; left: 1.3rem; bottom: 0.8rem; gap: 0.5rem; font-size: 0.48rem; }
-    .masthead-bottom span:nth-child(2) { display: none; }
+    .home-hero { padding-inline: 0.35rem; }
+    .home-hero h1 { font-size: clamp(2rem, 8.8vw, 3rem); line-height: 1.35; }
+    .home-hero p { letter-spacing: 0.04em; }
     .featured-note { grid-template-columns: 1fr; }
     .featured-copy { padding: 1.3rem; }
     .featured-copy h3 { margin-top: 0.85rem; font-size: 1.5rem; }
@@ -675,7 +661,7 @@ const catCounts = categories.map((c) => ({
     background: var(--gradient-primary);
     border-color: transparent;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px oklch(62% 0.14 158 / 0.28);
+    box-shadow: 0 4px 12px oklch(62% 0.14 282 / 0.28);
   }
   .cloud-tag:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
 

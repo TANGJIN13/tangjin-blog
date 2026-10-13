@@ -19,13 +19,29 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
 const totalWords = posts.reduce((n, p) => n + p.body.replace(/\s/g, '').length, 0);
 
 // 首屏先输出完整河道；分页后由客户端按当前可见条目重新校准曲线。
+// 河道是一条平缓蜿蜒的正弦曲线，节点（圆点）落在河上，卡片分列两岸、用虚线支流相连。
+const RIVER_W = 1000;
+const RIVER_STEP = 158;
+const riverNode = (count: number) => {
+  // 条目少时用更短的周期，才摆得出 S 形；多了就放缓，避免锯齿感
+  const period = count <= 3 ? 2 : Math.max(3, Math.min(6, count));
+  const amp = count <= 3 ? 78 : 62;
+  return Array.from({ length: count }, (_, i) => ({
+    x: RIVER_W / 2 + amp * Math.sin((i / period) * Math.PI * 2),
+    y: i * RIVER_STEP + RIVER_STEP / 2,
+  }));
+};
 const riverPathFor = (count: number) => {
-  const step = 176;
-  const xAt = (index: number) => (index % 2 === 0 ? 460 : 540);
-  let d = `M ${xAt(0)} ${step / 2}`;
-  for (let i = 1; i < count; i++) {
-    const y = i * step + step / 2;
-    d += ` C ${xAt(i - 1)} ${y - step / 2 + 48}, ${xAt(i)} ${y - 48}, ${xAt(i)} ${y}`;
+  const pts = riverNode(count);
+  if (!pts.length) return '';
+  const all = [{ x: pts[0].x, y: pts[0].y - 56 }, ...pts, { x: pts[pts.length - 1].x, y: pts[pts.length - 1].y + 56 }];
+  let d = `M ${all[0].x.toFixed(1)} ${all[0].y.toFixed(1)}`;
+  for (let i = 0; i < all.length - 1; i++) {
+    const p0 = all[i - 1] ?? all[i];
+    const p1 = all[i];
+    const p2 = all[i + 1];
+    const p3 = all[i + 2] ?? p2;
+    d += ` C ${(p1.x + (p2.x - p0.x) / 6).toFixed(1)} ${(p1.y + (p2.y - p0.y) / 6).toFixed(1)}, ${(p2.x - (p3.x - p1.x) / 6).toFixed(1)} ${(p2.y - (p3.y - p1.y) / 6).toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
   }
   return d;
 };
@@ -58,20 +74,29 @@ const riverPathFor = (count: number) => {
               <span class="year-caption">这一年的文字，沿河而来</span>
             </div>
             <ul class="year-list">
-              <svg class="river-canvas" aria-hidden="true" preserveAspectRatio="none">
+              <svg
+                class="river-canvas"
+                aria-hidden="true"
+                preserveAspectRatio="none"
+                viewBox={`0 0 ${RIVER_W} ${Math.max(1, byYear.get(y)!.length * RIVER_STEP)}`}
+              >
                 <defs>
                   <linearGradient id={`river-gradient-${y}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="var(--primary)" stop-opacity=".12" />
-                    <stop offset="16%" stop-color="var(--primary)" stop-opacity=".8" />
-                    <stop offset="84%" stop-color="var(--primary)" stop-opacity=".72" />
-                    <stop offset="100%" stop-color="var(--primary)" stop-opacity=".12" />
+                    <stop offset="0%" stop-color="var(--primary)" stop-opacity=".1" />
+                    <stop offset="14%" stop-color="var(--primary)" stop-opacity=".78" />
+                    <stop offset="86%" stop-color="var(--primary)" stop-opacity=".7" />
+                    <stop offset="100%" stop-color="var(--primary)" stop-opacity=".1" />
                   </linearGradient>
-                  <filter id={`river-glow-${y}`} x="-30%" y="-30%" width="160%" height="160%">
-                    <feGaussianBlur stdDeviation="3" />
-                  </filter>
                 </defs>
                 <path class="river-glow" stroke={`url(#river-gradient-${y})`} />
-                <path class="river-line" stroke={`url(#river-gradient-${y})`} />
+                <path class="river-body" stroke={`url(#river-gradient-${y})`} />
+                <path class="river-line" stroke={`url(#river-gradient-${y})`} d={riverPathFor(byYear.get(y)!.length)} />
+                <path
+                  class="river-trib"
+                  d={riverNode(byYear.get(y)!.length)
+                    .map((p, i) => `M ${p.x.toFixed(1)} ${p.y.toFixed(1)} L ${(i % 2 === 0 ? 420 : 580).toFixed(1)} ${p.y.toFixed(1)}`)
+                    .join(' ')}
+                />
               </svg>
               {byYear.get(y)!.map((p, i) => (
                 <li class="tl-item onload-animation paginate-item" style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}>
@@ -114,6 +139,8 @@ const riverPathFor = (count: number) => {
 </Base>
 
 <script>
+  // 时光河流：把每个条目的圆点摆在一条平缓蜿蜒的河道上，
+  // 河道用 Catmull-Rom 转三次贝塞尔连成柔弯，再画虚线支流接到两岸的卡片。
   function initRiverArchive() {
     document.querySelectorAll<HTMLElement>('.year-list').forEach((list) => {
       if (list.dataset.riverBound === 'true') return;
@@ -121,7 +148,23 @@ const riverPathFor = (count: number) => {
       const svg = list.querySelector<SVGSVGElement>('.river-canvas');
       const line = list.querySelector<SVGPathElement>('.river-line');
       const glow = list.querySelector<SVGPathElement>('.river-glow');
+      const body = list.querySelector<SVGPathElement>('.river-body');
+      const trib = list.querySelector<SVGPathElement>('.river-trib');
       if (!svg || !line || !glow) return;
+
+      const smooth = (pts: { x: number; y: number }[]) => {
+        if (!pts.length) return '';
+        if (pts.length === 1) return `M ${pts[0].x} ${pts[0].y}`;
+        let d = `M ${pts[0].x} ${pts[0].y}`;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[i - 1] ?? pts[i];
+          const p1 = pts[i];
+          const p2 = pts[i + 1];
+          const p3 = pts[i + 2] ?? p2;
+          d += ` C ${p1.x + (p2.x - p0.x) / 6} ${p1.y + (p2.y - p0.y) / 6}, ${p2.x - (p3.x - p1.x) / 6} ${p2.y - (p3.y - p1.y) / 6}, ${p2.x} ${p2.y}`;
+        }
+        return d;
+      };
 
       let frame = 0;
       const draw = () => {
@@ -130,35 +173,65 @@ const riverPathFor = (count: number) => {
           const box = list.getBoundingClientRect();
           if (!box.width || !box.height) return;
           svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
-          const items = Array.from(list.querySelectorAll('.tl-item:not(.is-hidden)'));
-          const points = items.map((item) => {
-            const dot = item.querySelector('.tl-dot');
-            const r = dot.getBoundingClientRect();
-            return { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top };
+
+          const compact = box.width < 641;
+          const items = Array.from(list.querySelectorAll<HTMLElement>('.tl-item:not(.is-hidden)'));
+          const cx = box.width / 2;
+          // 条目少时也要看得出「蜿蜒」：振幅按条目数放大，2 条也能摆出去
+          const amp = Math.min(compact ? 0 : 78, box.width * (items.length <= 3 ? 0.1 : 0.07));
+          const period = items.length <= 3 ? 2 : Math.max(3, Math.min(6, items.length));
+
+          const pts = items.map((item, i) => {
+            const r = item.getBoundingClientRect();
+            const y = r.top + r.height / 2 - box.top;
+            // 手机端河道靠左，桌面端在版心中线附近蜿蜒
+            const x = compact ? 22 : cx + amp * Math.sin((i / period) * Math.PI * 2);
+            const dot = item.querySelector<HTMLElement>('.tl-dot');
+            if (dot) dot.style.left = `${(x / box.width) * 100}%`;
+
+            let edge: number | null = null;
+            const card = item.querySelector<HTMLElement>('.tl-card');
+            if (card && !compact) {
+              const cr = card.getBoundingClientRect();
+              edge = i % 2 === 0 ? cr.right - box.left : cr.left - box.left;
+            }
+            return { x, y, edge };
           });
-          if (!points.length) {
+
+          if (!pts.length) {
             line.setAttribute('d', '');
             glow.setAttribute('d', '');
+            if (body) body.setAttribute('d', '');
+            if (trib) trib.setAttribute('d', '');
             return;
           }
-          let d = `M ${points[0].x} ${points[0].y}`;
-          for (let i = 1; i < points.length; i++) {
-            const prev = points[i - 1];
-            const current = points[i];
-            const dy = current.y - prev.y;
-            const dx = current.x - prev.x;
-            d += ` C ${prev.x + dx * 0.42} ${prev.y + dy * 0.38}, ${current.x - dx * 0.42} ${current.y - dy * 0.38}, ${current.x} ${current.y}`;
-          }
+
+          // 首尾各延出一小段，让河流「流进来 / 流出去」
+          const head = { x: pts[0].x, y: pts[0].y - Math.min(52, pts[0].y - 4) };
+          const tail = {
+            x: pts[pts.length - 1].x,
+            y: Math.min(box.height - 4, pts[pts.length - 1].y + 52),
+          };
+          const d = smooth([head, ...pts, tail]);
           line.setAttribute('d', d);
           glow.setAttribute('d', d);
+          if (body) body.setAttribute('d', d);
+          if (trib) {
+            let td = '';
+            for (const p of pts) if (p.edge != null) td += ` M ${p.x} ${p.y} L ${p.edge} ${p.y}`;
+            trib.setAttribute('d', td);
+          }
         });
       };
+
       const resizeObserver = new ResizeObserver(draw);
       resizeObserver.observe(list);
       list.querySelectorAll('.tl-item').forEach((item) => resizeObserver.observe(item));
       const mutationObserver = new MutationObserver(draw);
       mutationObserver.observe(list, { attributes: true, subtree: true, attributeFilter: ['class'] });
       draw();
+      // 字体/图片载入后高度会变，再校准一次
+      window.addEventListener('load', draw, { once: true });
     });
   }
   document.addEventListener('astro:page-load', initRiverArchive);
@@ -246,10 +319,10 @@ const riverPathFor = (count: number) => {
     position: relative;
     display: flex;
     flex-direction: column;
-    gap: 1.35rem;
+    gap: 1.6rem;
     list-style: none;
     margin: 0;
-    padding: 0.7rem 0;
+    padding: 0.9rem 0;
   }
   .river-canvas {
     position: absolute;
@@ -260,14 +333,23 @@ const riverPathFor = (count: number) => {
     overflow: visible;
     pointer-events: none;
   }
-  .river-line, .river-glow {
+  .river-line, .river-glow, .river-body, .river-trib {
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
     vector-effect: non-scaling-stroke;
   }
-  .river-line { stroke-width: 2.2; opacity: 0.82; }
-  .river-glow { stroke-width: 9; opacity: 0.16; filter: blur(4px); }
+  /* 三层叠出「水」的厚度：宽柔光 → 河身 → 亮芯 */
+  .river-line { stroke-width: 2.6; opacity: 0.9; }
+  .river-body { stroke-width: 9; opacity: 0.16; }
+  .river-glow { stroke-width: 22; opacity: 0.12; filter: blur(7px); }
+  /* 支流：从河道牵一条虚线到两岸的卡片 */
+  .river-trib {
+    stroke: color-mix(in srgb, var(--primary) 52%, transparent);
+    stroke-width: 1.3;
+    stroke-dasharray: 1 6;
+    opacity: 0.75;
+  }
 
   .tl-item {
     position: relative;
@@ -275,14 +357,14 @@ const riverPathFor = (count: number) => {
     display: flex;
     align-items: center;
     width: 100%;
-    min-height: 112px;
+    min-height: 132px;
   }
   .tl-item:nth-of-type(odd) { justify-content: flex-start; }
   .tl-item:nth-of-type(even) { justify-content: flex-end; }
   .tl-dot {
     position: absolute;
     top: 50%;
-    left: 46%;
+    left: 50%;
     z-index: 2;
     width: 15px;
     height: 15px;
@@ -291,9 +373,8 @@ const riverPathFor = (count: number) => {
     background: var(--surface);
     box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent), 0 0 22px color-mix(in srgb, var(--primary) 42%, transparent);
     transform: translate(-50%, -50%);
-    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, left 0.5s cubic-bezier(.2,.75,.25,1);
   }
-  .tl-item:nth-of-type(even) .tl-dot { left: 54%; }
   .tl-item:hover .tl-dot {
     background: var(--primary);
     box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary) 14%, transparent), 0 0 30px color-mix(in srgb, var(--primary) 56%, transparent);
@@ -392,10 +473,10 @@ const riverPathFor = (count: number) => {
     .year { margin-bottom: 2rem; }
     .year-node { margin-bottom: 0.75rem; }
     .year-caption { font-size: 0.7rem; }
-    .year-list { gap: 0.85rem; padding: 0.4rem 0; }
-    .tl-item { min-height: 104px; justify-content: flex-end !important; }
-    .tl-dot, .tl-item:nth-of-type(even) .tl-dot { left: 14px; }
-    .tl-card { width: calc(100% - 42px); min-height: 96px; padding: 0.85rem 0.95rem; border-radius: 1rem; }
+    .year-list { gap: 1.1rem; padding: 0.5rem 0; }
+    .tl-item { min-height: 112px; justify-content: flex-end !important; }
+    .tl-dot, .tl-item:nth-of-type(even) .tl-dot { left: 22px; }
+    .tl-card { width: calc(100% - 54px); min-height: 96px; padding: 0.85rem 0.95rem; border-radius: 1rem; }
     .tl-item:nth-of-type(even) .tl-card::before { inset: 0 auto 0 0; }
     .tl-tags { display: none; }
   }

@@ -11,36 +11,33 @@
    设计系统 —— 配色（oklch）、圆角、阴影、间距与断点
    ============================================================ */
 :root {
-  /* 墨绿与陶土：克制的研究手记色谱 */
-  --primary: oklch(54% 0.075 160);
-  --primary-strong: oklch(39% 0.07 160);
-  --primary-soft: oklch(92% 0.025 155);
-  --primary-light: oklch(76% 0.07 155);
-  --primary-glow: oklch(54% 0.075 160 / 0.28);
-  --accent: oklch(62% 0.105 48);
-  --accent-soft: oklch(93% 0.035 55);
+  /* 雾蓝紫搭配一点杏粉，呼应站点水彩封面 */
+  --primary: oklch(61% 0.105 282);
+  --primary-strong: oklch(48% 0.12 282);
+  --primary-soft: oklch(94.5% 0.025 282);
+  --primary-light: oklch(79% 0.085 282);
+  --primary-glow: oklch(68% 0.11 282 / 0.3);
+  --accent: oklch(72% 0.09 15);
+  --accent-soft: oklch(96% 0.025 18);
 
-  /* 暖纸底、墨色字；边界以细线而非浮夸阴影建立层次 */
-  --bg: oklch(96.5% 0.014 86);
-  --surface: oklch(99.2% 0.008 86);
-  --surface-hover: oklch(94% 0.018 86);
-  --surface-2: oklch(93.5% 0.018 86);
+  /* 云雾底色，让水彩封面仍是主角 */
+  --bg: oklch(97.5% 0.009 285);
+  --surface: oklch(100% 0 0);
+  --surface-hover: oklch(96% 0.014 285);
+  --surface-2: oklch(95% 0.013 285);
 
-  /* 文字 */
-  --text: oklch(23% 0.018 190);
-  --text-soft: oklch(43% 0.018 190);
-  --text-faint: oklch(58% 0.014 190);
-  --text-on-primary: oklch(98% 0.008 86);
+  --text: oklch(24% 0.022 285);
+  --text-soft: oklch(47% 0.02 285);
+  --text-faint: oklch(61% 0.015 285);
+  --text-on-primary: #fff;
 
-  /* 细分隔线 */
-  --border: oklch(24% 0.02 190 / 0.14);
-  --border-light: oklch(24% 0.02 190 / 0.08);
+  --border: oklch(28% 0.023 285 / 0.10);
+  --border-light: oklch(28% 0.023 285 / 0.055);
 
-  /* 小而克制的圆角 */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.4rem;
-  --radius-lg: 0.65rem;
-  --radius-xl: 0.7rem;
+  --radius-sm: 0.55rem;
+  --radius-md: 0.85rem;
+  --radius-lg: 1.15rem;
+  --radius-xl: 1.3rem;
 
   /* 无衬线负责界面，衬线负责标题与长文的编辑感 */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
@@ -49,19 +46,19 @@
   --font-display: "Iowan Old Style", "Palatino Linotype", "Noto Serif SC", "Songti SC", "SimSun", serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, "Courier New", monospace;
 
-  /* 低彩度墨绿与陶土，仅用色相标记层级 */
-  --gradient-primary: linear-gradient(120deg, oklch(49% 0.075 160), oklch(62% 0.105 48));
-  --gradient-card: linear-gradient(145deg, oklch(99.5% 0.008 86), oklch(96% 0.016 86));
+  /* 主渐变：雾蓝紫 → 杏粉，呼应水彩封面 */
+  --gradient-primary: linear-gradient(120deg, oklch(56% 0.115 282), oklch(72% 0.09 15));
+  --gradient-card: linear-gradient(145deg, oklch(99.5% 0.006 285), oklch(96% 0.012 285));
 
   /* 阴影轻、方向明确，纸面靠留白分层 */
   --radius: 0.4rem;
-  --shadow-sm: 0 1px 2px oklch(24% 0.02 190 / 0.045);
-  --shadow: 0 8px 24px oklch(24% 0.02 190 / 0.07);
-  --shadow-lg: 0 16px 44px oklch(24% 0.02 190 / 0.1);
-  --shadow-glow: 0 0 16px oklch(54% 0.075 160 / 0.2);
+  --shadow-sm: 0 1px 2px oklch(28% 0.02 285 / 0.045);
+  --shadow: 0 8px 24px oklch(28% 0.02 285 / 0.07);
+  --shadow-lg: 0 16px 44px oklch(28% 0.02 285 / 0.1);
+  --shadow-glow: 0 0 16px oklch(61% 0.105 282 / 0.2);
 
   --on-primary: var(--text-on-primary);
-  --hue: 160;
+  --hue: 282;
 
   /* ---- 毛玻璃体系（侧栏组件 / 浮动按钮共用）----
      一块「真实的玻璃」要同时具备四层，缺一层就会退回成普通白卡：
@@ -75,8 +72,8 @@
   --glass-top: oklch(100% 0 0 / 0.3); /* 顶部竖向提亮 */
   --glass-edge: oklch(100% 0 0 / 0.72); /* 上缘内高光 */
   --glass-hairline: oklch(0% 0 0 / 0.055); /* 外圈发丝边 */
-  --glass-shadow: 0 12px 32px oklch(45% 0.06 158 / 0.1), 0 3px 10px oklch(45% 0.06 158 / 0.06);
-  --glass-shadow-hover: 0 18px 44px oklch(45% 0.07 158 / 0.14), 0 4px 12px oklch(45% 0.06 158 / 0.07);
+  --glass-shadow: 0 12px 32px oklch(52% 0.07 282 / 0.1), 0 3px 10px oklch(52% 0.06 282 / 0.06);
+  --glass-shadow-hover: 0 18px 44px oklch(52% 0.08 282 / 0.14), 0 4px 12px oklch(52% 0.06 282 / 0.07);
   --glass-blur: blur(20px) saturate(175%);
   /* 磨砂颗粒：纯色玻璃看着像塑料，一层 5% 的极细噪点就有「毛面」的微观质感。
      用 SVG feTurbulence 现算，不需要额外图片资源。 */
@@ -92,35 +89,35 @@
 }
 
 [data-theme='dark'] {
-  --bg: oklch(17% 0.018 190);
-  --surface: oklch(21% 0.018 190);
-  --surface-hover: oklch(25% 0.022 190);
-  --surface-2: oklch(25% 0.02 190);
+  --bg: oklch(17.5% 0.02 285);
+  --surface: oklch(21.5% 0.022 285);
+  --surface-hover: oklch(25.5% 0.026 285);
+  --surface-2: oklch(25% 0.024 285);
 
-  --primary: oklch(72% 0.075 155);
-  --primary-strong: oklch(78% 0.07 155);
-  --primary-soft: oklch(30% 0.04 160);
-  --primary-light: oklch(78% 0.07 155);
-  --primary-glow: oklch(72% 0.075 155 / 0.32);
-  --accent: oklch(73% 0.1 55);
-  --accent-soft: oklch(30% 0.05 55);
+  --primary: oklch(74% 0.1 282);
+  --primary-strong: oklch(81% 0.085 282);
+  --primary-soft: oklch(31% 0.05 282);
+  --primary-light: oklch(81% 0.085 282);
+  --primary-glow: oklch(74% 0.1 282 / 0.32);
+  --accent: oklch(76% 0.085 20);
+  --accent-soft: oklch(31% 0.05 20);
 
-  --text: oklch(91% 0.012 85);
-  --text-soft: oklch(72% 0.014 85);
-  --text-faint: oklch(57% 0.012 85);
-  --text-on-primary: oklch(16% 0.02 190);
+  --text: oklch(92% 0.012 285);
+  --text-soft: oklch(73% 0.014 285);
+  --text-faint: oklch(58% 0.012 285);
+  --text-on-primary: oklch(17% 0.02 285);
 
-  --border: oklch(90% 0.012 85 / 0.13);
-  --border-light: oklch(90% 0.012 85 / 0.075);
+  --border: oklch(90% 0.012 285 / 0.13);
+  --border-light: oklch(90% 0.012 285 / 0.075);
 
-  --gradient-primary: linear-gradient(120deg, oklch(72% 0.075 155), oklch(73% 0.1 55));
-  --gradient-card: linear-gradient(145deg, oklch(23% 0.02 190), oklch(20% 0.02 190));
+  --gradient-primary: linear-gradient(120deg, oklch(74% 0.1 282), oklch(76% 0.085 20));
+  --gradient-card: linear-gradient(145deg, oklch(23.5% 0.024 285), oklch(20% 0.02 285));
   --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.22);
   --shadow: 0 8px 24px oklch(0% 0 0 / 0.24);
   --shadow-lg: 0 16px 44px oklch(0% 0 0 / 0.3);
 
-  --glass-bg: oklch(24% 0.02 190 / 0.94);
-  --glass-bg-hover: oklch(28% 0.022 190 / 0.98);
+  --glass-bg: oklch(24% 0.024 285 / 0.94);
+  --glass-bg-hover: oklch(28% 0.026 285 / 0.98);
   --glass-sheen: oklch(100% 0 0 / 0.025);
   --glass-top: oklch(100% 0 0 / 0.02);
   --glass-edge: oklch(100% 0 0 / 0.1);
@@ -185,7 +182,7 @@ code, pre, kbd { font-family: var(--font-mono); }
 /* 正文里的链接：细下划线，悬停时从左侧展开成主色实线 */
 .post-body a:not(.tag) {
   text-decoration: none;
-  border-bottom: 1px solid oklch(70% 0.14 158 / 0.45);
+  border-bottom: 1px solid oklch(70% 0.13 282 / 0.45);
   transition: border-color 0.18s ease, background 0.18s ease;
 }
 .post-body a:not(.tag):hover {
@@ -347,8 +344,8 @@ code, pre, kbd { font-family: var(--font-mono); }
 [data-theme='dark'] .card-base.profile-card,
 [data-theme='dark'] .card-base.heatmap-widget,
 [data-theme='dark'] .card-base.tag-card {
-  --surface: oklch(28% 0.03 158 / 0.7);
-  --surface-2: oklch(32% 0.035 158 / 0.5);
+  --surface: oklch(28% 0.03 282 / 0.7);
+  --surface-2: oklch(32% 0.035 282 / 0.5);
 }
 
 /* 侧栏是一列组件、不算「内容卡片」：悬停不上浮跳动，只把玻璃提亮一档、阴影加深一点 */
@@ -419,6 +416,28 @@ code, pre, kbd { font-family: var(--font-mono); }
   background: linear-gradient(90deg, var(--border), transparent);
 }
 
+/* 内页紧凑右栏：去掉「本年/月/周还剩」三块进度，收紧间距，
+   避免分类/标签这类短正文被右栏撑出大片空白。首页 full 变体不受影响。 */
+.ref-sidebar-right[data-variant='compact'] {
+  gap: 0.55rem;
+}
+.ref-sidebar-right[data-variant='compact'] .card-base.widget-card {
+  padding: 0.75rem 0.8rem 0.8rem;
+}
+.ref-sidebar-right[data-variant='compact'] .widget-title {
+  font-size: 0.88rem;
+  margin-bottom: 0.55rem;
+}
+.ref-sidebar-right[data-variant='compact'] .widget-title .icon {
+  padding: 0.22rem;
+}
+.ref-sidebar-right[data-variant='compact'] .days-left {
+  display: none;
+}
+.ref-sidebar-right[data-variant='compact'] .site-stats {
+  gap: 0.5rem;
+}
+
 /* ============ 玻璃效果 ============ */
 .glass {
   background: rgba(255, 255, 255, 0.72);
@@ -462,7 +481,7 @@ code, pre, kbd { font-family: var(--font-mono); }
   box-shadow:
     inset 0 1px 0 0 var(--glass-edge),
     0 0 0 1px var(--glass-hairline),
-    0 4px 14px oklch(45% 0.06 158 / 0.1);
+    0 4px 14px oklch(52% 0.07 282 / 0.1);
   transition: all 0.2s ease;
 }
 .floating-btn:hover {
@@ -474,7 +493,7 @@ code, pre, kbd { font-family: var(--font-mono); }
   background: var(--primary);
   color: var(--text-on-primary);
   border-color: var(--primary);
-  box-shadow: 0 4px 16px oklch(62% 0.14 158 / 0.38);
+  box-shadow: 0 4px 16px oklch(61% 0.105 282 / 0.38);
 }
 /* 樱花开关打开时图标慢慢转，一眼能看出「正在飘」。
    注意：这条必须写在 global.css（全局样式表）里，不能写进组件 —— 图标是 Icon.astro
@@ -591,8 +610,8 @@ body::after {
 }
 .card-base:hover {
   transform: translateY(-3px);
-  border-color: oklch(70% 0.14 158 / 0.45);
-  box-shadow: 0 2px 4px oklch(0% 0 0 / 0.05), 0 14px 34px oklch(60% 0.13 158 / 0.16);
+  border-color: oklch(70% 0.13 282 / 0.45);
+  box-shadow: 0 2px 4px oklch(0% 0 0 / 0.05), 0 14px 34px oklch(61% 0.105 282 / 0.16);
 }
 [data-theme='dark'] .card-base:hover {
   box-shadow: 0 2px 4px oklch(0% 0 0 / 0.3), 0 14px 34px oklch(0% 0 0 / 0.45);
@@ -602,14 +621,14 @@ body::after {
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: oklch(70% 0.14 158 / 0.35);
+  background: oklch(70% 0.13 282 / 0.35);
   border-radius: 999px;
   border: 2px solid transparent;
   background-clip: content-box;
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); background-clip: content-box; }
-::selection { background: oklch(70% 0.14 158 / 0.28); color: var(--primary-strong); }
-[data-theme='dark']::selection { background: oklch(60% 0.16 158 / 0.4); color: oklch(95% 0.02 158); }
+::selection { background: oklch(70% 0.13 282 / 0.28); color: var(--primary-strong); }
+[data-theme='dark']::selection { background: oklch(60% 0.15 282 / 0.4); color: oklch(95% 0.02 282); }
 
 /* 键盘可达性：焦点环 */
 a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
@@ -685,9 +704,9 @@ body.immersive-reading .post-shell > * { grid-column: 1 !important; }
 html { font-size: 14px; }
 @media (min-width: 768px) { html { font-size: 16px; } }
 
-/* 分类条 pill 文字色（hue=250） */
-:root { --btn-content: oklch(0.55 0.12 158); }
-[data-theme='dark'] { --btn-content: oklch(0.75 0.1 158); }
+/* 分类条 pill 文字色 */
+:root { --btn-content: oklch(0.55 0.12 282); }
+[data-theme='dark'] { --btn-content: oklch(0.78 0.1 282); }
 
 /* ============ 图片点击放大查看（Lightbox） ============ */
 .post-body img { cursor: zoom-in; }
@@ -702,7 +721,7 @@ body.ilb-lock { overflow: hidden; }
   flex-direction: column;
   gap: 0.7rem;
   padding: 3.4rem 1.25rem 0.9rem;
-  background: oklch(10% 0.02 158 / 0.96);
+  background: oklch(12% 0.02 285 / 0.96);
   backdrop-filter: blur(8px);
   opacity: 0;
   transition: opacity 0.22s ease;
@@ -830,7 +849,7 @@ body.ilb-lock { overflow: hidden; }
   color: #fff;
   border-color: transparent;
   cursor: default;
-  box-shadow: 0 4px 14px oklch(62% 0.14 158 / 0.32);
+  box-shadow: 0 4px 14px oklch(61% 0.105 282 / 0.32);
 }
 .pager-btn.is-disabled {
   opacity: 0.42;
@@ -851,25 +870,12 @@ body.ilb-lock { overflow: hidden; }
   .pager { gap: 0.35rem; margin-top: 1.75rem; }
 }
 
-/* ============ Editorial design system ============ */
+/* ============ Editorial design system ============
+   这一层只做「版式与质感」的统一，**不再覆盖配色与毛玻璃**：
+   卡片玻璃、侧栏柔光、壁纸明度都交回上面的原始设计系统负责。
+   （曾经这里用 !important 把 backdrop-filter 关掉、给壁纸加灰化滤镜，
+   结果整站变平、水彩壁纸发脏 —— 已全部移除。） */
 html { scroll-padding-top: calc(var(--navbar-height) + 1rem); }
-body {
-  background-color: var(--bg);
-  background-image: linear-gradient(90deg, color-mix(in srgb, var(--primary) 3%, transparent) 1px, transparent 1px);
-  background-size: 56px 100%;
-}
-body::before {
-  background:
-    radial-gradient(54rem 34rem at 5% 0%, oklch(63% 0.075 160 / 0.07), transparent 68%),
-    radial-gradient(42rem 30rem at 100% 17%, oklch(68% 0.09 50 / 0.06), transparent 68%),
-    linear-gradient(180deg, transparent 60%, color-mix(in srgb, var(--primary) 3%, transparent));
-}
-[data-theme='dark'] body::before {
-  background:
-    radial-gradient(54rem 34rem at 5% 0%, oklch(48% 0.08 160 / 0.12), transparent 68%),
-    radial-gradient(42rem 30rem at 100% 17%, oklch(55% 0.08 50 / 0.08), transparent 68%);
-}
-body::after { background: none !important; }
 
 h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
 .container { width: min(94%, var(--page-width)); padding-inline: clamp(0.7rem, 1.5vw, 1.25rem); }
@@ -890,41 +896,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
   .page-shell > .ref-sidebar-right { display: flex !important; }
   .post-shell { grid-template-columns: var(--post-aside) minmax(0, 1fr) var(--post-aside) !important; }
 }
-.card-base {
-  background: var(--surface) !important;
-  background-image: none !important;
-  border: 1px solid var(--border) !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent) !important;
-  backdrop-filter: none !important;
-  transition: border-color 0.22s ease, box-shadow 0.22s ease !important;
-}
-.card-base:hover {
-  transform: none !important;
-  border-color: color-mix(in srgb, var(--primary) 36%, var(--border)) !important;
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 8%, transparent) !important;
-}
-.card-base.widget-card, .card-base.profile-card, .card-base.heatmap-widget, .card-base.tag-card {
-  --surface: var(--bg);
-  --surface-2: var(--surface-hover);
-  background: var(--surface) !important;
-  background-image: none !important;
-  border-color: var(--border) !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent) !important;
-}
-[data-theme='dark'] .card-base,
-[data-theme='dark'] .card-base.widget-card,
-[data-theme='dark'] .card-base.profile-card,
-[data-theme='dark'] .card-base.heatmap-widget,
-[data-theme='dark'] .card-base.tag-card { background: var(--surface) !important; }
-.card-base.widget-card::after { display: none !important; }
-.glass { background: var(--surface) !important; border: 1px solid var(--border) !important; backdrop-filter: none !important; }
+.card-base { border-radius: var(--radius-lg); }
+/* 侧栏组件保留玻璃质感；这一层只统一标题的排版语言 */
 .widget-title { font-family: var(--font-sans); font-size: 0.78rem !important; letter-spacing: 0.11em !important; text-transform: uppercase; }
 .widget-title::after { background: var(--border) !important; }
 .widget-title .icon { padding: 0 !important; background: none !important; border: 0 !important; transform: none !important; }
-.post-card { border-radius: var(--radius-lg) !important; box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent) !important; }
-.post-card:hover { transform: translateY(-2px) !important; box-shadow: 0 12px 28px color-mix(in srgb, var(--text) 9%, transparent) !important; }
-.post-card-cover img { filter: saturate(0.78) contrast(1.02); }
+.post-card { border-radius: var(--radius-lg) !important; }
+.post-card-cover img { filter: saturate(0.94) contrast(1.02); }
 .post-card-title { font-family: var(--font-display); font-size: 1.04rem !important; }
 .post-card-desc { font-size: 0.82rem !important; line-height: 1.75 !important; }
 .pager { gap: 0.35rem; }
@@ -939,17 +917,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
-/* 常驻刊物导航：与页面是否有图像横幅解耦 */
-body .top-row, body .top-row.scrolled, body.has-banner .top-row:not(.scrolled) {
-  background: color-mix(in srgb, var(--bg) 95%, transparent) !important;
-  backdrop-filter: blur(12px) saturate(110%) !important;
-  border-bottom: 1px solid var(--border) !important;
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 3%, transparent);
-}
-body.has-banner .top-row:not(.scrolled) .brand-name,
-body.has-banner .top-row:not(.scrolled) .nav-item,
-body.has-banner .top-row:not(.scrolled) .nav-btn { color: var(--text) !important; text-shadow: none !important; }
-body.has-banner .top-row:not(.scrolled) .nav-item[aria-current='page'] { color: var(--primary-strong) !important; background: transparent !important; }
+/* 导航：保留「浮在壁纸上」的白玻璃（对比度在 Base.astro 里逐档调过），
+   这里只统一圆角、字重与间距，不再用纯色底把它盖平。 */
 .top-row .brand { padding-inline: 0.25rem; }
 .top-row .brand-avatar { border-radius: 0.28rem; }
 .top-row .brand-name { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.025em; }
@@ -960,21 +929,82 @@ body.has-banner .top-row:not(.scrolled) .nav-item[aria-current='page'] { color: 
   font-size: 0.82rem !important;
   letter-spacing: 0.01em;
 }
-.top-row .nav-item[aria-current='page'] { color: var(--primary-strong) !important; background: transparent !important; }
 .top-row .nav-item::after { left: 0.55rem !important; right: 0.55rem !important; height: 1px !important; border-radius: 0 !important; }
 .top-row .nav-btn { border-radius: 0.25rem !important; }
 .mobile-menu {
-  background: var(--surface) !important;
-  backdrop-filter: none !important;
-  border-color: var(--border) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: 0 14px 40px color-mix(in srgb, var(--text) 14%, transparent) !important;
 }
-[data-theme='dark'] .mobile-menu { background: var(--surface) !important; }
-.wp-page-title { font-family: var(--font-display) !important; letter-spacing: -0.04em !important; }
-.wp-page-icon { border-radius: 0.35rem !important; background: color-mix(in srgb, var(--bg) 18%, transparent) !important; }
-.wp-page-head { text-shadow: 0 2px 18px rgb(0 0 0 / 0.5); }
-.wallpaper-wrapper.wp-desktop-only { height: clamp(190px, 26vh, 310px) !important; }
-.wallpaper-wrapper.wp-cover-mode { height: clamp(300px, 42vh, 500px) !important; }
-.wallpaper-wrapper .wp-slide img { filter: grayscale(0.58) sepia(0.16) saturate(0.78) brightness(0.86); }
-.wallpaper-wrapper .wallpaper-dim { background: linear-gradient(180deg, rgb(16 30 27 / 0.34), rgb(16 30 27 / 0.12) 44%, rgb(16 30 27 / 0.62)) !important; }
+
+/* 内页横幅：保留水彩壁纸的原始色相与明度，只统一高度节奏。
+   （曾经这里加了 grayscale/sepia 滤镜 + 墨绿遮罩，壁纸被压得发脏 —— 已移除。） */
+.wallpaper-wrapper.wp-desktop-only { height: clamp(240px, 32vh, 380px) !important; }
+.wallpaper-wrapper.wp-cover-mode { height: clamp(320px, 46vh, 540px) !important; }
+
+/* 内页标题区（page-intro）：桌面端由它承担章节标题，页面内的重复标题头隐藏 */
+.hide-with-banner { display: none !important; }
+.page-intro { isolation: isolate; }
+.page-shell:has(> .ref-sidebar-left) { margin-top: clamp(1.8rem, 3vw, 2.8rem); }
+
+/* Article pages become quiet reading rooms: centered measure, clear section rhythm. */
+.post-shell { margin-top: clamp(1.5rem, 3vw, 2.75rem) !important; }
+.post-main { min-width: 0; }
+.post-main > .post-body {
+  padding: clamp(1.4rem, 4.6vw, 3.8rem) clamp(1.15rem, 5.2vw, 4.4rem) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 3px 16px color-mix(in srgb, var(--text) 4%, transparent) !important;
+}
+.post-body.custom-md { font-size: clamp(1rem, 1.1vw, 1.075rem) !important; line-height: 1.95 !important; }
+.post-body.custom-md > :first-child { margin-top: 0 !important; }
+.post-body.custom-md h1, .post-body.custom-md h2, .post-body.custom-md h3, .post-body.custom-md h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
+.post-body.custom-md h2 { margin-top: 2.5em !important; padding-bottom: 0.6em !important; border-bottom: 1px solid var(--border) !important; border-image: none !important; }
+.post-body.custom-md h3 { margin-top: 1.8em !important; }
+.post-body.custom-md blockquote { border-left: 2px solid var(--accent) !important; border-image: none !important; background: color-mix(in srgb, var(--accent-soft) 46%, transparent); }
+[data-theme='dark'] .post-body.custom-md blockquote { background: color-mix(in srgb, var(--accent-soft) 38%, transparent); }
+.post-body.custom-md pre { border-radius: var(--radius-md) !important; }
+.post-body.custom-md table { box-shadow: none !important; }
+.post-foot, .comments-card, .pn-card { border-radius: var(--radius-lg) !important; }
+.post-banner .pb-title { font-family: var(--font-display) !important; font-weight: 600 !important; letter-spacing: -0.04em !important; }
+
+/* Make archive, categories, tags, album and index panels share the same paper/ink grammar. */
+.cat-card.card-base { padding: 0.65rem 0.85rem !important; }
+.cat-pill, .tg-back a, .cat-post-card, .cat-card.glass, .tg-board, .post-head, .sp-hero, .dl-banner, .says-banner, .album-banner {
+  border-radius: var(--radius-md) !important;
+}
+.cat-post-card:hover { transform: translateX(3px) !important; box-shadow: none !important; }
+.cat-post-card { border-bottom: 1px solid var(--border-light) !important; background: var(--surface) !important; }
+.cat-post-card:last-child { border-bottom: 0 !important; }
+.cat-card.glass { box-shadow: none !important; }
+.cat-card.glass:hover { transform: translateY(-2px) !important; box-shadow: var(--shadow) !important; }
+.tg-board { padding: clamp(1.2rem, 3vw, 2rem) !important; }
+.tg-item { font-family: var(--font-display); }
+.tg-item em { border-radius: 2px !important; }
+.album-grid { gap: 0.7rem !important; }
+.album-item { border-radius: var(--radius-md) !important; box-shadow: none !important; }
+.album-item:hover { transform: translateY(-2px) !important; }
+
+/* Shared editorial labels and buttons, keeping all existing routes and scripts intact. */
+.section-head { border-bottom-style: solid !important; }
+.section-title::before { border-radius: 0 !important; }
+.meta-chip, .tag-chip, .cat-pill, .cat-row-count { border-radius: 0.2rem !important; }
+.meta-chip { background: transparent !important; border-color: var(--border-light) !important; color: var(--text-soft) !important; }
+.meta-chip.is-link:hover, .tag-chip:hover { background: var(--primary) !important; }
+.tag-chip { background: transparent !important; }
+.cloud-tag { border-radius: 0.25rem !important; background: transparent !important; }
+.cloud-tag:hover { transform: translateY(-1px) !important; background: var(--primary) !important; }
+.floating-btn { border-radius: 0.35rem !important; backdrop-filter: blur(8px) !important; }
+.music-float-panel, .music-float-mini { border-radius: var(--radius-md) !important; }
+
+@media (max-width: 899px) {
+  .page-intro { padding-block: 1.7rem 1.25rem; }
+  .page-intro-title { font-size: clamp(2rem, 8vw, 3rem); }
+  .page-intro-index { display: none; }
+  .post-body.custom-md { font-size: 1rem !important; }
+}
+@media (max-width: 640px) {
+  .page-shell:has(> .ref-sidebar-left) { margin-top: 1.25rem; }
+  .post-shell { margin-top: 1rem !important; }
+  .post-main > .post-body { padding: 1.25rem 1rem !important; }
+  .post-body.custom-md { line-height: 1.88 !important; }
+  .album-grid { columns: 2 !important; }
+}

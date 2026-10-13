@@ -1,6 +1,8 @@
 ---
-// 通用右侧栏：搜索 / 日历 / 节假日 / 站点统计 / 热力图
-// 默认插槽在最后：文章页借此把「目录」放在最下面，它会 sticky 吸附、其他卡片滚走后仍然可见
+// 通用右侧栏：搜索 / 日历 / 站点统计（内页默认）
+// full 时再补上「节假日」与「活跃度热力图」——首页内容长，撑得起整列；
+// 内页正文通常较短，右栏一旦比正文高出一大截，正文下方就会空出一大片，
+// 所以内页只留最必要的三个组件，右栏高度与正文接近，页面才平衡。
 import Icon from './Icon.astro';
 import SearchWidget from './SearchWidget.astro';
 import CalendarWidget from './CalendarWidget.astro';
@@ -10,11 +12,17 @@ import SiteStats from './SiteStats.astro';
 import { getPublishedPosts } from '../lib/posts';
 import { categories } from '../data/categories';
 
+interface Props {
+  full?: boolean;
+}
+
+const { full = false } = Astro.props;
+
 const posts = await getPublishedPosts();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
 ---
 
-<aside class="ref-sidebar-right">
+<aside class="ref-sidebar-right" data-variant={full ? 'full' : 'compact'}>
   <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
     <h3 class="widget-title"><Icon name="search" size="1.05rem" /> 搜索</h3>
     <SearchWidget />
@@ -25,10 +33,16 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
     <CalendarWidget />
   </div>
 
-  <div class="card-base widget-card onload-animation" style="animation-delay: 0.3s">
-    <h3 class="widget-title"><Icon name="clock" size="1.05rem" /> 节假日</h3>
-    <HolidayWidget />
-  </div>
+  {
+    full && (
+      <div class="card-base widget-card onload-animation" style="animation-delay: 0.3s">
+        <h3 class="widget-title">
+          <Icon name="clock" size="1.05rem" /> 节假日
+        </h3>
+        <HolidayWidget />
+      </div>
+    )
+  }
 
   <div class="card-base widget-card onload-animation" style="animation-delay: 0.4s">
     <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
@@ -39,7 +53,7 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
     />
   </div>
 
-  <HeatmapWidget />
+  {full && <HeatmapWidget />}
 
   <slot />
 </aside>

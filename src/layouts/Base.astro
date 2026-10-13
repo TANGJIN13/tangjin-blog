@@ -158,17 +158,16 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
 
     <!-- 主内容 -->
     <main class="main-layout">
-      <!-- 内页章节题签：以编号、细线与衬线标题建立层级，不复用首页主视觉 -->
+      <!-- 内页共享标题区：柔和留白让内容优先，横幅只留给首页与文章封面 -->
       {pageBanner && (
         <section class="page-intro">
           <div class="page-intro-inner container">
-            <div class="page-intro-kicker"><span>FIELD NOTES</span><i aria-hidden="true"></i><span>SECTION / {bannerIcon ?? 'INDEX'}</span></div>
+            <span class="page-intro-kicker">TJ'S BLOG <span aria-hidden="true">/</span> EXPLORE</span>
             <div class="page-intro-title-row">
+              {bannerIcon && <span class="page-intro-icon"><Icon name={bannerIcon} size="1.2rem" /></span>}
               <h1 class="page-intro-title">{bannerTitle ?? title ?? site.title}</h1>
-              {bannerIcon && <span class="page-intro-icon"><Icon name={bannerIcon} size="1.25rem" /></span>}
             </div>
             {bannerDesc && <p class="page-intro-desc">{bannerDesc}</p>}
-            <span class="page-intro-index" aria-hidden="true">TJ—2026</span>
           </div>
         </section>
       )}
@@ -532,7 +531,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     border-bottom-color: var(--border);
   }
   :global([data-theme='dark'] .top-row.scrolled) {
-    background: oklch(14% 0.015 158 / 0.75);
+    background: oklch(14% 0.015 282 / 0.75);
   }
 
   /* 横幅页面：导航栏始终是毛玻璃，悬浮在壁纸之上。
@@ -685,7 +684,41 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   .main-layout { padding-block: 1.5rem; padding-top: calc(var(--navbar-height) + 1.5rem); }
   body.has-banner .main-layout { padding-top: 0; }
 
-  /* ===== 内页横幅上的标题（白字压在壁纸上） ===== */
+  /* ===== 内页题签：像一本研究刊物的章节扉页 ===== */
+  .page-intro {
+    position: relative;
+    overflow: hidden;
+    padding: clamp(2.1rem, 4vw, 3.7rem) 0 clamp(1.45rem, 2.6vw, 2.2rem);
+    border-bottom: 1px solid var(--border);
+    background:
+      linear-gradient(90deg, color-mix(in srgb, var(--primary) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(180deg, color-mix(in srgb, var(--surface) 75%, transparent), transparent);
+    background-size: 52px 100%, auto;
+  }
+  .page-intro-inner { position: relative; }
+  .page-intro-kicker {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--text-faint);
+    font: 600 0.61rem/1.4 var(--font-mono);
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+  }
+  .page-intro-kicker i { width: 1.5rem; height: 1px; background: var(--accent); }
+  .page-intro-title-row { display: flex; align-items: center; gap: 0.9rem; margin-top: 0.7rem; }
+  .page-intro-title {
+    margin: 0;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: clamp(2.15rem, 5vw, 4.2rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1.12;
+  }
+  .page-intro-icon { display: grid; width: 2.45rem; height: 2.45rem; place-items: center; color: var(--primary); border: 1px solid var(--border); border-radius: 50%; }
+  .page-intro-desc { margin: 0.65rem 0 0; color: var(--text-soft); font-size: 0.87rem; letter-spacing: 0.015em; }
+  .page-intro-index { position: absolute; right: 0; bottom: 0.3rem; color: var(--text-faint); font: 0.62rem var(--font-mono); letter-spacing: 0.15em; }
   .wp-page-head {
     display: flex;
     flex-direction: column;
@@ -768,14 +801,14 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     justify-content: space-between;
     padding: 0.55rem 0.85rem;
     background: linear-gradient(145deg,
-      oklch(97% 0.02 158) 0%,
-      oklch(95% 0.03 48) 100%);
+      oklch(97% 0.02 282) 0%,
+      oklch(95% 0.03 15) 100%);
     border-bottom: 1px solid var(--border);
   }
   :global([data-theme='dark'] .music-float-head) {
     background: linear-gradient(145deg,
-      oklch(21% 0.03 158) 0%,
-      oklch(18% 0.04 48) 100%);
+      oklch(21% 0.03 282) 0%,
+      oklch(18% 0.04 15) 100%);
   }
   .music-float-title {
     display: inline-flex;
@@ -818,7 +851,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     box-shadow: 0 4px 16px oklch(0% 0 0 / 0.14);
     transition: all 0.2s ease;
   }
-  :global([data-theme='dark'] .music-float-mini) { background: oklch(20% 0.02 158 / 0.88); }
+  :global([data-theme='dark'] .music-float-mini) { background: oklch(20% 0.02 282 / 0.88); }
   .music-float-mini:hover { transform: scale(1.08); box-shadow: 0 6px 22px oklch(0% 0 0 / 0.18); }
 
   /* 播放时收起按钮显示动态均衡器（替代静态音符图标） */
@@ -895,7 +928,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   /* 提示期间给播放器本体一圈主色光晕，视线更容易被引导过去 */
   .music-float.hinting .music-float-mini,
   .music-float.hinting .music-float-panel {
-    box-shadow: 0 0 0 3px oklch(70% 0.14 158 / 0.35), 0 8px 28px oklch(0% 0 0 / 0.16);
+    box-shadow: 0 0 0 3px oklch(70% 0.14 282 / 0.35), 0 8px 28px oklch(0% 0 0 / 0.16);
   }
 
   /* 展开态：显示面板，隐藏小按钮 */
@@ -911,8 +944,8 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     animation: music-pulse 2.4s ease-in-out infinite;
   }
   @keyframes music-pulse {
-    0%, 100% { box-shadow: 0 4px 16px oklch(70% 0.14 158 / 0.25); }
-    50%      { box-shadow: 0 4px 26px oklch(70% 0.14 158 / 0.5); }
+    0%, 100% { box-shadow: 0 4px 16px oklch(70% 0.14 282 / 0.25); }
+    50%      { box-shadow: 0 4px 26px oklch(70% 0.14 282 / 0.5); }
   }
 
   @media (max-width: 640px) {
@@ -954,7 +987,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     opacity: 1;
   }
   :global([data-theme='dark'] .mobile-menu) {
-    background: oklch(22% 0.02 158 / 0.88);
+    background: oklch(22% 0.02 282 / 0.88);
     border-color: oklch(100% 0 0 / 0.08);
   }
 
@@ -976,7 +1009,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     transition: all 0.18s ease;
   }
   .mobile-nav-item:hover {
-    background: oklch(95% 0.03 158);
+    background: oklch(95% 0.03 282);
     color: var(--text);
   }
   .mobile-nav-item[aria-current='page'] {
@@ -984,7 +1017,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     background: var(--primary-soft);
     font-weight: 600;
   }
-  :global([data-theme='dark'] .mobile-nav-item:hover) { background: oklch(28% 0.03 158); }
+  :global([data-theme='dark'] .mobile-nav-item:hover) { background: oklch(28% 0.03 282); }
   .mobile-nav-item :global(.icon) { opacity: 0.85; }
 
   @media (max-width: 1023px) {

@@ -37,17 +37,15 @@ const plainBody = post.body
   .trim();
 const excerpt = (description ?? '').trim() || plainBody.slice(0, 120);
 
-// 没写 cover 的文章：兜底封面按列表位置轮换（同一页相邻文章不会撞同一张图）；
-// 拿不到位置信息时退化成 FNV-1a 哈希，保证同一篇文章永远是同一张
+// 没写 cover 的文章：用站点同色系的水彩壁纸兜底，按列表位置轮换
+// （同一页相邻文章不会撞同一张图；拿不到位置信息时退化成 FNV-1a 哈希，
+//   保证同一篇文章永远是同一张）。混进不相干的素材风景图会打断整站色调。
 const fallbackCovers = [
-  '/images/covers/cover-01.jpg',
-  '/images/covers/cover-02.jpg',
-  '/images/covers/cover-03.jpg',
-  '/images/covers/cover-04.jpg',
-  '/images/covers/cover-05.jpg',
-  '/images/covers/cover-06.jpg',
-  '/images/covers/cover-07.jpg',
-  '/images/covers/cover-08.jpg',
+  '/images/wallpapers/banner-pastel-01.webp',
+  '/images/wallpapers/banner-pastel-02.webp',
+  '/images/wallpapers/banner-pastel-03.webp',
+  '/images/wallpapers/banner-pastel-04.webp',
+  '/images/wallpapers/banner-pastel-05.webp',
 ];
 let hash = 2166136261;
 for (const ch of post.id) {
@@ -118,8 +116,8 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
   }
   .post-card:hover {
     transform: translateY(-4px);
-    border-color: oklch(70% 0.14 158 / 0.5);
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 158 / 0.18);
+    border-color: oklch(70% 0.14 282 / 0.5);
+    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 282 / 0.18);
   }
   :global([data-theme='dark'] .post-card:hover) {
     box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 18px 38px oklch(0% 0 0 / 0.5);
@@ -215,7 +213,7 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
     text-decoration: none !important;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 158 / 0.22);
+    border: 1px solid oklch(70% 0.14 282 / 0.22);
     transition: all 0.18s ease;
   }
   :global([data-theme='dark'] .meta-chip) { color: var(--primary-light); }

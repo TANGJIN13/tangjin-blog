@@ -733,7 +733,7 @@ const metingConfig = {
   .ctrl-btn :global(.icon) { grid-area: 1 / 1; }
   .ctrl-side { color: var(--text-faint); }
   #playlist-toggle.active, .mini-btn.active { color: var(--primary); background: var(--primary-soft); }
-  .ctrl-play { width: 44px; height: 44px; background: var(--primary); color: var(--text-on-primary); box-shadow: 0 4px 14px oklch(70% 0.14 158 / 0.35); }
+  .ctrl-play { width: 44px; height: 44px; background: var(--primary); color: var(--text-on-primary); box-shadow: 0 4px 14px oklch(70% 0.14 282 / 0.35); }
   .ctrl-play:hover { background: var(--primary-strong); color: var(--text-on-primary); transform: scale(1.06); }
   .ctrl-play:active { transform: scale(0.96); }
   .ctrl-play :global(.ico-pause) { display: none; }
@@ -765,7 +765,7 @@ const metingConfig = {
   .lyrics-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0 0.2rem 0.3rem; }
   .lyrics-label { font-size: 0.7rem; font-weight: 600; color: var(--text-faint); }
   .lrc-offset { display: inline-flex; align-items: center; gap: 0.2rem; padding: 2px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
-  :global([data-theme='dark'] .lrc-offset) { background: oklch(22% 0.02 158); }
+  :global([data-theme='dark'] .lrc-offset) { background: oklch(22% 0.02 282); }
   .lrc-btn {
     border: none; background: transparent; color: var(--text-faint);
     font-size: 0.65rem; font-weight: 600; padding: 0.16rem 0.42rem;
@@ -787,7 +787,7 @@ const metingConfig = {
 
   /* 来源分段开关 */
   .src-switch { display: inline-flex; padding: 2px; gap: 2px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); }
-  :global([data-theme='dark'] .src-switch) { background: oklch(22% 0.02 158); }
+  :global([data-theme='dark'] .src-switch) { background: oklch(22% 0.02 282); }
   .src-chip {
     display: inline-flex; align-items: center; gap: 0.25rem;
     padding: 0.22rem 0.6rem; border: none; border-radius: 999px;
@@ -796,7 +796,7 @@ const metingConfig = {
     transition: all 0.18s ease; white-space: nowrap;
   }
   .src-chip:hover { color: var(--primary); }
-  .src-chip.active { background: var(--primary); color: var(--text-on-primary); box-shadow: 0 2px 8px oklch(70% 0.14 158 / 0.3); }
+  .src-chip.active { background: var(--primary); color: var(--text-on-primary); box-shadow: 0 2px 8px oklch(70% 0.14 282 / 0.3); }
   .player-playlist { max-height: 190px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.1rem; padding-right: 0.15rem; }
   .track-item { display: flex; align-items: center; gap: 0.55rem; padding: 0.3rem 0.35rem; border-radius: var(--radius-sm); cursor: pointer; transition: background 0.12s ease; }
   .track-item:hover { background: var(--surface-2); }
@@ -816,6 +816,6 @@ const metingConfig = {
   .track-name { font-size: 0.8rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .track-item.active .track-name { color: var(--primary-strong); font-weight: 600; }
   .track-artist { font-size: 0.68rem; color: var(--text-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  :global([data-theme='dark'] .track-item:hover) { background: oklch(22% 0.02 158); }
-  :global([data-theme='dark'] .track-item.active) { background: oklch(25% 0.04 48); }
+  :global([data-theme='dark'] .track-item:hover) { background: oklch(22% 0.02 282); }
+  :global([data-theme='dark'] .track-item.active) { background: oklch(25% 0.04 15); }
 </style>
