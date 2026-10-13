@@ -27,7 +27,6 @@ const YEAR_MOTTOS = [
   '远处的灯，还亮着',
 ];
 const yearMotto = (i: number) => YEAR_MOTTOS[i] ?? '岁月把文字汇入长河';
-
 /*
   「时间节点」序列 —— 河道、里程碑、卡片全部由**真实文章数据**驱动。
 
@@ -109,6 +108,8 @@ const streams = years.map((y, yi) => {
           <path class="rl rl-skin" stroke="url(#river-skin)" />
           <!-- 一层亮芯：细，是水流的高光 -->
           <path class="rl rl-core" stroke="url(#river-core)" />
+          <!-- 一层流光：沿河缓慢推进的短高光段，让水「在动」 -->
+          <path class="rl rl-flow" />
           <!-- 支流：从河道优雅地拐向两侧卡片 -->
           <path class="rl rl-trib" />
         </svg>
@@ -209,8 +210,9 @@ const streams = years.map((y, yi) => {
     const haze = page.querySelector<SVGPathElement>('.rl-haze');
     const skin = page.querySelector<SVGPathElement>('.rl-skin');
     const core = page.querySelector<SVGPathElement>('.rl-core');
+    const flow = page.querySelector<SVGPathElement>('.rl-flow');
     const trib = page.querySelector<SVGPathElement>('.rl-trib');
-    if (!svg || !haze || !skin || !core || !trib) return;
+    if (!svg || !haze || !skin || !core || !flow || !trib) return;
 
     const reduce = (() => {
       try {
@@ -260,13 +262,15 @@ const streams = years.map((y, yi) => {
       svg.setAttribute('viewBox', `0 0 ${pr.width.toFixed(1)} ${pr.height.toFixed(1)}`);
 
       /*
-        ⚠️ 断点必须和 CSS 保持一致（都是 760px）。
-        大于 760 时卡片分列两岸、河道走中线；小于等于 760 时卡片单列靠右、
-        河道收到左侧。**如果这里写成 768 而 CSS 是 760**，就会出现
-        「760~768 之间：CSS 已经单列、JS 还以为双列」的错位，
-        实测表现为河道贴在左边缘、而卡片横跨过去压在河上（节点被埋进卡里）。
+        ⚠️ 断点必须用 **视口宽度**，不能用 .river-page 的宽度。
+        CSS 的 `@media (max-width: 760px)` 比的是视口；而 .river-page 只是
+        中间那一列（.page-shell 减去左右侧栏后的内容列），
+        在 768~1280 的视口下它只有 670~740px —— 拿它去比 760 会**误判成手机**，
+        于是河道被压成靠左的一条细线，而卡片其实是桌面端的两列。
+        实测：768/1024/1280 三个视口全部掉进手机分支（河道 x 恒在 28~40），
+        只有 1440 才正常（列宽 814 > 760）。这正是「平板宽度下河道贴死左边缘」的根因。
       */
-      const mobile = pr.width <= 760;
+      const mobile = window.innerWidth <= 760;
       // 桌面端河道在版心中线附近蜿蜒；手机端靠左留出一条单列阅读道
       const amp = mobile ? 6 : Math.min(56, pr.width * 0.066);
       // 波数：整页只走 2.5 个周期左右，缓慢而舒展；页面越长波长越长
@@ -329,6 +333,7 @@ const streams = years.map((y, yi) => {
         haze.setAttribute('d', '');
         skin.setAttribute('d', '');
         core.setAttribute('d', '');
+        flow.setAttribute('d', '');
         trib.setAttribute('d', '');
         return;
       }
@@ -342,6 +347,16 @@ const streams = years.map((y, yi) => {
       haze.setAttribute('d', d);
       skin.setAttribute('d', d);
       core.setAttribute('d', d);
+      flow.setAttribute('d', d);
+
+      // 流光的节奏：用 stroke-dasharray 切出若干短高光段，
+      // 再由 CSS 的 rl-flow-drift 动画缓慢推着它们沿河前进。
+      // 段长/间隔按河长算，这样无论页面多长，光段密度都一致。
+      const L = core.getTotalLength() || 1;
+      const seg = Math.max(60, L * 0.075);
+      const gap = Math.max(150, L * 0.2);
+      flow.style.strokeDasharray = `${seg.toFixed(1)} ${gap.toFixed(1)}`;
+      flow.style.setProperty('--flow-shift', `${(seg + gap).toFixed(1)}`);
 
       // 把每个节点摆到河道上，并算出卡片靠河那一侧的边缘 ——
       // 两者都必须在同一帧里、以同一份河道坐标写出，否则会各算各的。
@@ -488,6 +503,28 @@ const streams = years.map((y, yi) => {
     stroke-width: 1.4;
     stroke-dasharray: 2 7;
     opacity: 0.62;
+  }
+  /* 流光：几条短高光段沿河道缓缓推进，是"水在流"的主要线索。
+     非常克制 —— 只有 0.5 的不透明度、14s 走完一轮，远看只是水面上的一点游光。 */
+  .rl-flow {
+    stroke: color-mix(in srgb, var(--primary-light) 88%, white);
+    stroke-width: 2.2;
+    opacity: 0.5;
+    filter: blur(1.4px);
+    animation: rl-flow-drift 14s linear infinite;
+  }
+  @keyframes rl-flow-drift {
+    from {
+      stroke-dashoffset: 0;
+    }
+    to {
+      /* 正好走「一段 + 一隔」的距离 → 无缝循环 */
+      stroke-dashoffset: calc(var(--flow-shift, 300) * -1);
+    }
+  }
+  .river-static .rl-flow {
+    animation: none;
+    opacity: 0.34;
   }
 
   /* ---- 沿河漂浮的微光：缓慢上浮 + 横向轻摆 ---- */
