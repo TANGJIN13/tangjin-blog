@@ -12,10 +12,15 @@ interface Props {
 
 const {
   mobile = true,
+  // 首屏壁纸轮播池。
+  // ⚠️ 约束：这个池子必须与 PostCard / index 的兜底封面池（covers/cover-01..08）
+  //    **完全不重叠** —— 一旦重叠，同屏里就会出现"壁纸 = 某张卡片封面"的廉价撞图。
+  //    所以这里只放壁纸目录自己的图。曾经有 5 张，但 -02 和 -03 都是
+  //    "粉色樱花枝夹住两边"的近乎同一构图，轮播到第二张像"没换图"，
+  //    所以去掉 -03，留 4 张各不相同的画面。
   images = [
     '/images/wallpapers/banner-pastel-01.webp',
     '/images/wallpapers/banner-pastel-02.webp',
-    '/images/wallpapers/banner-pastel-03.webp',
     '/images/wallpapers/banner-pastel-04.webp',
     '/images/wallpapers/banner-pastel-05.webp',
   ],
@@ -293,7 +298,11 @@ const splitLine = (text) => {
     inset: 0;
     z-index: 1;
     pointer-events: none;
-    opacity: 0;
+    /* ⚠️ 容器常态必须是 opacity: 1 —— 星星的可见性由每颗 <i> 自己的 opacity 控制。
+       曾经这里写成 opacity: 0 配一个「入场时渐显」的容器动画，结果 intro-done
+       摘掉动画后容器立刻回到基态 0，**16 颗星全部消失**（子元素还在跑动画但被父层归零）。
+       父层归零是"整层开关"，一旦动画态与常态不一致，收尾就会把效果抹掉。 */
+    opacity: 1;
     /* 底部 30% 压掉：那里马上要被波浪和渐变层接管，星星露出来会显得脏 */
     -webkit-mask-image: linear-gradient(180deg, transparent 2%, #000 18%, #000 66%, transparent 88%);
     mask-image: linear-gradient(180deg, transparent 2%, #000 18%, #000 66%, transparent 88%);
@@ -346,13 +355,16 @@ const splitLine = (text) => {
   .wp-stars i:nth-child(15) { left: 86%; top: 43%; --s: 2px; --o: .42; --d: 300ms; --t: 6.6s; --dr: 37s; --dx: 7px;   --dy: 10px; }
   .wp-stars i:nth-child(16) { left: 94%; top: 38%; --s: 2px; --o: .45; --d: 620ms; --t: 5.6s; --dr: 31s; --dx: -8px;  --dy: -9px; }
 
-  /* 星光整体在首屏入场时渐显（和壁纸错开 0.35s，形成"背景清晰了 → 星光浮出来"的层次） */
+  /* 星光整体在首屏入场时不能靠"容器渐显" —— 那会在 intro-done 时被基态抹掉（见上面 ⚠️）。
+     渐显由每颗 <i> 自带的 star-in（各自 --d 错开 60~620ms）完成，容器保持常显。
+     这里只留一条**入场期间的极轻微上浮**，且终态与基态一致（transform: none），
+     所以摘掉动画后不会有任何跳变。 */
   html.intro-run .wp-stars {
-    animation: wp-stars-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+    animation: wp-stars-rise 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
-  @keyframes wp-stars-in {
-    from { opacity: 0; }
-    to   { opacity: 1; }
+  @keyframes wp-stars-rise {
+    from { transform: translate3d(0, 14px, 0); }
+    to   { transform: none; }
   }
 
   /* 暗角遮罩 —— 让白色文字可读。
@@ -427,9 +439,14 @@ const splitLine = (text) => {
   .wp-title .wp-line {
     display: inline-block;
     overflow: hidden;
-    /* 上下各留 0.18em 给书法笔画；左右留 0.06em 防止连笔/捺被切 */
-    padding: 0.18em 0.06em;
-    margin: -0.18em -0.06em;
+    /* 上下各留 0.18em 给书法笔画；左右各留 0.14em 防止连笔 / 捺 / 撇的甩锋被切。
+       实测（86.4px 字号）：真实墨迹高 93px，窗口高 122.67px（padding 15.55px），
+       上下各富余 12px 以上 —— 竖排不裁。
+       水平方向留 0.14em（≈12px）是因为书法字的撇捺甩锋常常超出字面框，
+       同族字（如"往""素"）的斜笔画比"凡"伸出更多；这个余量不占视觉宽度
+       （用负 margin 抵掉），纯粹是给 overflow:hidden 的缓冲区。 */
+    padding: 0.18em 0.14em;
+    margin: -0.18em -0.14em;
     vertical-align: bottom;
     /* 揭幕窗的基线对齐：inline-block 默认按 baseline 对齐，会给行高加出一个空隙 */
     line-height: 1.06;

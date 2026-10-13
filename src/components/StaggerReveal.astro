@@ -7,7 +7,7 @@
 //   ③ 书法标题**逐节揭幕**：每节从自身高度之下 110% 升到原位（.wp-line > .wp-line-inner）
 //   ④ 副标题随后浮现（blur → 清晰 + 上移）
 //   ⑤ 导航栏轻移淡入；波浪保持既有的缓慢流动
-// 总时长约 1.6~1.8s（用户明确要求"短"）。
+// 总时长约 1.6~1.9s（用户明确要求"短"）。
 //
 // 为什么这次不是"全屏遮罩幕布"：
 //   之前那版是 IntroCurtain —— 不透明幕布 + canvas 水墨 + 卷帘升起。
@@ -24,63 +24,72 @@
 //   · prefers-reduced-motion → 完全不参与，内容直接可见。
 //   · 播完摘掉 intro-run（让 will-change / 动画终态都退场，页面回到完全静止的常态），
 //     同时挂上 intro-done（放行句尾光标闪烁等"常态动效"）。
+//
+// ⚠️ 踩过的坑（务必保留这些约束）：
+//   1) `astro:page-load` 在**初次硬加载**时也会触发（不只是软导航），
+//      而清理函数本来只该服务软导航。第一版把清理直接挂在 page-load 上，
+//      结果开播后 ~50ms 就被自己的清理函数判定"已播过"而摘掉 intro-run，
+//      动画看起来"完全没播"（实机表现为标题瞬间出现、毫无揭幕）。
+//      → 现在用 `softNav` 标志位把「初始加载」和「软导航」严格分开。
+//   2) `animationend` 会从**任意后代**冒泡上来（fade-in-up / star-in / quote-in
+//      都在 document 上被收到）。靠 animationName 过滤既脆弱又容易误判。
+//      → 现在只监听目标元素本身，且用 `{ once: true }` 自摘。
+//   3) 收尾必须**幂等**：定时器、animationend、（可能的）软导航清理
+//      三条路径都可能先到，重复执行不能有任何副作用。
 ---
 
 <script is:inline>
   (function () {
     var KEY = 'intro-played';
+    var DONE_AT = 1900; // 最长一段：标题末节延迟 440ms + 1.05s ≈ 1.5s，留 0.4s 余量
     var root = document.documentElement;
 
-    // ---- 软导航清理 ----
-    // 换页时新文档的 HTML 里也带着 intro-pending（服务端渲染时就写死了类名），
-    // 而本脚本在 ClientRouter 的替换流程里**不会重新执行** → 不主动清就是"切页后整页不可见"。
-    function clear() {
-      var played = false;
-      try { played = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
-      if (!played) return;
+    var finished = false;
+    function finish() {
+      if (finished) return;
+      finished = true;
       root.classList.remove('intro-pending', 'intro-run');
       root.classList.add('intro-done');
     }
-    document.addEventListener('astro:before-swap', clear);
-    document.addEventListener('astro:page-load', clear);
 
     // ---- 是否需要播 ----
     var reduce = false;
     try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
     var seen = false;
     try { seen = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+
     if (reduce || seen) {
-      root.classList.remove('intro-pending');
-      root.classList.add('intro-done');
-      return;
-    }
-
-    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
-
-    // ---- 开播 ----
-    root.classList.add('intro-run');
-
-    // ---- 收尾 ----
-    // 动画最长的那一段是标题：最后一节的延迟 + 1.05s 时长。
-    // 这里按站点箴言可能的最大节数（3 节）算：260 + 2*180 + 1050 ≈ 1670ms，
-    // 留到 1900ms 收尾。摘掉 intro-run 之后：
-    //   · will-change 释放，合成层回收；
-    //   · 标题/副标题回到"没有任何动画"的常态，后续 hover 之类不受干扰；
-    //   · 挂上 intro-done 让光标开始闪。
-    var DONE_AT = 1900;
-    window.setTimeout(function () {
+      // 已看过 / 用户要求减少动效 → 直接落到终态
+      finished = true;
       root.classList.remove('intro-pending', 'intro-run');
       root.classList.add('intro-done');
-    }, DONE_AT);
+    } else {
+      try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+      root.classList.add('intro-run');
 
-    // 兜底：万一上面的定时器被标签页挂起拖住，用 animationend 再补一次
-    // （取最长的那条动画，任一元素触发即可认为整段结束）
-    document.addEventListener('animationend', function (ev) {
-      if (ev.animationName !== 'wp-line-up') return;
-      if (root.classList.contains('intro-run')) {
-        root.classList.remove('intro-pending', 'intro-run');
-        root.classList.add('intro-done');
-      }
+      // 主收尾：定时器（最可靠，不受动画是否真的跑起来影响）
+      window.setTimeout(finish, DONE_AT);
+
+      // 兜底：标题最后一节动画真的结束时立刻收（比定时器更贴实际节奏）。
+      // ⚠️ 只在目标元素上监听，绝不在 document 上监听 —— 见文件头的坑 2。
+      var lines = document.querySelectorAll('.wp-quote.active .wp-line-inner');
+      var last = lines.length ? lines[lines.length - 1] : null;
+      if (last) last.addEventListener('animationend', finish, { once: true });
+    }
+
+    // ---- 软导航清理 ----
+    // 换页时新文档的 HTML 里也带着 intro-pending（服务端渲染时就写死了类名），
+    // 而本脚本在 ClientRouter 的替换流程里**不会重新执行**。
+    // 只服务"从别的页软导航回来"：此时 sessionStorage 已是 '1'，必须立刻落终态，
+    // 否则整页停在 intro-pending（内容全部 opacity:0）。
+    // ⚠️ 首次硬加载时 page-load 也会触发，所以必须用 softNav 把它排除掉（见坑 1）。
+    var softNav = false;
+    document.addEventListener('astro:before-swap', function () { softNav = true; });
+    document.addEventListener('astro:page-load', function () {
+      if (!softNav) return;      // 初次加载不是软导航，交给上面的时间轴
+      finished = true;
+      root.classList.remove('intro-pending', 'intro-run');
+      root.classList.add('intro-done');
     });
   })();
 </script>

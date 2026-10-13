@@ -37,15 +37,24 @@ const plainBody = post.body
   .trim();
 const excerpt = (description ?? '').trim() || plainBody.slice(0, 120);
 
-// 没写 cover 的文章：用站点同色系的水彩壁纸兜底，按列表位置轮换
+// 没写 cover 的文章：用同色系的水彩插画兜底，按列表位置轮换
 // （同一页相邻文章不会撞同一张图；拿不到位置信息时退化成 FNV-1a 哈希，
 //   保证同一篇文章永远是同一张）。混进不相干的素材风景图会打断整站色调。
+//
+// ⚠️ 之前这里直接复用了首屏大壁纸的图片池（banner-pastel-01..05），
+//    结果是**同一屏里壁纸和文章封面撞同一张图**（首屏壁纸轮播到 02/03 时，
+//    下面的卡片封面也正好是 02/03，粉色樱花枝上下各一份，非常廉价）。
+//    现在卡片改用 covers/ 这套独立的插画（小鹿 / 花溪 / 星河 / 云海 / 竹林 /
+//    灯塔 / 荷塘 / 雪月），和壁纸**完全不重叠**，色调仍是同一族粉紫薄荷。
 const fallbackCovers = [
-  '/images/wallpapers/banner-pastel-01.webp',
-  '/images/wallpapers/banner-pastel-02.webp',
-  '/images/wallpapers/banner-pastel-03.webp',
-  '/images/wallpapers/banner-pastel-04.webp',
-  '/images/wallpapers/banner-pastel-05.webp',
+  '/images/covers/cover-01.jpg',
+  '/images/covers/cover-02.jpg',
+  '/images/covers/cover-03.jpg',
+  '/images/covers/cover-04.jpg',
+  '/images/covers/cover-05.jpg',
+  '/images/covers/cover-06.jpg',
+  '/images/covers/cover-07.jpg',
+  '/images/covers/cover-08.jpg',
 ];
 let hash = 2166136261;
 for (const ch of post.id) {

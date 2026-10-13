@@ -17,13 +17,15 @@ const tags = await getTags();
 const ordered = pinToTop(posts);
 const featured = ordered[0] ?? null;
 const featuredCategory = featured ? categories.find((c) => c.slug === featured.data.category) : null;
-// 文章没写 cover 时，用站点同色系的水彩壁纸兜底，避免混进不相干的素材图
+// 文章没写 cover 时，用同色系水彩插画兜底。
+// ⚠️ 这里**不能**再用壁纸池（banner-pastel-*）—— 那个池子同时服务首屏大壁纸，
+//    复用会让"壁纸"和"文章封面"在同一屏里撞图。改走 covers/ 这套独立插画。
 const fallbackCovers = [
-  '/images/wallpapers/banner-pastel-01.webp',
-  '/images/wallpapers/banner-pastel-02.webp',
-  '/images/wallpapers/banner-pastel-03.webp',
-  '/images/wallpapers/banner-pastel-04.webp',
-  '/images/wallpapers/banner-pastel-05.webp',
+  '/images/covers/cover-01.jpg',
+  '/images/covers/cover-02.jpg',
+  '/images/covers/cover-03.jpg',
+  '/images/covers/cover-04.jpg',
+  '/images/covers/cover-05.jpg',
 ];
 const featuredCover = featured?.data.cover ?? fallbackCovers[0];
 const recentPosts = featured ? ordered.slice(1) : ordered;
