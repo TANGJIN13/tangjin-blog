@@ -114,7 +114,7 @@ const { pageSize = 6 } = Astro.props;
       page = n;
       render();
       const target =
-        document.querySelector('.post-list, .timeline') ||
+        document.querySelector('.post-rows, .post-list, .timeline') ||
         document.getElementById('main-content');
       if (target) {
         const y = target.getBoundingClientRect().top + window.scrollY - 90;

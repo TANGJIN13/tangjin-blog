@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import PostCard from '../components/PostCard.astro';
+import PostListItem from '../components/PostListItem.astro';
 import Paginate from '../components/Paginate.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
@@ -50,13 +50,9 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
         <!-- 文章主编精选 + 最近更新 -->
         {featured && (
           <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 2500ms">
-            <div class="section-head">
-              <h2 class="section-title"><span class="section-index">01 /</span> 最新手记</h2>
-              <span class="section-edition">按时间持续更新</span>
-            </div>
             <a class="featured-note" href={`/posts/${featured.id}/`}>
               <div class="featured-copy">
-                <span class="featured-kicker"><span class="featured-mark"></span> 最新文章 · {featuredCategory?.name ?? '随笔'}</span>
+                <span class="featured-kicker"><span class="featured-mark"></span> 置顶 · {featuredCategory?.name ?? '随笔'}</span>
                 <h3>{featured.data.title}</h3>
                 <p>{featured.data.description || featured.body.replace(/\s+/g, ' ').slice(0, 150)}</p>
                 <div class="featured-meta">
@@ -76,13 +72,13 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
         {recentPosts.length > 0 && (
           <section class="block recent-feed" data-reveal style="--rv: 2650ms">
             <div class="section-head">
-              <h2 class="section-title"><span class="section-index">02 /</span> 继续阅读</h2>
-              <a class="section-more" href="/archive/">全部归档 <Icon name="arrow_right" size="0.85rem" /></a>
+              <h2 class="section-title"><Icon name="article" size="1.05rem" /> 最新文章</h2>
+              <a class="section-more" href="/archive/">查看更多 <Icon name="arrow_right" size="0.85rem" /></a>
             </div>
-            <div class="post-list">
+            <div class="post-rows">
               {recentPosts.map((p, i) => (
                 <div class="paginate-item">
-                  <PostCard post={p} index={i + 1} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
+                  <PostListItem post={p} index={i + 1} />
                 </div>
               ))}
             </div>
@@ -346,13 +342,18 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
     border-bottom: 1px solid var(--border);
   }
   .editorial-feed .section-title, .recent-feed .section-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     padding-left: 0;
     font-family: var(--font-sans);
-    font-size: 0.82rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    text-transform: none;
   }
+  .recent-feed .section-title :global(.icon) { color: var(--primary-strong); }
+  :global([data-theme='dark']) .recent-feed .section-title :global(.icon) { color: var(--primary-light); }
   .editorial-feed .section-title::before, .recent-feed .section-title::before { display: none; }
   .section-index { color: var(--primary); font-size: 0.68rem; letter-spacing: 0.05em; }
   .section-edition { color: var(--text-faint); font-size: 0.62rem; }
@@ -383,7 +384,7 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   .featured-note:hover .featured-image img { transform: scale(1.035); }
   .featured-image-index { position: absolute; z-index: 1; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
   .featured-image-arrow { position: absolute; z-index: 1; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
-  .recent-feed .post-list { gap: 0.9rem; }
+  .recent-feed .post-rows { gap: 0.7rem; }
   @media (max-width: 640px) {
     .featured-note { grid-template-columns: 1fr; }
     .featured-copy { padding: 1.3rem; }
@@ -428,26 +429,12 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   }
   .cloud-tag:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
 
-  /* 首页文章网格：固定两列（一行两篇），窄屏回退单列
-     grid-auto-rows: 1fr —— 让【所有行】都取同一高度（按内容最多的那张算），
-     这样无论有没有摘要、摘要长短、电脑端还是手机端单列，卡片都完全等高 */
-  .post-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 1fr;
-    gap: 1rem;
+  /* 首页「最新文章」：单列横向行（参考图形态 —— 左缩略图 + 标题 + 摘要 + 标签 + 时长）。
+     不再用两列大卡片网格。 */
+  .post-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
   }
-
-  /* 宽屏一行三篇：卡片更小更紧凑，一屏能看更多 */
-  @media (min-width: 1500px) {
-    .post-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem; }
-  }
-
-  /* 分页包装层是网格的直接子项：内部再套一层 grid，让卡片撑满包装层，
-     否则等高拉伸断在包装层上——没写摘要的矮卡片底部会对不齐 */
-  .post-list .paginate-item { display: grid; }
-
-  @media (max-width: 640px) {
-    .post-list { grid-template-columns: 1fr; }
-  }
+  .post-rows .post-row { width: 100%; }
 </style>
