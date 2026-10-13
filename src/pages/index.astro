@@ -167,56 +167,8 @@ const catCounts = categories.map((c) => ({
 </Base>
 
 <style>
-  .home-hero {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin: 0 auto;
-    padding: 0 1rem 3rem;
-    color: #fff;
-    /* 标题压在浅色水彩上，只靠大面积柔光会发飘 —— 近距实影 + 远距柔光各一层 */
-    text-shadow: 0 1px 2px rgb(24 22 46 / 0.85), 0 4px 14px rgb(24 22 46 / 0.45);
-  }
-  .home-hero-eyebrow {
-    display: block;
-    margin-bottom: 1.3rem;
-    padding: 0.4rem 0.8rem;
-    border: 1px solid rgb(255 255 255 / 0.5);
-    border-radius: 999px;
-    color: #fff;
-    background: rgb(30 26 52 / 0.36);
-    backdrop-filter: blur(6px);
-    font: 600 0.72rem/1 var(--font-sans);
-    letter-spacing: 0.14em;
-    text-shadow: 0 1px 3px rgb(20 18 40 / 0.7);
-  }
-  .home-hero h1 {
-    margin: 0;
-    color: #fff;
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5vw, 4.9rem);
-    font-weight: 600;
-    letter-spacing: -0.035em;
-    line-height: 1.3;
-    text-shadow: 0 1px 2px rgb(18 16 38 / 0.92), 0 3px 8px rgb(18 16 38 / 0.72), 0 12px 34px rgb(18 16 38 / 0.4);
-  }
-  .home-hero h1 em { font-style: normal; }
-  .home-hero p { margin: 1rem 0 0; color: #fff; font-size: clamp(0.86rem, 1.2vw, 1.05rem); letter-spacing: 0.12em; text-shadow: 0 1px 3px rgb(18 16 38 / 0.9), 0 4px 14px rgb(18 16 38 / 0.55); }
-  .home-hero-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    margin-top: 1.6rem;
-    padding: 0.5rem 0.2rem;
-    color: #fff !important;
-    border-bottom: 1px solid rgb(255 255 255 / 0.7);
-    text-decoration: none !important;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: gap 0.2s ease, border-color 0.2s ease;
-  }
-  .home-hero-link:hover { gap: 0.8rem; border-color: #fff; }
+  /* 壁纸上的文字交给 WallpaperBanner 自带的 .wp-title / .wp-quote-sub（书法字体 + 轮播），
+     首页不再自己画一套 hero 文字，所以这里原先的 .home-hero* 样式已全部移除。 */
 
   /* 内容区域 */
   .ref-layout {
@@ -477,9 +429,6 @@ const catCounts = categories.map((c) => ({
   .featured-image-arrow { position: absolute; z-index: 1; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
   .recent-feed .post-list { gap: 0.9rem; }
   @media (max-width: 640px) {
-    .home-hero { padding-inline: 0.35rem; }
-    .home-hero h1 { font-size: clamp(2rem, 8.8vw, 3rem); line-height: 1.35; }
-    .home-hero p { letter-spacing: 0.04em; }
     .featured-note { grid-template-columns: 1fr; }
     .featured-copy { padding: 1.3rem; }
     .featured-copy h3 { margin-top: 0.85rem; font-size: 1.5rem; }

@@ -20,6 +20,9 @@
 import { site } from '../site';
 
 const title = site.title;
+// 幕布上的句子：取站点箴言第一句（就是首页壁纸上那套书法句子），
+// 句尾不带标点 —— 落笔成题要的是「一句题词」，不是一句文案。
+const motto = site.mottos[0]?.text ?? '';
 
 // ⚠️ 为什么这段 CSS 不写在下面 <style> 里：
 //    Astro 会把 <style> 打包成**外链** CSS 文件，而上面 Base.astro 里那段「抢首帧」的
@@ -52,7 +55,7 @@ const criticalCss = `
   <!-- 舞台：标题 / 小字 / 细线，用 CSS 做「书写」 -->
   <div class="ic-stage">
     <h1 class="ic-title" data-text={title}>{title}</h1>
-    <p class="ic-sub">WEB SECURITY &nbsp;·&nbsp; CTF &nbsp;·&nbsp; JOURNAL</p>
+    {motto && <p class="ic-sub">{motto}</p>}
     <span class="ic-line" aria-hidden="true"></span>
   </div>
 
@@ -414,25 +417,26 @@ const criticalCss = `
     100% { left: 100%; opacity: 0; }
   }
 
+  /* 幕布副题 = 站点箴言第一句，用的是首页壁纸同一套「书法潦草」字体，
+     和标题（衬线）形成对照。中文书法句子不能套 mono + 大字距那套（那是给英文小标的），
+     所以这里换成手写体、收窄字距、字号取到读得清的档。 */
   .ic-sub {
     margin: 0;
     color: var(--text-soft);
-    font-family: var(--font-mono);
-    font-size: clamp(0.56rem, 1.5vw, 0.7rem);
-    letter-spacing: 0.4em;
-    /* 字距是加在**每个字后面**的，末字多出一份 → 用 text-indent 补回来，视觉才真正居中。
-       另外书写阶段标题宽度是「变化中」的，父级 flex 会跟着抖；
-       这里给一行不许换行的宽度约束，避免小字被挤到左边贴边。 */
-    text-indent: 0.4em;
+    font-family: 'Liu Jian Mao Cao', 'Xingkai SC', 'STXingkai', 'HanziPen SC', 'Kaiti SC', 'STKaiti', 'KaiTi', '楷体', cursive;
+    font-size: clamp(1rem, 2.6vw, 1.5rem);
+    line-height: 1.5;
+    letter-spacing: 0.08em;
+    text-indent: 0.08em;
     white-space: nowrap;
     opacity: 0;
   }
   .intro-curtain.ic-live .ic-sub {
-    animation: ic-sub-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ic-write, 900ms) * 0.62) both;
+    animation: ic-sub-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ic-write, 900ms) * 0.55) both;
   }
   @keyframes ic-sub-in {
-    from { opacity: 0; transform: translateY(10px); letter-spacing: 0.6em; filter: blur(5px); }
-    to   { opacity: 1; transform: translateY(0); letter-spacing: 0.4em; filter: blur(0); }
+    from { opacity: 0; transform: translateY(10px); letter-spacing: 0.24em; filter: blur(5px); }
+    to   { opacity: 1; transform: translateY(0); letter-spacing: 0.08em; filter: blur(0); }
   }
 
   .ic-line {
@@ -510,7 +514,7 @@ const criticalCss = `
        （body.scrollHeight 的高度），居中后的标题掉到 y≈827，被整个推到屏幕外。
        实测对照：documentElement 去掉 is-intro → 幕布高度立刻从 1848px 回到 900px。
 
-     正确做法：推近挂在 #page 这个内层包壳上（它只包内容、不包幕布）。
+     正确做法：推近挂在 .main-layout 这个**内层内容容器**上（它只包正文，不包幕布）。
      幕布的包含块因此仍是视口，位置永远准。 */
   html.is-intro .main-layout {
     animation: ic-page-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
