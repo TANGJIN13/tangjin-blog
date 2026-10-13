@@ -76,12 +76,12 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- 主题恢复 + 分层揭幕标记 —— 都必须在首屏绘制前同步执行。
+    <!-- 主题恢复 + 首屏入场标记 —— 都必须在首屏绘制前同步执行。
          ⚠️ 主题为什么挪到这里：原来主题恢复在 body 末尾的模块脚本里（会 defer），
          而 body 里读主题的脚本是**立即执行**的，那时 data-theme 还没设，
          暗色用户会先看到浅色的一帧。顺带这也修掉了站点本身的「暗色用户首帧闪白」。
-         ⚠️ 分层揭幕同理：第一帧就必须把内容藏好，否则会先闪一帧完整页面再从头播。
-         sessionStorage 里已有标记（软导航 / 本会话看过）时立刻撤掉，不做任何遮挡。 -->
+         ⚠️ 入场标记同理：第一帧就必须把导航藏好，否则会先闪一帧完整的导航条再从头播。
+         sessionStorage 里已有标记（软导航 / 本会话看过）时立刻放过，不做任何遮挡。 -->
     <script is:inline>
       (function () {
         // ① 主题：与 Base 末尾的 applyTheme 共用同一个 'theme' 键
@@ -92,12 +92,18 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             : pref;
           document.documentElement.setAttribute('data-theme', resolved);
         } catch (e) {}
-        // ② 分层揭幕：已看过 / 用户偏好减少动态 → 什么都不加，内容保持默认可见
+        // ② 首屏入场：已看过 / 用户偏好减少动态 → 什么都不加，内容保持默认可见
         try {
-          if (sessionStorage.getItem('reveal-played') === '1') return;
-          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          if (sessionStorage.getItem('intro-played') === '1') {
+            document.documentElement.classList.add('intro-done');
+            return;
+          }
+          if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.documentElement.classList.add('intro-done');
+            return;
+          }
         } catch (e) {}
-        document.documentElement.classList.add('reveal-pending');
+        document.documentElement.classList.add('intro-pending');
       })();
     </script>
     <!-- 分层揭幕的「首帧隐藏」样式：必须内联在 <head>，原因同上。
@@ -113,36 +119,55 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             · 绝不含 fixed 后代的层（top-row / 页脚 / 壁纸）→ rv-rise（位移 + 模糊）
             · 含 fixed 后代的层（main-layout）            → rv-fade（**只动不透明度**） -->
     <style is:inline>
-      html.reveal-pending [data-reveal] { opacity: 0; }
-      html.reveal-pending .top-row { opacity: 0; }
-      /* 内页（内部没有错峰层）的容器也要先藏好，否则会闪一帧再淡入 */
-      html.reveal-pending .main-layout:not(:has([data-reveal])) { opacity: 0; }
-      html.reveal-run [data-reveal] {
-        animation: rv-rise 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
-        animation-delay: var(--rv, 0ms);
+      /* ===== 首屏入场的「首帧隐藏」=====
+         必须在 <head> 内联输出：Astro 的 <style> 会打包成外链 CSS，
+         而抢首帧脚本走同步路径 —— 那一刻外链还没解析，会先画一帧完整页面再从头播。
+
+         只藏两样东西：
+           · 导航栏 —— 它要"轻微下移后淡入"（首屏分镜的第 ⑤ 拍）
+           · 内容主体（内页限定）—— 内页没有壁纸分镜，让内容自己淡入就够
+         首页的壁纸/标题/副标题**不在这里藏**，它们的入场由 WallpaperBanner 自己管
+         （intro-run 下的 wp-bg-in / wp-line-up / wp-sub-in），这样职责不交叉。 */
+      html.intro-pending .top-row { opacity: 0; }
+      html.intro-pending .main-layout:not(:has([data-reveal])) { opacity: 0; }
+
+      /* ===== 导航栏：轻微下移 → 淡入 =====
+         位移只给 10px（比内容层的 22px 更克制）：导航是"始终在那儿的框架"，
+         动得比内容还多就会喧宾夺主。延迟 100ms，让背景先出来一点。 */
+      html.intro-run .top-row {
+        animation: nav-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
       }
-      html.reveal-run .top-row {
-        animation: rv-rise 0.66s cubic-bezier(0.22, 1, 0.36, 1) both;
+      @keyframes nav-in {
+        from { opacity: 0; transform: translateY(-10px); }
+        to   { opacity: 1; transform: none; }
       }
-      /* 含 fixed 后代的层：只淡入，绝不动 transform / filter。
-         用在 .main-layout 上 —— 但它只在**内部没有自己的错峰层**时才需要淡入
-         （首页内部的 section 各自错峰，容器再淡入就变成 opacity 相乘、内容发灰）。
-         `:not(:has([data-reveal]))` 精确表达这个条件。 */
-      html.reveal-run .main-layout:not(:has([data-reveal])) {
-        animation: rv-fade 0.78s cubic-bezier(0.22, 1, 0.36, 1) both;
-      }
-      /* 上浮 + 淡入：位移给 22px、带一点模糊消散，读作"浮上来"而不是"滑进来" */
-      @keyframes rv-rise {
-        from { opacity: 0; transform: translateY(22px); filter: blur(6px); }
-        to   { opacity: 1; transform: none; filter: blur(0); }
+
+      /* ===== 内容主体（内页）：只淡入，绝不动 transform / filter =====
+         ⚠️ .main-layout 里装着浮动按钮和左下角音乐播放器，它们都是 position:fixed。
+            `transform` / `filter` / `perspective` 都会让元素成为 fixed 后代的**包含块**，
+            一旦给它挂带位移或模糊的动画，那些固定元素就会以 main 的盒子为参照
+            —— 表现是入场过程中按钮从屏幕上"飘走"。这个坑在本项目撞过不止一次。
+         首页的 main 内部有自己的分镜层，容器再淡入会变成 opacity 相乘（0.5×0.5=0.25）
+         内容发灰，所以用 :not(:has([data-reveal])) 把它排除掉。 */
+      html.intro-run .main-layout:not(:has([data-reveal])) {
+        animation: rv-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
       }
       @keyframes rv-fade {
         from { opacity: 0; }
         to   { opacity: 1; }
       }
+
+      /* ===== 首页内容各区块的错峰 =====
+         壁纸分镜演完之后（约 800ms）内容再往下铺 —— 让首屏先"讲完自己的故事"。
+         同样只动 opacity：这些 section 内部也有 fixed 后代（浮动控件的锚点在 main 里，
+         而 section 是 main 的兄弟层级结构里的普通块，为稳妥起见统一走纯淡入）。 */
+      html.intro-run [data-reveal] {
+        animation: rv-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--rv, 0ms) both;
+      }
+
       @media (prefers-reduced-motion: reduce) {
-        html.reveal-pending [data-reveal],
-        html.reveal-pending .top-row { opacity: 1; }
+        html.intro-pending .top-row,
+        html.intro-pending .main-layout:not(:has([data-reveal])) { opacity: 1; }
       }
     </style>
     <!-- 首屏壁纸预加载：让首页大图在解析 body 之前就开始下载，做到「秒出」。

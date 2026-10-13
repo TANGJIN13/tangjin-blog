@@ -28,6 +28,17 @@ const {
 // 有插槽内容时用它替代默认的「头像 + 座右铭」，文章页据此放自己的标题
 const hasSlot = Astro.slots.has('default');
 const slides = single ? images.slice(0, 1) : images;
+
+// 逐行揭幕的「行」怎么切：
+//   箴言都是「上句，下句」的骈句（如 "凡心所向，素履以往"），所以按中文逗号切最自然
+//   —— 切出来的每组就是一个 .wp-line，各自带 0.18s 的延迟依次升起。
+//   没有逗号的句子（如 "山高路远，看世界，也找自己" 有三段）会切成多组，
+//   每组一个揭幕窗，视觉上就是"一节一节地写出来"。
+//   ⚠️ 逗号本身**留在前一段**：中文书法句的行末逗号是视觉重音，切掉会显得句子断得生硬。
+const splitLine = (text) => {
+  const parts = text.split(/(?<=，)/).map((s) => s.trim()).filter(Boolean);
+  return parts.length ? parts : [text];
+};
 ---
 
 <div class:list={['wallpaper-wrapper', { 'wp-desktop-only': !mobile }]} style={`--wp-height: ${height}; --wp-mobile-height: ${mobileHeight}`} data-interval="7000">
@@ -51,6 +62,16 @@ const slides = single ? images.slice(0, 1) : images;
   <!-- 暗角遮罩 -->
   <div class="wallpaper-dim" aria-hidden="true"></div>
 
+  <!-- 星光层：细腻的渐显 / 微弱闪烁 / 缓慢漂浮。
+       纯 CSS 生成（radial-gradient 点 + 各自的闪烁相位），不占 JS、不读像素。
+       只在首页（非 slot 模式）出现 —— 内页横幅不放，避免喧宾夺主。 -->
+  {!hasSlot && (
+    <div class="wp-stars" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+  )}
+
   <!-- 文字覆盖层 -->
   <div class="wallpaper-content">
     <div class="container wp-inner">
@@ -58,12 +79,22 @@ const slides = single ? images.slice(0, 1) : images;
         <slot />
       ) : (
         <>
-          <!-- 轮换句子 —— 直接作为横幅文字，句尾带闪烁光标，每隔几秒淡入换一句 -->
+          <!-- 轮换句子 —— 直接作为横幅文字，句尾带闪烁光标，每隔几秒淡入换一句。
+               ⚠️ 揭幕结构：标题要「逐行从遮罩里升上来」，所以每行都需要
+                 .wp-line（overflow:hidden 的裁切容器） > .wp-line-inner（真正位移的那层）。
+               overflow:hidden 必须给在**外层**、transform 给在**内层** —— 反过来就裁不到。
+               中文书法字体（Liu Jian Mao Cao）上下留白很大，所以裁切容器要留出
+               上下 padding 的余量，否则笔画会被切掉（这是最容易翻车的一处）。 -->
           <div class="wp-quotes" id="wp-quotes" data-interval="6000">
             {site.mottos.map((m, i) => (
               <div class:list={['wp-quote', { active: i === 0 }]}>
-                <h1 class="wp-title">{m.text}<span class="wp-caret" aria-hidden="true"></span></h1>
-                {m.sub && <p class="wp-quote-sub">{m.sub}</p>}
+                <h1 class="wp-title">
+                  {splitLine(m.text).map((seg, k) => (
+                    <span class="wp-line"><span class="wp-line-inner" style={`--ln-d: ${i === 0 ? 260 + k * 180 : k * 180}ms`}>{seg}</span></span>
+                  ))}
+                  <span class="wp-caret" aria-hidden="true"></span>
+                </h1>
+                {m.sub && <p class="wp-quote-sub" style={`--sub-d: ${i === 0 ? 260 + splitLine(m.text).length * 180 + 120 : 400}ms`}>{m.sub}</p>}
               </div>
             ))}
           </div>
@@ -237,6 +268,93 @@ const slides = single ? images.slice(0, 1) : images;
   .wp-slide.active { opacity: 1; transform: scale(1); }
   .wp-slide img { width: 100%; height: 100%; object-fit: cover; }
 
+  /* ===== ① 背景入场：从「轻微模糊」逐渐清晰 =====
+     作用在 .wallpaper-images 上（图片容器），不动 .wallpaper-wrapper 本身 ——
+     只有 1.4s 的一次性动画，结束后 filter/transform 都回到 none，
+     不会与轮播自己的 transition 打架（轮播动的是 .wp-slide）。
+     缓动给 cubic-bezier(0.22,1,0.36,1)（≈power3.out）：起步快、收尾极缓，
+     这是"高级官网"最典型的曲线 —— 它让最后 20% 的变化几乎看不见，所以读作"稳定下来"。 */
+  html.intro-run .wallpaper-images {
+    animation: wp-bg-in 1.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @keyframes wp-bg-in {
+    from { opacity: 0; transform: scale(1.045); filter: blur(14px) saturate(0.9); }
+    60%  { opacity: 1; }
+    to   { opacity: 1; transform: scale(1); filter: blur(0) saturate(1); }
+  }
+
+  /* ===== ② 星光层：渐显 + 微弱闪烁 + 缓慢漂浮 =====
+     两层背景图叠加 + 16 个 <i> 各自闪烁。
+     为什么不用 SVG 或 JS：radial-gradient 光斑本身就是"柔光点"，
+     而且不需要任何脚本；每个 <i> 的位置用 nth-child 手工错开（写在下面），
+     保证布局稳定、无随机数 —— 每次打开星星位置一致，不会像"跑马灯"。 */
+  .wp-stars {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0;
+    /* 底部 30% 压掉：那里马上要被波浪和渐变层接管，星星露出来会显得脏 */
+    -webkit-mask-image: linear-gradient(180deg, transparent 2%, #000 18%, #000 66%, transparent 88%);
+    mask-image: linear-gradient(180deg, transparent 2%, #000 18%, #000 66%, transparent 88%);
+  }
+  .wp-stars i {
+    position: absolute;
+    width: var(--s, 3px);
+    height: var(--s, 3px);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 38%, rgba(255,255,255,0) 72%);
+    /* 柔光点的外晕：用 box-shadow 而不是 filter:blur —— blur 会让整个层参与合成，
+       16 个点一起模糊在低端设备上是能感觉到的开销 */
+    box-shadow: 0 0 6px 2px rgba(255, 255, 255, 0.28), 0 0 14px 5px rgba(190, 180, 255, 0.18);
+    opacity: 0;
+    animation:
+      star-in 1.1s ease-out var(--d, 0ms) both,
+      star-twinkle var(--t, 4s) ease-in-out calc(var(--d, 0ms) + 1.1s) infinite,
+      star-drift var(--dr, 26s) ease-in-out calc(var(--d, 0ms) + 1.1s) infinite alternate;
+  }
+  @keyframes star-in {
+    from { opacity: 0; }
+    to   { opacity: var(--o, 0.75); }
+  }
+  /* 微弱闪烁：幅度只到 0.35~1 倍，不做"忽明忽暗"的呼吸（那是廉价特效） */
+  @keyframes star-twinkle {
+    0%, 100% { opacity: calc(var(--o, 0.75) * 1); }
+    45%      { opacity: calc(var(--o, 0.75) * 0.42); }
+  }
+  /* 缓慢漂浮：位移只有 10~18px、周期 20s 以上 —— 刻意慢到"几乎察觉不到在动" */
+  @keyframes star-drift {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(var(--dx, 8px), var(--dy, -14px), 0); }
+  }
+
+  /* 16 颗星的位置 / 大小 / 节奏 —— 手工错开，不用随机数（保证每次一致） */
+  .wp-stars i:nth-child(1)  { left: 8%;  top: 16%; --s: 3px; --o: .70; --d: 120ms; --t: 4.2s; --dr: 24s; --dx: 10px;  --dy: -12px; }
+  .wp-stars i:nth-child(2)  { left: 17%; top: 34%; --s: 2px; --o: .55; --d: 260ms; --t: 5.4s; --dr: 30s; --dx: -8px;  --dy: 14px; }
+  .wp-stars i:nth-child(3)  { left: 25%; top: 12%; --s: 2px; --o: .48; --d: 80ms;  --t: 6.1s; --dr: 34s; --dx: 14px;  --dy: 8px; }
+  .wp-stars i:nth-child(4)  { left: 33%; top: 27%; --s: 4px; --o: .82; --d: 380ms; --t: 3.8s; --dr: 22s; --dx: -12px; --dy: -16px; }
+  .wp-stars i:nth-child(5)  { left: 41%; top: 9%;  --s: 2px; --o: .60; --d: 200ms; --t: 5.0s; --dr: 28s; --dx: 9px;   --dy: 12px; }
+  .wp-stars i:nth-child(6)  { left: 49%; top: 21%; --s: 3px; --o: .66; --d: 460ms; --t: 4.6s; --dr: 32s; --dx: -10px; --dy: -10px; }
+  .wp-stars i:nth-child(7)  { left: 57%; top: 33%; --s: 2px; --o: .50; --d: 140ms; --t: 6.4s; --dr: 36s; --dx: 12px;  --dy: 10px; }
+  .wp-stars i:nth-child(8)  { left: 65%; top: 14%; --s: 4px; --o: .80; --d: 320ms; --t: 3.6s; --dr: 20s; --dx: -14px; --dy: -14px; }
+  .wp-stars i:nth-child(9)  { left: 73%; top: 29%; --s: 2px; --o: .52; --d: 60ms;  --t: 5.8s; --dr: 30s; --dx: 8px;   --dy: 14px; }
+  .wp-stars i:nth-child(10) { left: 81%; top: 11%; --s: 3px; --o: .72; --d: 400ms; --t: 4.4s; --dr: 26s; --dx: -9px;  --dy: -12px; }
+  .wp-stars i:nth-child(11) { left: 89%; top: 25%; --s: 2px; --o: .58; --d: 180ms; --t: 5.2s; --dr: 33s; --dx: 11px;  --dy: 9px; }
+  .wp-stars i:nth-child(12) { left: 12%; top: 48%; --s: 2px; --o: .44; --d: 520ms; --t: 6.8s; --dr: 38s; --dx: -7px;  --dy: -10px; }
+  .wp-stars i:nth-child(13) { left: 37%; top: 45%; --s: 2px; --o: .46; --d: 240ms; --t: 6.2s; --dr: 35s; --dx: 10px;  --dy: 11px; }
+  .wp-stars i:nth-child(14) { left: 62%; top: 47%; --s: 3px; --o: .62; --d: 440ms; --t: 4.9s; --dr: 27s; --dx: -11px; --dy: -13px; }
+  .wp-stars i:nth-child(15) { left: 86%; top: 43%; --s: 2px; --o: .42; --d: 300ms; --t: 6.6s; --dr: 37s; --dx: 7px;   --dy: 10px; }
+  .wp-stars i:nth-child(16) { left: 94%; top: 38%; --s: 2px; --o: .45; --d: 620ms; --t: 5.6s; --dr: 31s; --dx: -8px;  --dy: -9px; }
+
+  /* 星光整体在首屏入场时渐显（和壁纸错开 0.35s，形成"背景清晰了 → 星光浮出来"的层次） */
+  html.intro-run .wp-stars {
+    animation: wp-stars-in 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.35s both;
+  }
+  @keyframes wp-stars-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
   /* 暗角遮罩 —— 让白色文字可读。
      原来是一条盖满整张图的均匀黑纱（0.35 / 0.22 / 0.30 / 0.18），平均把壁纸压暗约 21%，
      粉紫 / 薄荷那点彩度全被压成灰调 —— 这就是「壁纸不够明亮」的根源。
@@ -296,20 +414,62 @@ const slides = single ? images.slice(0, 1) : images;
     gap: 0.75rem;
   }
 
-  /* ===== 慢慢浮现：模糊 → 清晰 + 上移，逐层延迟 ===== */
-  @keyframes wp-reveal {
-    from {
-      opacity: 0;
-      transform: translateY(28px) scale(0.985);
-      filter: blur(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      filter: blur(0);
-    }
+  /* ===== ③ 标题逐行揭幕 =====
+     结构是 .wp-line（overflow:hidden 的裁切窗） > .wp-line-inner（位移层）。
+     起点是 translateY(110%) —— 用**百分比**而不是 px，因为要"从自身高度之下升上来"，
+     这样无论桌面 6rem 还是手机 3rem，升起的行程永远等于自身高度，节奏一致。
+     缓动 power3.out（0.16, 1, 0.3, 1）。
+
+     ⚠️ 书法字体（Liu Jian Mao Cao）的上下留白极大：字面框比实际笔画高出很多，
+        如果 overflow:hidden 的窗口贴着 line-height 切，笔画上下会被削掉。
+        所以 .wp-line 要给足上下 padding（0.18em），并用负 margin 把那部分占位补回来
+        —— 视觉位置不变，但笔画有了缓冲区。 */
+  .wp-title .wp-line {
+    display: inline-block;
+    overflow: hidden;
+    /* 上下各留 0.18em 给书法笔画；左右留 0.06em 防止连笔/捺被切 */
+    padding: 0.18em 0.06em;
+    margin: -0.18em -0.06em;
+    vertical-align: bottom;
+    /* 揭幕窗的基线对齐：inline-block 默认按 baseline 对齐，会给行高加出一个空隙 */
+    line-height: 1.06;
+  }
+  .wp-title .wp-line-inner {
+    display: inline-block;
+    will-change: transform;
+  }
+  /* 只在入场期间挂动画；播完由 JS 摘掉 intro-run，元素回到完全静止的常态
+     （不摘的话 will-change 会一直留着，等于长驻一个合成层） */
+  html.intro-run .wp-quote.active .wp-line-inner {
+    animation: wp-line-up 1.05s cubic-bezier(0.16, 1, 0.3, 1) var(--ln-d, 0ms) both;
+  }
+  @keyframes wp-line-up {
+    from { transform: translateY(110%); opacity: 0; }
+    35%  { opacity: 1; }
+    to   { transform: translateY(0); opacity: 1; }
   }
 
+  /* 副标题：等标题那一行升完（约 60%）再浮现，形成"主标题 → 副标题"的时序 */
+  html.intro-run .wp-quote.active .wp-quote-sub {
+    animation: wp-sub-in 1.0s cubic-bezier(0.16, 1, 0.3, 1) var(--sub-d, 700ms) both;
+  }
+  @keyframes wp-sub-in {
+    from { opacity: 0; transform: translateY(20px); filter: blur(8px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+
+  /* 句尾光标：入场期间先藏，等标题升完再亮起 —— 否则光标会在空窗里自己闪 */
+  html.intro-run .wp-caret { animation: none; opacity: 0; }
+  html.intro-run.intro-done .wp-caret {
+    opacity: 1;
+    animation: caret-blink 1.1s step-end infinite;
+  }
+
+  /* 通用浮现（内页 slot 里的 .wp-desc / .wp-links，以及向下浏览引导用） */
+  @keyframes wp-reveal {
+    from { opacity: 0; transform: translateY(28px) scale(0.985); filter: blur(10px); }
+    to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
   .wp-desc        { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both; }
   .wp-links       { animation: wp-reveal 1.9s cubic-bezier(0.16, 1, 0.3, 1) 1.5s both; }
 
@@ -373,11 +533,13 @@ const slides = single ? images.slice(0, 1) : images;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55), 0 4px 24px rgba(0, 0, 0, 0.5);
   }
 
-  /* ===== 句子轮换：同格堆叠，逐句淡入浮现 / 淡出上移 ===== */
+  /* ===== 句子轮换：同格堆叠，逐句淡入浮现 / 淡出上移 =====
+     ⚠️ .wp-quotes **不能**再加整块 wp-reveal —— 它和标题的逐行揭幕会同时改
+        opacity / transform，两者叠加后动画互相抵消（表现为标题"抖一下才出现"）。
+        入场交给 .wp-line-inner，轮播交给 .wp-quote.active / .leaving，各管各的。 */
   .wp-quotes {
     display: grid;
     width: 100%;
-    animation: wp-reveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
   }
   .wp-quote {
     grid-area: 1 / 1;
@@ -402,6 +564,12 @@ const slides = single ? images.slice(0, 1) : images;
     pointer-events: auto;
     animation: quote-in 1s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
+  /* ⚠️ 首屏入场期间，关掉 .wp-quote.active 自带的 quote-in：
+     它整块动 opacity + transform + blur，会和标题的逐行揭幕**改同一批属性**，
+     两个动画在同一元素上叠加 → 标题升到一半被整块又拽一次（观感是"抖了一下"）。
+     入场期间入场归 wp-line-inner，轮播归 quote-in，二选一。
+     intro-done 之后（揭幕播完）再放开，那时换句才是干净的 quote-in。 */
+  html.intro-run .wp-quote.active { animation: none; opacity: 1; }
   .wp-quote.leaving { animation: quote-out 0.7s ease both; }
 
   /* 句尾闪烁光标 */
