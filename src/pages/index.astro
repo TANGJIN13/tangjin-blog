@@ -37,8 +37,11 @@ const catCounts = categories.map((c) => ({
 <Base banner>
   <!-- 壁纸文字：交给 WallpaperBanner 自带的「书法潦草句子」轮播（内容来自 site.mottos）。
        之前这里塞了自定义的 <slot>（「把每一次好奇…」+ 一行 Web 安全·CTF），
-       把原来那套有哲理的书法句子顶掉了 —— 现在撤掉 slot，恢复成原来那种。 -->
-  <WallpaperBanner height="clamp(410px, 60vh, 620px)" mobileHeight="clamp(350px, 58vh, 510px)" />
+       把原来那套有哲理的书法句子顶掉了 —— 现在撤掉 slot，恢复成原来那种。
+       分层揭幕的**第 2 层**：导航落地后壁纸再浮起（delay 90ms）。 -->
+  <div data-reveal style="--rv: 90ms">
+    <WallpaperBanner height="clamp(410px, 60vh, 620px)" mobileHeight="clamp(350px, 58vh, 510px)" />
+  </div>
 
   <!-- 三栏内容 -->
   <div class="container">
@@ -48,7 +51,7 @@ const catCounts = categories.map((c) => ({
       <!-- 主内容 -->
       <main class="ref-main" id="main-content" aria-label="文章列表">
         <!-- 快捷导航条：首页 + 归档 -->
-        <section class="block onload-animation">
+        <section class="block onload-animation" data-reveal style="--rv: 300ms">
           <div class="cat-card card-base" id="category-bar">
             <div class="cat-bar-inner">
               <a class="cat-pill cat-pill-home is-active" href="/" aria-label="首页">
@@ -78,7 +81,7 @@ const catCounts = categories.map((c) => ({
 
         <!-- 文章主编精选 + 最近更新 -->
         {featured && (
-          <section class="block editorial-feed" id="latest-notes">
+          <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 400ms">
             <div class="section-head">
               <h2 class="section-title"><span class="section-index">01 /</span> 最新手记</h2>
               <span class="section-edition">按时间持续更新</span>
@@ -103,7 +106,7 @@ const catCounts = categories.map((c) => ({
           </section>
         )}
         {recentPosts.length > 0 && (
-          <section class="block recent-feed">
+          <section class="block recent-feed" data-reveal style="--rv: 500ms">
             <div class="section-head">
               <h2 class="section-title"><span class="section-index">02 /</span> 继续阅读</h2>
               <a class="section-more" href="/archive/">全部归档 <Icon name="arrow_right" size="0.85rem" /></a>

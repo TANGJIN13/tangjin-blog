@@ -2,7 +2,7 @@
 import '../styles/global.css';
 import { site } from '../site';
 import Icon from '../components/Icon.astro';
-import IntroCurtain from '../components/IntroCurtain.astro';
+import StaggerReveal from '../components/StaggerReveal.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
 import ImageZoom from '../components/ImageZoom.astro';
 import SakuraEffect from '../components/SakuraEffect.astro';
@@ -76,12 +76,11 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- 主题恢复 + 入站动画标记 —— 都必须在首屏绘制前同步执行。
+    <!-- 主题恢复 + 分层揭幕标记 —— 都必须在首屏绘制前同步执行。
          ⚠️ 主题为什么挪到这里：原来主题恢复在 body 末尾的模块脚本里（会 defer），
-         而 body 第一个元素 IntroCurtain 的内联脚本是**立即执行**的。
-         幕布脚本要读 `--bg` / `--primary` 去给 canvas 上色，那时 data-theme 还没设，
-         于是暗色用户看到的是**浅色纸面**（实测 data-theme 已是 dark，但纸面像素仍是
-         [242,242,250]）。顺带这也修掉了站点本身的「暗色用户首帧闪白」。
+         而 body 里读主题的脚本是**立即执行**的，那时 data-theme 还没设，
+         暗色用户会先看到浅色的一帧。顺带这也修掉了站点本身的「暗色用户首帧闪白」。
+         ⚠️ 分层揭幕同理：第一帧就必须把内容藏好，否则会先闪一帧完整页面再从头播。
          sessionStorage 里已有标记（软导航 / 本会话看过）时立刻撤掉，不做任何遮挡。 -->
     <script is:inline>
       (function () {
@@ -93,14 +92,59 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             : pref;
           document.documentElement.setAttribute('data-theme', resolved);
         } catch (e) {}
-        // ② 入站动画
+        // ② 分层揭幕：已看过 / 用户偏好减少动态 → 什么都不加，内容保持默认可见
         try {
-          if (sessionStorage.getItem('intro-played') === '1') return;
+          if (sessionStorage.getItem('reveal-played') === '1') return;
           if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
         } catch (e) {}
-        document.documentElement.classList.add('intro-pending');
+        document.documentElement.classList.add('reveal-pending');
       })();
     </script>
+    <!-- 分层揭幕的「首帧隐藏」样式：必须内联在 <head>，原因同上。
+         只藏最关键的几层（导航 / 壁纸 / 内容主体），且只藏 1 帧 —— 解析到 body 的
+         StaggerReveal 脚本就把 reveal-run 挂上，动画随即开始。
+
+         ⚠️⚠️ 这里有两套动画，用哪个取决于**该元素里有没有 position:fixed 的后代**：
+            `filter` 和 `transform` 都会让元素成为 fixed 后代的**包含块**。
+            `.main-layout` 里装着浮动按钮和左下角音乐播放器（都是 fixed），
+            一旦给它挂带 filter/transform 的动画，这些固定元素就会以 main 的盒子为参照
+            —— 表现是揭幕过程中按钮从屏幕上"飘走"。这个坑在本项目撞过不止一次。
+         所以：
+            · 绝不含 fixed 后代的层（top-row / 页脚 / 壁纸）→ rv-rise（位移 + 模糊）
+            · 含 fixed 后代的层（main-layout）            → rv-fade（**只动不透明度**） -->
+    <style is:inline>
+      html.reveal-pending [data-reveal] { opacity: 0; }
+      html.reveal-pending .top-row { opacity: 0; }
+      /* 内页（内部没有错峰层）的容器也要先藏好，否则会闪一帧再淡入 */
+      html.reveal-pending .main-layout:not(:has([data-reveal])) { opacity: 0; }
+      html.reveal-run [data-reveal] {
+        animation: rv-rise 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+        animation-delay: var(--rv, 0ms);
+      }
+      html.reveal-run .top-row {
+        animation: rv-rise 0.66s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      /* 含 fixed 后代的层：只淡入，绝不动 transform / filter。
+         用在 .main-layout 上 —— 但它只在**内部没有自己的错峰层**时才需要淡入
+         （首页内部的 section 各自错峰，容器再淡入就变成 opacity 相乘、内容发灰）。
+         `:not(:has([data-reveal]))` 精确表达这个条件。 */
+      html.reveal-run .main-layout:not(:has([data-reveal])) {
+        animation: rv-fade 0.78s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      /* 上浮 + 淡入：位移给 22px、带一点模糊消散，读作"浮上来"而不是"滑进来" */
+      @keyframes rv-rise {
+        from { opacity: 0; transform: translateY(22px); filter: blur(6px); }
+        to   { opacity: 1; transform: none; filter: blur(0); }
+      }
+      @keyframes rv-fade {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html.reveal-pending [data-reveal],
+        html.reveal-pending .top-row { opacity: 1; }
+      }
+    </style>
     <!-- 首屏壁纸预加载：让首页大图在解析 body 之前就开始下载，做到「秒出」。
          注意：这里的第一张要和 WallpaperBanner 默认 images 数组的第一张保持一致。 -->
     <link rel="preload" as="image" type="image/avif" href="/images/wallpapers/banner-pastel-01.avif" fetchpriority="high" />
@@ -138,10 +182,10 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <ClientRouter />
   </head>
   <body class:list={[{ 'has-banner': hasBanner }]}>
-    <!-- 入站动画：必须是 body 的第一个元素，才能压住导航与浮动按钮（硬加载时只播一次）。
-         它靠 position:fixed + inset:0 铺满视口，所以播放期间 **html 和 body 都不许带
-         transform / filter / perspective**（详见 IntroCurtain.astro 里的说明）。 -->
-    <IntroCurtain />
+    <!-- 分层揭幕的播放器：只负责「挂标记 / 记会话 / 软导航清理」，
+         真正的动画是纯 CSS（见 <head> 里的内联样式），组件本体不渲染任何 DOM。
+         必须在 body 最前面，才能赶在第一帧渲染前把 reveal-run 挂上。 -->
+    <StaggerReveal />
 
     <!-- 阅读进度条 -->
     <div class="reading-progress" id="reading-progress" aria-hidden="true"></div>
@@ -187,7 +231,14 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
       </nav>
     </div>
 
-    <!-- 主内容 -->
+    <!-- 主内容 —— 容器本身**不参与**揭幕，让页面内部的区块自己错峰（见 index.astro）。
+         两个理由：
+           ① 容器里有浮动按钮和音乐播放器（都是 position:fixed），
+              给它挂带 transform/filter 的动画会让那些固定元素的包含块变成它自己
+              —— 表现是揭幕过程中按钮"飘走"。这个坑本项目撞过不止一次。
+           ② 容器 + 内部区块都淡入会造成 opacity 相乘（0.5 × 0.5 = 0.25），
+              内容会暗一段再亮回来，观感是"发灰"。让错峰只发生在**一层**里，才不会打架。
+         内页（没有独立区块错峰的）由 .main-layout 兜底淡入，见 <head> 里的 CSS。 -->
     <main class="main-layout">
       <!-- 内页共享标题区：柔和留白让内容优先，横幅只留给首页与文章封面 -->
       {pageBanner && (
@@ -258,7 +309,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <SakuraEffect />
 
     <!-- 页脚 -->
-    <footer class="site-footer">
+    <footer class="site-footer" data-reveal style="--rv: 380ms">
       <div class="container footer-inner">
         <p>© {site.footer.since}–{new Date().getFullYear()} {site.author}</p>
         {site.icp && <p><a href="https://beian.miit.gov.cn/" rel="nofollow" target="_blank">{site.icp}</a></p>}

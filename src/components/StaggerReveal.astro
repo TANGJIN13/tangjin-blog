@@ -1,0 +1,65 @@
+---
+// 分层揭幕（Stagger Reveal）
+//
+// 打开网站时，首页**自身**从上往下逐层浮现，而不是盖一层遮罩再掀开。
+// 顺序：导航 → 壁纸 → 内容主体 → 页脚。
+//
+// 为什么换掉原来的水墨幕布（IntroCurtain）：
+//   幕布是「不透明遮罩 + canvas 画墨 + 卷帘升起」——它的问题不在实现，而在**范式**：
+//     · 它把用户的第 1~2 秒整块占掉，什么都读不到，回访者被迫等；
+//     · canvas 逐帧渲染 + 每帧 drawImage 一张全屏纸纹，是这一页最重的开销；
+//     · 遮罩与底层内容必须手动对齐底色、手动锁滚动、手动处理 fixed 包含块，
+//       每一条都是坑，维护成本远高于收益。
+//   改成分层揭幕之后：用户第一眼就看到真实内容，只是「一层层落下来」。
+//   动画的时长感来自**层与层之间的错峰**（stagger），而不是单层的时长。
+//
+// 关键设计（每一条都为了避开一个具体的坑）：
+//   ① 首帧就必须把内容藏好 —— 否则会先闪一帧完整页面再从头播。
+//      所以藏内容的 CSS 由 Base 的 <head> 内联输出，这里不负责样式。
+//   ② 只在**硬加载**播一次；SPA 软导航换页不重播（sessionStorage 记标记）。
+//   ③ 尊重 prefers-reduced-motion：直接不参与，内容始终可见。
+//   ④ 动画是纯 CSS（delay 由 --rv 变量给），不需要 rAF、不读像素，
+//      因此不会因为标签页被挂起而卡在半途。
+//   ⑤ 兜底：定时器到点强制摘掉隐藏标记，保证内容绝不会永久不可见。
+---
+
+<script is:inline>
+  (function () {
+    var KEY = 'reveal-played';
+    var root = document.documentElement;
+
+    // 软导航清理：换页时新文档可能还带着 reveal-pending（那是服务端 HTML 里就有的类名），
+    // 而内联脚本在 ClientRouter 的替换流程里**不会重新执行** —— 不主动清就是"切页后内容全没了"。
+    function clear() {
+      var played = false;
+      try { played = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+      if (!played) return;
+      root.classList.remove('reveal-pending', 'reveal-run');
+    }
+    document.addEventListener('astro:before-swap', clear);
+    document.addEventListener('astro:page-load', clear);
+
+    // 已播过 / 减少动态 → 不做任何事，内容本来就是可见的
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+    var seen = false;
+    try { seen = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+    if (reduce || seen) {
+      root.classList.remove('reveal-pending');
+      return;
+    }
+
+    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+
+    // 挂上播放标记：Base 的 <head> 里已经按 reveal-pending 把内容藏好，
+    // 这里在它之上再加 reveal-run，让 CSS 把入场动画挂上去。
+    root.classList.add('reveal-run');
+
+    // 兜底 + 收尾：所有层的动画最迟 1.6s 内跑完。
+    //   2.6s 摘 reveal-pending（防止内容永久不可见）；
+    //   再晚一点连 reveal-run 一起摘掉，让 DOM 回到"什么都没在播"的干净状态
+    //   —— 留着它会让动画的 both 终态一直挂在元素上，影响后续任何 transform/filter 过渡。
+    window.setTimeout(function () { root.classList.remove('reveal-pending'); }, 2200);
+    window.setTimeout(function () { root.classList.remove('reveal-run'); }, 3200);
+  })();
+</script>
