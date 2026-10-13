@@ -181,7 +181,17 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             `animation:` 简写会**连 delay 一起覆盖**成 var(--rv, 0ms)，
             于是所有列表项同时出现、逐项错峰全废。所以两者严格分开：
               · [data-reveal]      → 首页首屏，走本条统一时间轴
-              · .onload-animation  → 列表/次级页面，保持各自的 inline delay 不动 */
+              · .onload-animation  → 列表/次级页面，保持各自的 inline delay 不动
+
+         ⚠️ 选择器**必须带上 html.intro-run**。
+            这条规则原本写成裸的 `[data-reveal]`（0,0,1,0），
+            而 global.css 里 `.onload-animation` 也是 (0,0,1,0) —— 同特异性下
+            **后加载的外链 CSS 赢**，于是 `animation: rv-fade` 会被
+            `animation: fade-in-up` 整条顶掉。实测：入场期间卡片的
+            animation-name 是 `fade-in-up`、duration 0.62s（不是 rv-fade 的 0.85s），
+            逐项 delay 0/0.06s 照旧生效 → 卡片在主标题（0.7s 起）之前就逐张冒出来，
+            视觉焦点被抢走，正是需求书点名要避免的"所有元素各自为政"。
+            加上 `html.intro-run` 后特异性升到 (0,0,2,1)，稳定压过 global.css。 */
       html.intro-run [data-reveal] {
         animation: rv-fade 0.85s cubic-bezier(0.16, 1, 0.3, 1) var(--rv, 0ms) both;
       }
@@ -193,7 +203,10 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
          两层叠加会 opacity 相乘（区块 0.5 × 卡片 0.5 = 0.25）→ 内容明显发灰；
          而且卡片的 delay 只有 0~0.5s，比主标题（0.7s 起）还早，会抢走视觉焦点。
          所以：**父级是 [data-reveal] 的卡片，在入场期间不做自己的动画**。
-         用 `:where()` 把父级那段的特异性抹掉，避免和 `.onload-animation` 打架。 */
+         同样必须带 `html.intro-run`（理由见上一条），否则会被 global.css 的
+         `.onload-animation { animation: fade-in-up ... }` 覆盖，抑制失效。
+         特异性 (0,0,2,2) —— 高于 `.onload-animation` (0,0,1,0)，
+         也高于上一条的 (0,0,2,1)，但两者选择器不重叠，不存在互相顶掉。 */
       html.intro-run :where([data-reveal]) .onload-animation {
         animation: none;
       }
