@@ -34,16 +34,16 @@ const motto = site.mottos[0]?.text ?? '';
 const criticalCss = `
 .intro-curtain{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;overflow:hidden;cursor:pointer;background:var(--bg)}
 .ic-paper{position:absolute;inset:0;display:block;width:100%;height:100%}
-.ic-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:.95rem;padding-inline:1.5rem;text-align:center;transform:translateY(-2vh);min-height:9rem;justify-content:center}
-.ic-title{position:relative;margin:0;font-family:var(--font-display);font-size:clamp(2.4rem,8.4vw,5.4rem);font-weight:600;letter-spacing:-.025em;line-height:1.14;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--text) 42%,transparent);white-space:nowrap}
-/* 关键：给标题一个「写完后的最终占位」。::after 的实心字是绝对定位、宽度跟着 clip-path 走，
-   但底层描边的宽度是**固定的完整标题宽度** —— 只要拿它做占位，整个 flex 舞台在书写过程中
-   就不会因为「当前写到第几个字」而反复重新居中（那会让标题一路往右上漂）。 */
+.ic-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:1.1rem;padding-inline:1.5rem;text-align:center;transform:translateY(-2vh);min-height:9rem;justify-content:center}
+/* 标题底：只留极淡的「字痕」（6% 墨色 + 0.8px 细描边）。
+   之前这里是 42%、1.5px —— 结果整块画面上是一个空心灰字，观感像「字没加载出来」，非常廉价。
+   真实的落笔不是先画空壳再填色，而是墨随笔走：骨架要近乎看不见，让实心字本身成为唯一主体。 */
+.ic-title{position:relative;margin:0;font-family:var(--font-display);font-size:clamp(2.5rem,8.6vw,5.6rem);font-weight:600;letter-spacing:-.02em;line-height:1.12;color:transparent;-webkit-text-stroke:.8px color-mix(in srgb,var(--text) 7%,transparent);white-space:nowrap}
 .ic-title::after,
 .ic-title::before{pointer-events:none}
 .ic-veil{position:absolute;inset:0;background:transparent;pointer-events:none;border-radius:0}
-.ic-title::after{content:attr(data-text);position:absolute;inset:0;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;-webkit-text-stroke:0;clip-path:inset(0 100% 0 0)}
-.ic-title::before{content:'';position:absolute;top:-8%;bottom:-8%;left:0;width:2px;background:linear-gradient(180deg,transparent,var(--primary),transparent);opacity:0}
+.ic-title::after{content:attr(data-text);position:absolute;inset:0;background:var(--gradient-primary);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;-webkit-text-stroke:0;clip-path:inset(0 100% 0 0);filter:drop-shadow(0 2px 10px color-mix(in srgb,var(--primary) 26%,transparent))}
+.ic-title::before{content:'';position:absolute;top:-9%;bottom:-9%;left:0;width:2px;background:linear-gradient(180deg,transparent,var(--primary),transparent);opacity:0}
 `;
 ---
 
@@ -91,27 +91,41 @@ const criticalCss = `
     document.documentElement.classList.add('intro-lock');
     el.classList.add('is-running');
     document.documentElement.classList.add('is-intro');
+    // ⚠️ ic-live 必须**立刻**加：CSS 里书写 / 小字 / 细线 / 卷帘四段动画
+    //    全都挂在 `.intro-curtain.ic-live` 之下，靠自己的 animation-delay 排序。
+    //    曾经把它放在 teardown() 里加 —— 那是「收尾」时刻（1580ms），
+    //    结果书写动画到 1580ms 才起跑，前 1.5 秒标题只有 7% 的淡字痕，
+    //    整段动画看起来就是「一个紫球悬在空白页上，什么都没发生」。
+    el.classList.add('ic-live');
 
     /* ================= 时间轴（ms） =================
        节奏原则：墨滴与书写**重叠**推进，而不是排队。
-       总长约 2.4s（含 0.9s 揭幕），比原先砍掉近三分之一 —— 入站动画的黄金法则是
-       「看一眼就完」，多留 1 秒都是在惩罚回访者。 */
+       总长约 2.9s（含 0.9s 揭幕）。入站动画的黄金法则是「看一眼就完」，
+       但也不能快到看不清 —— 关键是三段要**有重叠**：
+         · 墨滴 0 → 900        落墨晕开
+         · 书写 460 → 460+write 墨还没落定就开始写（墨随笔走）
+         · 小字/细线 在书写中段浮出，不等到写完
+         · 卷帘 1900 上掀（此时书写早已完成，留 200ms 让人看清成品） */
     var T = {
       blot: 0,        // 墨滴落下
       thread: 200,    // 游丝开始走（和书写几乎同时，边落墨边写字）
       write: 460,     // 书写开始
-      lift: 1580,     // 卷帘上掀
-      end: 2500
+      lift: 1900,     // 卷帘上掀
+      end: 2900
     };
 
     var dots = window.innerWidth < 640 ? 520 : window.innerWidth < 1024 ? 720 : 900;
     el.style.setProperty('--ic-stroke', dots + '');
     var titleEl = el.querySelector('.ic-title');
     var titleChars = ((titleEl && titleEl.getAttribute('data-text')) || '').replace(/\s/g, '').length || 8;
-    // 书写时长跟字数走：字多给宽一点，保证「一笔一笔」看得出来
-    var writeMs = Math.max(700, Math.min(1050, titleChars * 78));
+    // 书写时长跟字数走：字多给宽一点，保证「一笔一笔」看得出来。
+    // 上限压到 900ms：再长就和「看一眼就完」的原则冲突了。
+    var writeMs = Math.max(620, Math.min(900, titleChars * 68));
     el.style.setProperty('--ic-write', writeMs + 'ms');
-    var writeDelay = T.write;
+    el.style.setProperty('--ic-t-write', T.write + 'ms');
+    el.style.setProperty('--ic-t-line', Math.round(T.write + writeMs * 0.30) + 'ms');
+    el.style.setProperty('--ic-t-sub', Math.round(T.write + writeMs * 0.55) + 'ms');
+    el.style.setProperty('--ic-t-lift', T.lift + 'ms');
 
     /* ================= canvas：墨滴 + 游丝 + 纸纹 ================= */
     var cv = el.querySelector('.ic-paper');
@@ -119,27 +133,40 @@ const criticalCss = `
     var W = 0, H = 0, DPR = 1;
 
     // 主题色：从 CSS 变量里读，亮/暗自动跟着走。
-    // ⚠️ canvas 的 fillStyle 不认 oklch()，也不认 color-mix() —— 直接丢进去会被**静默忽略**，
-    //    结果就是「每一帧都在画，但什么都看不见」。所以这里先把变量交给浏览器解析成
-    //    rgb() 三通道，再由我们自己拼 rgba()。
+    // ⚠️⚠️ 这个函数踩了两个坑，两次都表现为「整屏纯蓝」：
+    //   坑 1：canvas 的 fillStyle **不认** oklch() / color-mix() 的**旧**浏览器会静默忽略 → 什么都画不出来。
+    //   坑 2（更隐蔽）：想用 DOM 探针归一，但实测的 Chrome 上
+    //        · `getComputedStyle(span).color` 对 oklch 输入返回的**仍是** `oklch(...)`；
+    //        · 连离屏 canvas 的 `ctx.fillStyle = 'oklch(...)'` 之后读回来，**也还是** `oklch(...)`
+    //          （CSS Color 4 支持它，但 getter 保留原颜色空间，不做 sRGB 归一）。
+    //        于是按 /[\d.]+/ 抓数字得到 ["0.975","0.009","285"] → 当 RGB 用 → clamp 成 rgb(1,0,255)
+    //        → **整屏纯蓝**（实测像素 [6,5,252]）。
+    //
+    //   唯一 100% 可靠的归一：**让浏览器真的画一像素，再读回来**。
+    //   做法是一个 1×1 的离屏 canvas：fillStyle = raw → fillRect → getImageData。
+    //   getImageData 返回的字节一定已经是 sRGB，跟它内部怎么表示颜色无关。
+    var _c1 = document.createElement('canvas');
+    _c1.width = _c1.height = 1;
+    var _px = _c1.getContext('2d', { willReadFrequently: true });
     var cs = getComputedStyle(document.documentElement);
     function channels(name, fallback) {
       var raw = (cs.getPropertyValue(name) || '').trim() || fallback;
-      var probe = document.createElement('span');
-      probe.style.color = raw;
-      document.body.appendChild(probe);
-      var rgb = getComputedStyle(probe).color; // 浏览器已归一为 "rgb(r, g, b)"
-      probe.remove();
-      var m = rgb.match(/[\d.]+/g) || [];
-      if (m.length < 3) return [110, 92, 200];
-      return [+m[0], +m[1], +m[2]];
+      try {
+        _px.clearRect(0, 0, 1, 1);
+        _px.fillStyle = raw;          // 不合法则保留上一次的值
+        _px.fillRect(0, 0, 1, 1);
+        var d = _px.getImageData(0, 0, 1, 1).data;
+        if (d[3] > 0 || d[0] + d[1] + d[2] > 0) return [d[0], d[1], d[2]];
+      } catch (e) {}
+      return [110, 92, 200];
     }
-    var INK = channels('--primary', 'oklch(61% 0.105 282)');
-    var WARM = channels('--accent', 'oklch(72% 0.09 15)');
-    // 纸纹颗粒的色相要跟着主题走：亮色纸上是淡紫灰，暗色纸上必须换成浅色才看得见
+    // 兜底值必须也是**合法颜色**，否则 fillStyle 保持上一个值 → 读出一片黑
+    var INK = channels('--primary', 'oklch(0.61 0.105 282)');
+    var WARM = channels('--accent', 'oklch(0.72 0.09 15)');
+    // 站点真实背景色：纸面底色直接用它，揭幕时才不会跳色
+    var BG = channels('--bg', 'oklch(0.975 0.009 285)');
+    // 亮/暗主题下墨的观感差别很大：暗底上墨是"发光"的，需要压低不透明度才不刺眼
     var dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    var GRAIN = dark ? 'rgba(210,206,240,0.055)' : 'rgba(96,88,140,0.05)';
-    var GLOW = dark ? 0.16 : 0.42;   // 中心柔光的强度
     function ink(a, warm) {
       var c = warm ? WARM : INK;
       return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + Math.max(0, Math.min(1, a)).toFixed(3) + ')';
@@ -156,23 +183,33 @@ const criticalCss = `
       if (ctx) ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     }
 
-    // 墨丝：从中心向外游走的短笔触，速度带噪声，越远越淡
+    // 墨丝：从墨团外缘向外游走的短笔触。
+    // ⚠️ 长度是这里最敏感的参数，两个极端都试过、都不行：
+    //    · 太短（0.16~0.42 maxR）→ 前半截埋在墨团里，等于没画，完全看不见；
+    //    · 太长（0.22~0.52 maxR）→ 变成放射状的"星芒 / 海胆"，像爆炸特效，非常廉价。
+    //    正解是**短而弯、且长短悬殊**：让它们读作"几笔甩出去的飞白"，
+    //    而不是"从一个点射出的光线"。所以：基准长度压回 0.12~0.30，
+    //    但把 curve 放大（弯曲 → 不再指向圆心），并让笔宽/不透明度差异拉开。
     var threads = [];
     function seedThreads() {
       threads = [];
-      var n = W < 640 ? 26 : 46;
-      var maxR = Math.hypot(W, H) * 0.46;
+      var n = W < 640 ? 20 : 34;
+      var maxR = Math.min(W, H) * 0.5;
       for (var i = 0; i < n; i++) {
-        var a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
+        // 角度刻意不均匀：加随机抖动，避免"放射状太阳"的观感
+        var a = (i / n) * Math.PI * 2 + (Math.random() - 0.5) * 1.1;
         threads.push({
           a: a,
-          // 每个笔触单独的速度 / 长度 / 弯曲
-          sp: 0.34 + Math.random() * 0.5,
-          len: maxR * (0.42 + Math.random() * 0.62),
-          curve: (Math.random() - 0.5) * 0.9,
-          w: 0.7 + Math.random() * 1.7,
-          warm: Math.random() < 0.28,        // 少量取杏粉色，避免整片死紫
-          delay: Math.random() * 0.22
+          len: maxR * (0.12 + Math.random() * 0.18),
+          // 弯曲幅度给大：弧线一弯，就不再是"从圆心射出的光线"
+          curve: (Math.random() - 0.5) * 1.9,
+          // 笔宽：1px 以下的线在 1× DPR 上会被抗锯齿"融"进背景，等于没画。
+          // 起档抬到 1.1，最粗 2.6 —— 读作"细笔触"，而不是"发丝"。
+          w: 1.1 + Math.random() * 1.5,
+          warm: Math.random() < 0.30,        // 少量取杏粉色，避免整片死紫
+          // 延迟拉开到 0~0.55：让它们**陆续甩出**，而不是同一瞬间全部出现。
+          // 这一步是"从爆发感 → 书写感"的关键 —— 同时出现永远像爆炸。
+          delay: Math.random() * 0.55
         });
       }
     }
@@ -184,26 +221,122 @@ const criticalCss = `
       paper.height = Math.round(H * DPR);
       var pc = paper.getContext('2d');
       pc.setTransform(DPR, 0, 0, DPR, 0, 0);
-      // 底板：一张接近纸色的浅底，让后面的墨有「纸」可落
-      pc.clearRect(0, 0, W, H);
-      // 中心柔光：四角略沉，中心微亮（暗色主题下要弱得多，否则整块发灰）
-      var g = pc.createRadialGradient(W / 2, H * 0.46, 0, W / 2, H * 0.46, Math.max(W, H) * 0.72);
-      g.addColorStop(0, 'rgba(255,255,255,' + GLOW + ')');
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      pc.fillStyle = g;
+
+      // ① 纸底色：**就用站点真实的 --bg**，别的什么都不叠。
+      //    ⚠️ 这里曾经叠了两层色（一层暖黄 rgba(196,178,152,0.055) + 一层
+      //       中心提亮 rgba(255,255,255,0.62)），结果整屏变成饱和的蓝紫色，
+      //       标题直接被吃掉。原因是：--bg 本身已经很淡（oklch 97.5% 0.009），
+      //       衬底极浅；再往中心糊 62% 的纯白，中心接近纯白，而四周仍是 --bg 的
+      //       冷调 → 大脑把四周读作"蓝"，整块画面就"泛蓝"了。
+      //       纸感的来源应该是**纤维颗粒**（见 ③），不是靠加大面积叠色。
+      pc.fillStyle = 'rgb(' + BG[0] + ',' + BG[1] + ',' + BG[2] + ')';
       pc.fillRect(0, 0, W, H);
-      // 颗粒：稀疏散布的小点，模拟宣纸的纤维感（不需要逐像素循环，几万个点足够）
-      var n = Math.round(W * H / 26);
-      pc.fillStyle = GRAIN;
-      for (var i = 0; i < n; i++) {
+
+      // ② 极轻的暗角：只压边缘 3~6%，让视线收拢到中间，不做中心提亮。
+      var vg = pc.createRadialGradient(W / 2, H * 0.46, Math.min(W, H) * 0.3, W / 2, H * 0.46, Math.max(W, H) * 0.78);
+      if (dark) {
+        vg.addColorStop(0, 'rgba(0,0,0,0)');
+        vg.addColorStop(1, 'rgba(0,0,0,0.30)');
+      } else {
+        vg.addColorStop(0, 'rgba(255,255,255,0)');
+        vg.addColorStop(1, 'rgba(108,98,132,0.055)');
+      }
+      pc.fillStyle = vg;
+      pc.fillRect(0, 0, W, H);
+
+      // ③ 纸纤维：细短的线条，方向随机 —— 比圆点更像"纸"（圆点看着像噪点/脏点）。
+      //    底色不再提亮之后，纸感**全靠这一层**，所以颗粒可以稍微给足一点，
+      //    但仍然要压在不透明度 4% 以下：纸上不该看出"噪点"，只觉得"不平"。
+      var fibers = Math.round(W * H / 64);
+      pc.lineWidth = 0.6;
+      for (var i = 0; i < fibers; i++) {
         var x = Math.random() * W;
         var y = Math.random() * H;
-        var r = Math.random() < 0.82 ? 0.6 : 1.1;
-        pc.fillRect(x, y, r, r);
+        var ang = Math.random() * Math.PI;
+        var len = 2 + Math.random() * 8;
+        pc.strokeStyle = dark
+          ? 'rgba(215,210,240,' + (0.020 + Math.random() * 0.032) + ')'
+          : 'rgba(110,98,135,' + (0.014 + Math.random() * 0.026) + ')';
+        pc.beginPath();
+        pc.moveTo(x, y);
+        pc.lineTo(x + Math.cos(ang) * len, y + Math.sin(ang) * len);
+        pc.stroke();
       }
     }
 
     function ease(t) { return 1 - Math.pow(1 - t, 3); }
+
+    /* ============ 不规则墨迹 ============
+       真实墨滴晕开的轮廓**不是圆**，也**不是花**。
+       ⚠️ 踩过的坑：早先用「几个不同频率的正弦叠加」扰动半径 —— 数学上必然产生
+          周期性瓣状轮廓，画出来就是一坨 6~7 瓣的"多边形花 / 雪花 / 齿轮"，
+          完全不像墨，非常廉价。正弦是周期函数，这条路走不通。
+
+       正确做法：在圆周上**独立随机采样**一圈半径（每个角度一个随机数，互不相关），
+       然后做若干轮「相邻三点加权平均」把它磨圆 —— 随机数负责"不可预测的凹凸"，
+       平滑负责"墨的张力把它拉圆"。平滑必须**环状**处理（首尾互邻），
+       否则接缝处会出现一条直棱。
+
+       采样点数与平滑强度挂钩：点越少越有机（大形起伏），点越多越毛（细碎边）。
+       三层叠加时用不同的点数与强度，就得到了"浓墨核心紧致、外层洇散毛糙"的层次。 */
+    var BLOTS = [];
+    function smoothRing(arr, passes) {
+      var n = arr.length;
+      var a = arr;
+      for (var p = 0; p < passes; p++) {
+        var b = new Array(n);
+        for (var i = 0; i < n; i++) {
+          // 环状邻域：1-2-1 加权平均，首尾互邻保证闭合连续
+          b[i] = (a[(i - 1 + n) % n] + a[i] * 2 + a[(i + 1) % n]) * 0.25;
+        }
+        a = b;
+      }
+      return a;
+    }
+    // 预生成若干组轮廓：每组就是一个「已经磨圆过的随机半径数组」
+    function makeRing(n, amp, passes) {
+      var r = new Array(n);
+      for (var i = 0; i < n; i++) r[i] = 1 + (Math.random() * 2 - 1) * amp;
+      return smoothRing(r, passes);
+    }
+    function seedBlot() {
+      BLOTS = [
+        // 外圈：点少 + 幅度大 + 平滑轻 → 大块不规则的洇散形
+        { ring: makeRing(14, 0.26, 2), squash: 0.86 },
+        // 中圈：中等
+        { ring: makeRing(18, 0.20, 3), squash: 0.93 },
+        // 内圈：点较密 + 幅度小 + 平滑重 → 紧致但仍有微起伏的核心
+        { ring: makeRing(20, 0.13, 4), squash: 0.95 },
+        { ring: makeRing(16, 0.17, 3), squash: 0.90 },
+        { ring: makeRing(22, 0.10, 5), squash: 0.94 },
+      ];
+    }
+    // 画一个不规则墨团：r = 基准半径，seed = 用哪一组轮廓
+    function blot(cx, cy, r, seed, alpha, squash) {
+      if (r <= 0 || alpha <= 0.002) return;
+      var B = BLOTS[seed % BLOTS.length];
+      var ring = B.ring;
+      var n = ring.length;
+      var sq = squash || B.squash;
+      // 用二次贝塞尔穿过每个采样点（控制点取相邻两点中点），
+      // 得到没有折角的柔性曲线 —— 直接 lineTo 会在点少时看出多边形棱。
+      ctx.beginPath();
+      var p0x = cx + Math.cos(0) * r * ring[0];
+      var p0y = cy + Math.sin(0) * r * ring[0] * sq;
+      ctx.moveTo(p0x, p0y);
+      for (var i = 0; i < n; i++) {
+        var ia = (i / n) * Math.PI * 2;
+        var ib = ((i + 1) / n) * Math.PI * 2;
+        var ax = cx + Math.cos(ia) * r * ring[i];
+        var ay = cy + Math.sin(ia) * r * ring[i] * sq;
+        var bx = cx + Math.cos(ib) * r * ring[(i + 1) % n];
+        var by = cy + Math.sin(ib) * r * ring[(i + 1) % n] * sq;
+        ctx.quadraticCurveTo(ax, ay, (ax + bx) / 2, (ay + by) / 2);
+      }
+      ctx.closePath();
+      ctx.fillStyle = alpha;
+      ctx.fill();
+    }
 
     var start = 0;
     var raf = 0;
@@ -214,48 +347,101 @@ const criticalCss = `
       var e = now - start;               // 已过去的时间
       var t = Math.min(1, Math.max(0, (e - T.blot) / 900));       // 墨滴进度
       var tt = Math.min(1, Math.max(0, (e - T.thread) / 1500));   // 游丝进度
-      var cx = W / 2, cy = H * 0.46;
-      var maxR = Math.hypot(W, H) * 0.46;
+      // 落墨点在**标题下方**：标题居中的位置约在 H*0.46（.ic-stage 带 -2vh 上移），
+      // 墨团若放在同一高度，就会把标题整块糊住（实测 1150ms 帧上标题几乎看不见）。
+      // 放到 H*0.66 —— 视觉读作"一笔落在标题下面"，游丝往上飘去碰字。
+      var cx = W / 2, cy = H * 0.66;
+      var unit = Math.min(W, H);
 
       ctx.clearRect(0, 0, W, H);
       ctx.drawImage(paper, 0, 0, W, H);
 
-      // ---- 墨团：一团软墨，先浓后匀 ----
+      // ---- 墨团：不规则墨迹 + 浓淡分离 ----
+      // 尺度必须克制：标题宽约 330px、字高约 100px，墨团是**给字做底**的，
+      // 直径控制在 ~180px 左右即可。曾经把系数放大到 2.4 倍外层，
+      // 半径直接超过屏幕 → 墨团糊满全屏、把标题整个吞掉，那是不可用的。
+      //
+      // ⚠️⚠️ 「同心圆靶」的坑（踩了两次）：
+      //   第一次：四层全部共心，半径 1.34/1.02/0.72/0.36 递减、不透明度逐层升高
+      //           → 一组完美的同心环，像"一颗眼睛/一个靶子"。
+      //   第二次：加了小偏移 + 压小不透明度落差，仍然像靶 —— 因为**两层之间
+      //           存在色差**（中间层用暖色 accent、内外层用冷色 primary），
+      //           冷暖分界本身就在替人勾边。
+      //   真正的修法有三条，缺一不可：
+      //     ① 色彩统一：墨就是墨，全套用 primary，暖色只允许出现在**游丝**上；
+      //     ② 偏移要够大：内层相对外层错开 30%~50% 半径，让"环"散成"偏心的团"；
+      //     ③ 用**多层低不透明度叠加**代替"少层高不透明度分层" ——
+      //        5 层各 4% 叠出来的是一团雾，2 层各 15% 叠出来的是两个边。
       var inK = ease(t);
+      // base 提到分支外：游丝要用它当起笔半径，不能依赖「墨团已经画过」
+      var base = (W < 640 ? 0.095 : 0.072) * unit * (0.5 + inK * 0.85);
       if (inK > 0) {
-        var r0 = (W < 640 ? 0.30 : 0.22) * Math.min(W, H) * (0.35 + inK * 1.5);
-        var a0 = 0.34 * inK * (1 - Math.max(0, (e - 1500) / 1400) * 0.55);
-        var rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r0);
-        rg.addColorStop(0, ink(a0));
-        rg.addColorStop(0.45, ink(a0 * 0.5));
-        rg.addColorStop(1, ink(0));
-        ctx.fillStyle = rg;
-        ctx.beginPath();
-        ctx.arc(cx, cy, r0, 0, Math.PI * 2);
-        ctx.fill();
+        var life = 1 - Math.max(0, (e - 1500) / 1400) * 0.45;   // 后半程整体变淡
+        var blur = 1 - inK;                                     // 1 → 0：起点虚、落定实
+        var grow = 0.45 + inK * 0.55;                           // 偏移随墨团一起长大
+        // 每层：半径系数 / 半径方向的偏移量(x,y，单位=base) / 不透明度 / squash
+        // 偏移刻意错开方向，任何两层都不共心 —— 这是"不成为靶"的根本。
+        var LAYERS = [
+          [1.32, -0.14, 0.10, 0.055, 0.88],
+          [1.10, 0.20, -0.08, 0.055, 0.92],
+          [0.92, -0.06, -0.24, 0.060, 0.90],
+          [0.70, 0.26, 0.18, 0.065, 0.95],
+          [0.46, -0.30, 0.06, 0.075, 0.97],
+        ];
+        ctx.save();
+        for (var li = 0; li < LAYERS.length; li++) {
+          var L = LAYERS[li];
+          // 外层模糊大、内层紧：造成"越到中心越实"的墨性
+          var solid = li / (LAYERS.length - 1);
+          ctx.shadowColor = ink(0.10 * life);
+          ctx.shadowBlur = (30 - solid * 22) + blur * 26;
+          blot(
+            cx + L[1] * base * grow,
+            cy + L[2] * base * grow,
+            base * L[0],
+            li,
+            ink(L[3] * life),
+            L[4]
+          );
+        }
+        ctx.restore();
       }
 
-      // ---- 游丝：一支一支从中心甩出去 ----
+      // ---- 游丝：从墨团边缘往外游走的细笔触 ----
       if (tt > 0) {
         ctx.lineCap = 'round';
+        var threadRef = Math.min(W, H) * 0.5;
         for (var i = 0; i < threads.length; i++) {
           var s = threads[i];
           var p = Math.min(1, Math.max(0, (tt - s.delay) / (1 - s.delay || 1)));
           if (p <= 0) continue;
           var pe = ease(p);
+          // 从墨团**最外层轮廓之外**起笔。
+          // ⚠️ 这里有个隐形的浪费：墨团最外层半径是 base*1.32，早先起笔半径取 base*1.02,
+          //    意味着笔触的前 1/4 完全埋在墨团底下 —— 白画。
+          //    起笔半径必须 ≥ 最外层半径，才谈得上"从墨团边缘甩出去"。
+          var r0 = base * 1.30;
           var len = s.len * pe;
-          var fade = Math.sin(Math.PI * Math.min(1, pe * 1.05)); // 两头淡中间浓
+          // 两头淡中间浓：让游丝像「笔尖蘸墨写了半笔」，不是一根硬线。
+          // ⚠️ 谷底不能到 0：sin() 在 pe→0 和 pe→1 时归零，
+          //    而 pe 小的时候正好是"笔刚刚甩出去"的瞬间 —— 全透明就等于没画。
+          //    抬到 0.35 保底，笔触始终有一点点墨。
+          var fade = 0.35 + 0.65 * Math.sin(Math.PI * Math.min(1, pe * 1.05));
           ctx.beginPath();
-          var steps = 26;
+          var steps = 24;
           for (var k = 0; k <= steps; k++) {
-            var q = (k / steps) * len;
-            var ang = s.a + s.curve * (q / maxR) * 1.5;
+            var q = r0 + (k / steps) * len;
+            var ang = s.a + s.curve * (q / threadRef) * 1.1;
             var x = cx + Math.cos(ang) * q;
-            var y = cy + Math.sin(ang) * q * 0.9;
+            var y = cy + Math.sin(ang) * q * 0.92;
             if (k === 0) ctx.moveTo(x, y);
             else ctx.lineTo(x, y);
           }
-          ctx.strokeStyle = ink(0.22 * fade, s.warm);
+          // 不透明度：它是"墨在纸里散开的痕迹"，不该像画上去的线 ——
+          // 但这个上限被实测卡得很死：0.075 完全看不见（画布上根本统计不到暗像素），
+          // 0.13 也几乎看不见。浅色纸上要有"能察觉但不像描边"的效果，0.30 是起点。
+          // 暗色主题下墨是发光的，压到 0.22 免得刺眼。
+          ctx.strokeStyle = ink((dark ? 0.22 : 0.30) * fade, s.warm);
           ctx.lineWidth = s.w;
           ctx.stroke();
         }
@@ -268,6 +454,7 @@ const criticalCss = `
     if (ctx) {
       resize();
       bakePaper();
+      seedBlot();
       seedThreads();
       raf = requestAnimationFrame(draw);
     } else {
@@ -290,7 +477,7 @@ const criticalCss = `
     var torn = false;
     var endTimer = 0;
     var fallbackTimer = 0;
-    function teardown(instant) {
+    function teardown() {
       if (torn) return;
       torn = true;
       done = true;
@@ -298,35 +485,31 @@ const criticalCss = `
       if (endTimer) clearTimeout(endTimer);
       if (fallbackTimer) clearTimeout(fallbackTimer);
 
-      // 放行挂起队列里的动画（标题书写 → 小字 / 细线 → 卷帘上掀）
-      el.classList.add('ic-live');
+      // 立刻放行滚动 / 撤掉镜头推近 —— 用户点了就得马上响应，
+      // 不能让他再等 0.9s 的卷帘动画走完才「感觉」能动。
       document.documentElement.classList.remove('intro-lock');
       document.documentElement.classList.remove('is-intro');
 
-      // 跳过时不要让人干等 1s 的书写动画：直接跳到揭幕
-      var hold = instant ? 0 : writeMs + 200;
-      window.setTimeout(function () {
-        // 兜底：万一 animationend 没来（标签页切走等），也把幕布摘掉
-        var removed = false;
-        function drop() {
-          if (removed) return;
-          removed = true;
-          el.remove();
-          document.documentElement.classList.remove('intro-pending');
-        }
-        el.addEventListener('animationend', function (ev) {
-          if (ev.animationName === 'ic-curtain-up') drop();
-        });
-        el.classList.add('is-gone');
-        window.setTimeout(drop, 900);
-      }, hold);
+      // 幕布退场：只做一次 opacity 淡出（0.4s），**不再**等 ic-curtain-up。
+      // ⚠️ 之前这里分「正常 / 跳过」两条路，按 writeMs 算 hold 再挂 is-gone ——
+      //    逻辑建立在「ic-live 是收尾时才加」的旧设计上。现在 ic-live 早就在播放前
+      //    加好了，CSS 里四段动画各自带 delay 自己跑；收尾只需要**淡出 + 摘 DOM**。
+      var removed = false;
+      function drop() {
+        if (removed) return;
+        removed = true;
+        el.remove();
+        document.documentElement.classList.remove('intro-pending');
+      }
+      el.classList.add('is-gone');
+      window.setTimeout(drop, 460);
     }
 
     // 时间轴到点：正常揭幕
-    endTimer = window.setTimeout(function () { teardown(false); }, T.lift);
+    endTimer = window.setTimeout(teardown, T.lift);
 
     // 跳过 = 直接到终点
-    function skip() { teardown(true); }
+    function skip() { teardown(); }
     el.addEventListener('click', skip);
     window.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') skip();
@@ -335,7 +518,7 @@ const criticalCss = `
     // 兜底：标签页被挂起导致 rAF 停摆时，也要收尾
     fallbackTimer = window.setTimeout(function () {
       if (!el.isConnected) return;
-      if (!torn) teardown(false);
+      if (!torn) teardown();
     }, T.lift + 2600);
 
     // SPA 软导航（ClientRouter）的收尾 —— 这里有个容易漏掉的坑：
@@ -399,12 +582,15 @@ const criticalCss = `
     box-shadow: 0 0 20px 5px color-mix(in srgb, var(--primary) 50%, transparent);
     opacity: 0;
   }
-  /* 时间轴到达后由 JS 加 .ic-live，才把这两段动画挂上（避免首帧就抢跑） */
+  /* 时间轴由 JS 注入的三个变量统一驱动，CSS 里不重复硬编码秒数：
+       --ic-write  书写时长（跟标题字数走）
+       --ic-t-write 书写**起跑**时刻（= T.write）
+       --ic-t-lift  卷帘上掀时刻（= T.lift） */
   .intro-curtain.ic-live .ic-title::after {
-    animation: ic-write var(--ic-write, 900ms) cubic-bezier(0.66, 0.02, 0.3, 1) both;
+    animation: ic-write var(--ic-write, 900ms) cubic-bezier(0.66, 0.02, 0.3, 1) var(--ic-t-write, 460ms) both;
   }
   .intro-curtain.ic-live .ic-title::before {
-    animation: ic-pen var(--ic-write, 900ms) cubic-bezier(0.66, 0.02, 0.3, 1) both;
+    animation: ic-pen var(--ic-write, 900ms) cubic-bezier(0.66, 0.02, 0.3, 1) var(--ic-t-write, 460ms) both;
   }
   @keyframes ic-write {
     from { clip-path: inset(0 100% 0 0); }
@@ -432,7 +618,7 @@ const criticalCss = `
     opacity: 0;
   }
   .intro-curtain.ic-live .ic-sub {
-    animation: ic-sub-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ic-write, 900ms) * 0.55) both;
+    animation: ic-sub-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--ic-t-sub, 780ms) both;
   }
   @keyframes ic-sub-in {
     from { opacity: 0; transform: translateY(10px); letter-spacing: 0.24em; filter: blur(5px); }
@@ -449,7 +635,7 @@ const criticalCss = `
     transform-origin: center;
   }
   .intro-curtain.ic-live .ic-line {
-    animation: ic-line-out 0.9s cubic-bezier(0.16, 1, 0.3, 1) calc(var(--ic-write, 900ms) * 0.4) both;
+    animation: ic-line-out 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--ic-t-line, 620ms) both;
   }
   @keyframes ic-line-out {
     from { transform: scaleX(0); opacity: 0; }
@@ -472,15 +658,15 @@ const criticalCss = `
   }
   @keyframes ic-skip-in { to { opacity: 0.6; } }
 
-  /* 底下的「字痕」在书写阶段就是主角：墨把字写出来之前，读者先看到字的骨架。
-     太淡会像没画完，太浓又抢实心字的戏 —— 42% 是实测下来「看得出字形、又不与实心字打架」的位置。
-     实心字写满后，这层描边会被完全盖住，不会留双线。 */
+  /* 「字痕」是极淡的一层（7%），只为给书写提供落脚点，不承担辨识度 ——
+     辨识度全部交给实心渐变字。曾经把它调到 42% 想让它"看得清"，
+     结果画面上是个空心灰字在飘，像字体没加载完，非常廉价。 */
 
-  /* 暗色主题：墨底是深蓝紫，描边要用更亮的色，否则字形糊在纸里。
+  /* 暗色主题：底色是深蓝紫，字痕要反过来用更亮一档的墨，否则完全看不见。
      ⚠️ Astro 的 scoped <style> 会把 `[data-theme='dark'] .foo` 这种**前缀写法**整条丢掉
      （编译后选择器里根本不存在）。必须把整条包进 :global(...)，见本项目既有约定。 */
   :global([data-theme='dark'] .ic-title) {
-    -webkit-text-stroke-color: color-mix(in srgb, var(--text) 58%, transparent);
+    -webkit-text-stroke-color: color-mix(in srgb, var(--text) 13%, transparent);
   }
 
   /* ===== ④ 卷帘上掀 =====
@@ -488,10 +674,10 @@ const criticalCss = `
      所以抬升必须由幕布本体自己完成 —— 连同它身上的纸色一起向上卷走。
      veil 只补一个底缘圆角，让抬起的那一瞬像纸被卷起来，而不是一块硬板滑走。 */
   .intro-curtain.ic-live {
-    animation: ic-curtain-up 0.92s cubic-bezier(0.72, 0, 0.2, 1) var(--ic-write, 900ms) both;
+    animation: ic-curtain-up 0.92s cubic-bezier(0.72, 0, 0.2, 1) var(--ic-t-lift, 1900ms) both;
   }
   .intro-curtain.ic-live .ic-veil {
-    animation: ic-veil-round 0.92s cubic-bezier(0.72, 0, 0.2, 1) var(--ic-write, 900ms) both;
+    animation: ic-veil-round 0.92s cubic-bezier(0.72, 0, 0.2, 1) var(--ic-t-lift, 1900ms) both;
   }
   @keyframes ic-curtain-up {
     from { transform: translateY(0); }

@@ -76,11 +76,24 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- 入站动画在首屏绘制前就把标记挂上：这样浏览器不会先画一帧首页再盖上幕布，
-         也不会因为幕布还没进场而先滑出滚动条。脚本是同步的，解析到这里立即生效。
+    <!-- 主题恢复 + 入站动画标记 —— 都必须在首屏绘制前同步执行。
+         ⚠️ 主题为什么挪到这里：原来主题恢复在 body 末尾的模块脚本里（会 defer），
+         而 body 第一个元素 IntroCurtain 的内联脚本是**立即执行**的。
+         幕布脚本要读 `--bg` / `--primary` 去给 canvas 上色，那时 data-theme 还没设，
+         于是暗色用户看到的是**浅色纸面**（实测 data-theme 已是 dark，但纸面像素仍是
+         [242,242,250]）。顺带这也修掉了站点本身的「暗色用户首帧闪白」。
          sessionStorage 里已有标记（软导航 / 本会话看过）时立刻撤掉，不做任何遮挡。 -->
     <script is:inline>
       (function () {
+        // ① 主题：与 Base 末尾的 applyTheme 共用同一个 'theme' 键
+        try {
+          var pref = localStorage.getItem('theme') || 'system';
+          var resolved = pref === 'system'
+            ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+            : pref;
+          document.documentElement.setAttribute('data-theme', resolved);
+        } catch (e) {}
+        // ② 入站动画
         try {
           if (sessionStorage.getItem('intro-played') === '1') return;
           if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
