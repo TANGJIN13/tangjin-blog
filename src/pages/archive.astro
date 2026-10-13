@@ -54,19 +54,38 @@ const riverPathFor = (count: number) => {
           <section class="year" data-paginate-group>
             <div class="year-node">
               <span class="year-num">{y}</span>
-              <span class="year-count">{byYear.get(y)!.length} 篇</span>
+              <span class="year-count">{byYear.get(y)!.length} 篇记忆</span>
+              <span class="year-caption">这一年的文字，沿河而来</span>
             </div>
             <ul class="year-list">
+              <svg class="river-canvas" aria-hidden="true" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id={`river-gradient-${y}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--primary)" stop-opacity=".12" />
+                    <stop offset="16%" stop-color="var(--primary)" stop-opacity=".8" />
+                    <stop offset="84%" stop-color="var(--primary)" stop-opacity=".72" />
+                    <stop offset="100%" stop-color="var(--primary)" stop-opacity=".12" />
+                  </linearGradient>
+                  <filter id={`river-glow-${y}`} x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3" />
+                  </filter>
+                </defs>
+                <path class="river-glow" stroke={`url(#river-gradient-${y})`} />
+                <path class="river-line" stroke={`url(#river-gradient-${y})`} />
+              </svg>
               {byYear.get(y)!.map((p, i) => (
                 <li class="tl-item onload-animation paginate-item" style={`animation-delay: ${Math.min(i, 10) * 0.05}s`}>
                   <span class="tl-dot" aria-hidden="true"></span>
                   <a class="tl-card" href={`/posts/${p.id}/`}>
-                    <time class="tl-date" datetime={p.data.published.toISOString()}>
-                      {formatDate(p.data.published)}
-                    </time>
+                    <span class="tl-meta">
+                      <time class="tl-date" datetime={p.data.published.toISOString()}>
+                        {formatDate(p.data.published)}
+                      </time>
+                      <span class="tl-index">{String(i + 1).padStart(2, '0')}</span>
+                    </span>
                     <span class="tl-title">{p.data.title}</span>
                     {p.data.tags.length > 0 && (
-                      <span class="tl-tags">{p.data.tags.slice(0, 3).map((t) => `#${t}`).join(' ')}</span>
+                      <span class="tl-tags">{p.data.tags.slice(0, 3).map((t) => `#${t}`).join('　')}</span>
                     )}
                     <span class="tl-arrow" aria-hidden="true">
                       <Icon name="next" size="0.9rem" />
@@ -94,6 +113,58 @@ const riverPathFor = (count: number) => {
   </div>
 </Base>
 
+<script>
+  function initRiverArchive() {
+    document.querySelectorAll<HTMLElement>('.year-list').forEach((list) => {
+      if (list.dataset.riverBound === 'true') return;
+      list.dataset.riverBound = 'true';
+      const svg = list.querySelector<SVGSVGElement>('.river-canvas');
+      const line = list.querySelector<SVGPathElement>('.river-line');
+      const glow = list.querySelector<SVGPathElement>('.river-glow');
+      if (!svg || !line || !glow) return;
+
+      let frame = 0;
+      const draw = () => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          const box = list.getBoundingClientRect();
+          if (!box.width || !box.height) return;
+          svg.setAttribute('viewBox', `0 0 ${box.width} ${box.height}`);
+          const items = Array.from(list.querySelectorAll('.tl-item:not(.is-hidden)'));
+          const points = items.map((item) => {
+            const dot = item.querySelector('.tl-dot');
+            const r = dot.getBoundingClientRect();
+            return { x: r.left + r.width / 2 - box.left, y: r.top + r.height / 2 - box.top };
+          });
+          if (!points.length) {
+            line.setAttribute('d', '');
+            glow.setAttribute('d', '');
+            return;
+          }
+          let d = `M ${points[0].x} ${points[0].y}`;
+          for (let i = 1; i < points.length; i++) {
+            const prev = points[i - 1];
+            const current = points[i];
+            const dy = current.y - prev.y;
+            const dx = current.x - prev.x;
+            d += ` C ${prev.x + dx * 0.42} ${prev.y + dy * 0.38}, ${current.x - dx * 0.42} ${current.y - dy * 0.38}, ${current.x} ${current.y}`;
+          }
+          line.setAttribute('d', d);
+          glow.setAttribute('d', d);
+        });
+      };
+      const resizeObserver = new ResizeObserver(draw);
+      resizeObserver.observe(list);
+      list.querySelectorAll('.tl-item').forEach((item) => resizeObserver.observe(item));
+      const mutationObserver = new MutationObserver(draw);
+      mutationObserver.observe(list, { attributes: true, subtree: true, attributeFilter: ['class'] });
+      draw();
+    });
+  }
+  document.addEventListener('astro:page-load', initRiverArchive);
+  initRiverArchive();
+</script>
+
 <style>
   .page-head {
     padding: 2.5rem 0 2rem;
@@ -117,139 +188,191 @@ const riverPathFor = (count: number) => {
   }
   :global([data-theme='dark'] .page-head strong) { color: var(--primary-light); }
 
-  /* ============ 时间线 ============ */
+  /* ============ 时光河流 ============ */
   .timeline {
     position: relative;
-    max-width: 56rem;
+    max-width: 58rem;
     margin: 0 auto;
-    padding-left: 1.5rem;
+    padding: 0.5rem 0 2rem;
+    isolation: isolate;
   }
-  /* 渐变竖线 */
-  .timeline::before {
-    content: '';
-    position: absolute;
-    left: 7px;
-    top: 0.4rem;
-    bottom: 0.4rem;
-    width: 2px;
-    background: linear-gradient(180deg, var(--primary), oklch(70% 0.14 300 / 0.15));
-    border-radius: 2px;
+  .year {
+    position: relative;
+    margin: 0 0 2.8rem;
+    padding-top: 0.2rem;
   }
-
-  .year { margin-bottom: 2.25rem; }
-
   .year-node {
+    position: relative;
+    z-index: 1;
     display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    margin-bottom: 1rem;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin: 0 auto 1.2rem;
+    text-align: center;
   }
   .year-num {
-    font-size: 2rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: clamp(2rem, 4vw, 2.65rem);
+    font-weight: 850;
+    letter-spacing: -0.055em;
+    line-height: 1;
     background: var(--gradient-primary);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    line-height: 1;
+    text-shadow: 0 8px 32px color-mix(in srgb, var(--primary) 18%, transparent);
   }
   .year-count {
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--text-faint);
-    padding: 0.1rem 0.6rem;
+    align-self: center;
+    color: var(--primary-strong);
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border-light));
     border-radius: 999px;
-    background: var(--surface-2);
-    border: 1px solid var(--border-light);
+    padding: 0.22rem 0.72rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+  }
+  :global([data-theme='dark'] .year-count) { color: var(--primary-light); }
+  .year-caption {
+    flex-basis: 100%;
+    color: var(--text-faint);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
   }
 
   .year-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 1.35rem;
+    list-style: none;
+    margin: 0;
+    padding: 0.7rem 0;
   }
-
-  .tl-item { position: relative; padding-left: 1.4rem; }
-  /* 时间线上的小圆点 */
-  .tl-dot {
+  .river-canvas {
     position: absolute;
-    left: -1.5rem;
-    top: 50%;
-    transform: translate(calc(-50% + 7px), -50%);
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--surface);
-    border: 2px solid var(--primary);
-    transition: all 0.2s ease;
-    z-index: 1;
+    z-index: 0;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
   }
-  .tl-item:hover .tl-dot {
-    background: var(--primary);
-    box-shadow: 0 0 0 4px oklch(62% 0.14 300 / 0.18);
+  .river-line, .river-glow {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
   }
+  .river-line { stroke-width: 2.2; opacity: 0.82; }
+  .river-glow { stroke-width: 9; opacity: 0.16; filter: blur(4px); }
 
-  .tl-card {
+  .tl-item {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
-    padding: 0.7rem 1rem;
+    width: 100%;
+    min-height: 112px;
+  }
+  .tl-item:nth-of-type(odd) { justify-content: flex-start; }
+  .tl-item:nth-of-type(even) { justify-content: flex-end; }
+  .tl-dot {
+    position: absolute;
+    top: 50%;
+    left: 46%;
+    z-index: 2;
+    width: 15px;
+    height: 15px;
+    border: 3px solid color-mix(in srgb, var(--primary) 74%, white);
+    border-radius: 50%;
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-sm);
-    text-decoration: none !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary) 12%, transparent), 0 0 22px color-mix(in srgb, var(--primary) 42%, transparent);
+    transform: translate(-50%, -50%);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+  }
+  .tl-item:nth-of-type(even) .tl-dot { left: 54%; }
+  .tl-item:hover .tl-dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 8px color-mix(in srgb, var(--primary) 14%, transparent), 0 0 30px color-mix(in srgb, var(--primary) 56%, transparent);
+    transform: translate(-50%, -50%) scale(1.12);
+  }
+  .tl-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.62rem;
+    width: 42%;
     min-width: 0;
+    min-height: 104px;
+    padding: 1rem 1.2rem 1.05rem;
+    overflow: hidden;
+    color: var(--text);
+    text-decoration: none !important;
+    border: 1px solid color-mix(in srgb, var(--primary) 15%, var(--border));
+    border-radius: 1.2rem;
+    background: color-mix(in srgb, var(--surface) 80%, transparent);
+    box-shadow: 0 8px 30px color-mix(in srgb, var(--primary) 7%, transparent), inset 0 1px 0 color-mix(in srgb, white 58%, transparent);
+    backdrop-filter: blur(14px) saturate(135%);
+    transition: transform 0.32s cubic-bezier(.2,.75,.25,1), border-color 0.32s ease, box-shadow 0.32s ease, background 0.32s ease;
   }
+  .tl-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: linear-gradient(180deg, transparent, var(--primary), color-mix(in srgb, var(--primary) 20%, transparent), transparent);
+    opacity: 0.55;
+    transition: opacity 0.3s ease;
+  }
+  .tl-item:nth-of-type(even) .tl-card::before { inset: 0 0 0 auto; }
   .tl-card:hover {
-    transform: translateX(4px);
-    border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
-    box-shadow: var(--shadow);
+    transform: translateY(-4px);
+    border-color: color-mix(in srgb, var(--primary) 42%, var(--border));
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: 0 16px 38px color-mix(in srgb, var(--primary) 14%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
   }
-
+  .tl-card:hover::before { opacity: 1; }
+  .tl-meta { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
   .tl-date {
-    flex-shrink: 0;
-    font-size: 0.74rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
     color: var(--primary-strong);
-    background: var(--primary-soft);
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
+    font-size: 0.73rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.025em;
   }
   :global([data-theme='dark'] .tl-date) { color: var(--primary-light); }
-
+  .tl-index {
+    color: var(--text-faint);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    opacity: 0.72;
+  }
   .tl-title {
-    flex: 1;
-    min-width: 0;
-    font-size: 0.98rem;
-    font-weight: 600;
-    color: var(--text);
-    white-space: nowrap;
+    display: -webkit-box;
     overflow: hidden;
-    text-overflow: ellipsis;
-    transition: color 0.15s ease;
+    color: var(--text);
+    font-size: clamp(0.92rem, 1.3vw, 1.04rem);
+    font-weight: 700;
+    line-height: 1.55;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    transition: color 0.2s ease;
   }
   .tl-card:hover .tl-title { color: var(--primary-strong); }
   :global([data-theme='dark'] .tl-card:hover .tl-title) { color: var(--primary-light); }
-
-  .tl-tags {
-    flex-shrink: 0;
-    font-size: 0.72rem;
-    color: var(--text-faint);
-  }
-
+  .tl-tags { overflow: hidden; color: var(--text-faint); font-size: 0.7rem; white-space: nowrap; text-overflow: ellipsis; }
   .tl-arrow {
-    flex-shrink: 0;
+    position: absolute;
+    right: 1rem;
+    bottom: 0.85rem;
     color: var(--primary);
     opacity: 0;
-    transform: translateX(-4px);
-    transition: all 0.2s ease;
+    transform: translateX(-5px);
+    transition: opacity 0.22s ease, transform 0.22s ease;
   }
   .tl-card:hover .tl-arrow { opacity: 1; transform: translateX(0); }
 
@@ -261,10 +384,22 @@ const riverPathFor = (count: number) => {
     border: 1px dashed var(--border);
     border-radius: var(--radius-lg);
   }
-
+  @media (max-width: 900px) {
+    .tl-card { width: 44%; }
+  }
   @media (max-width: 640px) {
+    .timeline { padding: 0.3rem 0.1rem 1.5rem; }
+    .year { margin-bottom: 2rem; }
+    .year-node { margin-bottom: 0.75rem; }
+    .year-caption { font-size: 0.7rem; }
+    .year-list { gap: 0.85rem; padding: 0.4rem 0; }
+    .tl-item { min-height: 104px; justify-content: flex-end !important; }
+    .tl-dot, .tl-item:nth-of-type(even) .tl-dot { left: 14px; }
+    .tl-card { width: calc(100% - 42px); min-height: 96px; padding: 0.85rem 0.95rem; border-radius: 1rem; }
+    .tl-item:nth-of-type(even) .tl-card::before { inset: 0 auto 0 0; }
     .tl-tags { display: none; }
-    .year-num { font-size: 1.6rem; }
-    .timeline { padding-left: 1.2rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tl-card, .tl-dot { transition: none; }
   }
 </style>
