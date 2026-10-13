@@ -118,8 +118,8 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
   }
   .post-card:hover {
     transform: translateY(-4px);
-    border-color: oklch(70% 0.14 300 / 0.5);
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 300 / 0.18);
+    border-color: oklch(70% 0.14 158 / 0.5);
+    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 158 / 0.18);
   }
   :global([data-theme='dark'] .post-card:hover) {
     box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 18px 38px oklch(0% 0 0 / 0.5);
@@ -215,7 +215,7 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
     text-decoration: none !important;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 300 / 0.22);
+    border: 1px solid oklch(70% 0.14 158 / 0.22);
     transition: all 0.18s ease;
   }
   :global([data-theme='dark'] .meta-chip) { color: var(--primary-light); }

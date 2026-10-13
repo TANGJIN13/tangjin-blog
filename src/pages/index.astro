@@ -6,11 +6,10 @@ import HeatmapWidget from '../components/HeatmapWidget.astro';
 import SearchWidget from '../components/SearchWidget.astro';
 import CalendarWidget from '../components/CalendarWidget.astro';
 import HolidayWidget from '../components/HolidayWidget.astro';
-import WallpaperBanner from '../components/WallpaperBanner.astro';
 import SiteStats from '../components/SiteStats.astro';
 import Paginate from '../components/Paginate.astro';
 import Icon from '../components/Icon.astro';
-import { getPublishedPosts, getTags, pinToTop } from '../lib/posts';
+import { formatDate, getPublishedPosts, getTags, pinToTop, readingTime } from '../lib/posts';
 import { categories } from '../data/categories';
 import { site } from '../site';
 
@@ -20,6 +19,10 @@ const tags = await getTags();
 
 // 首页文章统一卡片网格；置顶文章浮到最前
 const ordered = pinToTop(posts);
+const featured = ordered[0] ?? null;
+const featuredCategory = featured ? categories.find((c) => c.slug === featured.data.category) : null;
+const featuredCover = featured?.data.cover ?? '/images/covers/cover-01.jpg';
+const recentPosts = featured ? ordered.slice(1) : ordered;
 
 const catCounts = categories.map((c) => ({
   ...c,
@@ -30,9 +33,26 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
 
 ---
 
-<Base banner>
+<Base>
   <!-- 顶部全宽壁纸 -->
-  <WallpaperBanner />
+  <section class="home-masthead" aria-label="个人博客介绍">
+    <div class="masthead-inner">
+      <div class="masthead-kicker"><span class="masthead-rule"></span> WEB SECURITY · CTF · FIELD NOTES <span class="masthead-edition">个人研究手记 / 2026</span></div>
+      <h1>把好奇心，<br /><em>写成可追溯的答案。</em></h1>
+      <p>这里记录漏洞复现、CTF 解题与一路上的真实思考。<br class="desktop-break" />不追热点，认真留下每一次理解。</p>
+      <div class="masthead-links">
+        <a class="masthead-primary" href="#latest-notes">读最新文章 <Icon name="arrow_down" size="0.95rem" /></a>
+        <a class="masthead-secondary" href="/about/">认识作者 <Icon name="arrow_right" size="0.85rem" /></a>
+      </div>
+      <span class="masthead-index" aria-hidden="true">01</span>
+    </div>
+    <div class="masthead-art" aria-hidden="true">
+      <span class="art-orbit orbit-one"></span><span class="art-orbit orbit-two"></span><span class="art-core"></span>
+      <span class="art-caption">OBSERVE<br />·<br />UNDERSTAND</span>
+      <span class="art-coordinate">N 25°16′ · E 110°17′</span>
+    </div>
+    <div class="masthead-bottom"><span>INDEPENDENT NOTES / VOL. 01</span><span>SCROLL TO EXPLORE ↓</span><span>EST. 2026</span></div>
+  </section>
 
   <!-- 三栏内容 -->
   <div class="container">
@@ -112,13 +132,42 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
           </div>
         </section>
 
-        <!-- 文章网格（统一卡片样式） -->
-        {ordered.length > 0 && (
-          <section class="block">
+        <!-- 文章主编精选 + 最近更新 -->
+        {featured && (
+          <section class="block editorial-feed" id="latest-notes">
+            <div class="section-head">
+              <h2 class="section-title"><span class="section-index">01 /</span> 最新手记</h2>
+              <span class="section-edition">按时间持续更新</span>
+            </div>
+            <a class="featured-note" href={`/posts/${featured.id}/`}>
+              <div class="featured-copy">
+                <span class="featured-kicker"><span class="featured-mark"></span> EDITOR'S PICK · {featuredCategory?.name ?? 'LATEST NOTE'}</span>
+                <h3>{featured.data.title}</h3>
+                <p>{featured.data.description || featured.body.replace(/\s+/g, ' ').slice(0, 150)}</p>
+                <div class="featured-meta">
+                  <time datetime={featured.data.published.toISOString()}>{formatDate(featured.data.published)}</time>
+                  <span>·</span><span>{readingTime(featured.body)} 分钟阅读</span>
+                  <span class="featured-read">打开手记 <Icon name="arrow_right" size="0.9rem" /></span>
+                </div>
+              </div>
+              <div class="featured-image">
+                <img src={featuredCover} alt="" fetchpriority="high" />
+                <span class="featured-image-index">FIELD NOTE / 001</span>
+                <span class="featured-image-arrow"><Icon name="arrow_right" size="1.15rem" /></span>
+              </div>
+            </a>
+          </section>
+        )}
+        {recentPosts.length > 0 && (
+          <section class="block recent-feed">
+            <div class="section-head">
+              <h2 class="section-title"><span class="section-index">02 /</span> 继续阅读</h2>
+              <a class="section-more" href="/archive/">全部归档 <Icon name="arrow_right" size="0.85rem" /></a>
+            </div>
             <div class="post-list">
-              {ordered.map((p, i) => (
+              {recentPosts.map((p, i) => (
                 <div class="paginate-item">
-                  <PostCard post={p} index={i} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
+                  <PostCard post={p} index={i + 1} style={`animation-delay: ${Math.min(i, 8) * 0.06}s`} />
                 </div>
               ))}
             </div>
@@ -200,7 +249,57 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
 </Base>
 
 <style>
-  /* 三栏布局 —— 严格按照参照站：280 / 1fr / 280，gap 16 */
+  .home-masthead {
+    position: relative;
+    width: 100vw;
+    min-height: clamp(440px, 58vh, 650px);
+    margin-left: calc(50% - 50vw);
+    padding: clamp(5rem, 9vh, 7.5rem) max(5vw, calc((100vw - 100rem) / 2 + 2rem)) 3.7rem;
+    overflow: hidden;
+    color: oklch(22% 0.025 175);
+    background:
+      radial-gradient(ellipse at 82% 52%, oklch(72% 0.07 152 / 0.12), transparent 38%),
+      linear-gradient(112deg, oklch(95.5% 0.018 82), oklch(92.5% 0.022 78) 54%, oklch(95% 0.02 84));
+    border-bottom: 1px solid color-mix(in srgb, var(--text) 12%, transparent);
+  }
+  :global([data-theme='dark'] .home-masthead) {
+    color: var(--text);
+    background:
+      radial-gradient(ellipse at 82% 52%, oklch(50% 0.06 155 / 0.18), transparent 38%),
+      linear-gradient(112deg, oklch(20% 0.02 190), oklch(23% 0.022 180) 54%, oklch(20% 0.02 190));
+  }
+  .masthead-inner { position: relative; z-index: 1; max-width: 72rem; margin-inline: auto; }
+  .masthead-kicker, .masthead-bottom, .masthead-edition, .masthead-index, .art-caption, .art-coordinate, .featured-kicker, .featured-image-index, .section-edition, .section-index {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.13em;
+  }
+  .masthead-kicker { display: flex; align-items: center; gap: 0.75rem; color: color-mix(in srgb, var(--text) 66%, transparent); }
+  .masthead-rule { width: 2rem; height: 1px; background: var(--primary); }
+  .masthead-edition { margin-left: 0.5rem; color: var(--text-faint); }
+  .masthead-inner h1 { margin: 2.5rem 0 1.15rem; font-size: clamp(3rem, 6.8vw, 6.4rem); line-height: 1.13; letter-spacing: -0.065em; font-weight: 500; color: inherit; }
+  .masthead-inner h1 em { color: var(--primary-strong); font-style: normal; }
+  :global([data-theme='dark'] .masthead-inner h1 em) { color: var(--primary-light); }
+  .masthead-inner > p { color: color-mix(in srgb, var(--text) 70%, transparent); font-size: clamp(0.95rem, 1.3vw, 1.08rem); line-height: 1.9; }
+  .masthead-links { display: flex; align-items: center; gap: 1.5rem; margin-top: 1.8rem; }
+  .masthead-primary, .masthead-secondary { display: inline-flex; align-items: center; gap: 0.55rem; text-decoration: none !important; font-size: 0.86rem; font-weight: 650; }
+  .masthead-primary { padding: 0.75rem 1.05rem; color: oklch(98% 0.008 86) !important; background: oklch(34% 0.055 165); border: 1px solid oklch(34% 0.055 165); border-radius: 0.22rem; transition: background 0.2s ease, transform 0.2s ease; }
+  .masthead-primary:hover { background: oklch(28% 0.05 165); transform: translateY(-2px); }
+  .masthead-secondary { color: var(--text-soft); }
+  .masthead-secondary:hover { color: var(--primary-strong); }
+  .masthead-index { position: absolute; right: 0; top: 0.4rem; color: var(--text-faint); }
+  .masthead-art { position: absolute; right: max(7vw, calc((100vw - 100rem) / 2 + 5rem)); top: 50%; width: clamp(230px, 28vw, 410px); aspect-ratio: 1; transform: translateY(-44%); border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); border-radius: 50%; opacity: 0.78; }
+  .masthead-art::before, .masthead-art::after { content: ''; position: absolute; inset: 12%; border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); border-radius: 50%; }
+  .masthead-art::after { inset: 25%; border-style: dashed; opacity: 0.65; }
+  .art-orbit { position: absolute; inset: -8% 18%; border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent); border-radius: 50%; transform: rotate(47deg); }
+  .orbit-two { inset: 17% -7%; transform: rotate(-42deg); border-color: color-mix(in srgb, var(--primary) 24%, transparent); }
+  .art-core { position: absolute; inset: 38%; border-radius: 50%; background: radial-gradient(circle at 32% 28%, oklch(79% 0.08 118), oklch(53% 0.075 157) 54%, oklch(32% 0.06 178)); box-shadow: 0 0 55px color-mix(in srgb, var(--primary) 25%, transparent), inset -12px -16px 24px rgb(21 42 34 / 0.18); }
+  .art-caption { position: absolute; left: 2%; top: 35%; color: var(--primary-strong); line-height: 1.8; }
+  .art-coordinate { position: absolute; right: 1%; bottom: 18%; color: var(--text-faint); font-size: 0.56rem; }
+  .masthead-bottom { position: absolute; right: max(5vw, calc((100vw - 100rem) / 2 + 2rem)); bottom: 1.15rem; left: max(5vw, calc((100vw - 100rem) / 2 + 2rem)); display: flex; justify-content: space-between; padding-top: 0.75rem; color: var(--text-faint); border-top: 1px solid color-mix(in srgb, var(--text) 12%, transparent); font-size: 0.6rem; }
+  .masthead-bottom span:nth-child(2) { color: var(--primary-strong); }
+
+  /* 三栏布局保持组件功能，视觉系统由全局刊物版式统一 */
   .ref-layout {
     display: grid;
     grid-template-columns: 1fr;
@@ -254,7 +353,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     width: 130px;
     height: 130px;
     border-radius: 50%;
-    background: radial-gradient(circle, oklch(70% 0.15 300 / 0.16), transparent 68%);
+    background: radial-gradient(circle, oklch(70% 0.15 158 / 0.16), transparent 68%);
     pointer-events: none;
   }
 
@@ -265,7 +364,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     border-radius: 50%;
     padding: 3px;
     background: var(--gradient-primary);
-    box-shadow: 0 6px 20px oklch(62% 0.14 300 / 0.35);
+    box-shadow: 0 6px 20px oklch(62% 0.14 158 / 0.35);
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   }
   /* 头像右下角的在线状态点（呼吸扩散） */
@@ -396,7 +495,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     font-weight: 700;
     color: var(--primary-strong);
     background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 300 / 0.25);
+    border: 1px solid oklch(70% 0.14 158 / 0.25);
     padding: 0.12rem 0.6rem;
     border-radius: 999px;
     flex-shrink: 0;
@@ -411,6 +510,76 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     transition: transform 0.18s ease;
   }
   .section-more:hover { transform: translateX(3px); }
+
+  .editorial-feed, .recent-feed { margin-bottom: clamp(2rem, 4vw, 3.5rem); }
+  .editorial-feed .section-head, .recent-feed .section-head {
+    align-items: baseline;
+    margin-bottom: 1rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .editorial-feed .section-title, .recent-feed .section-title {
+    padding-left: 0;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .editorial-feed .section-title::before, .recent-feed .section-title::before { display: none; }
+  .section-index { color: var(--primary); font-size: 0.68rem; letter-spacing: 0.05em; }
+  .section-edition { color: var(--text-faint); font-size: 0.62rem; }
+  .featured-note {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+    min-height: 280px;
+    overflow: hidden;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent);
+    text-decoration: none !important;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .featured-note:hover { border-color: color-mix(in srgb, var(--primary) 38%, var(--border)); box-shadow: 0 14px 34px color-mix(in srgb, var(--text) 9%, transparent); }
+  .featured-copy { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: clamp(1.5rem, 3vw, 2.6rem); }
+  .featured-kicker { display: inline-flex; align-items: center; gap: 0.55rem; color: var(--text-faint); font-size: 0.6rem; }
+  .featured-mark { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+  .featured-copy h3 { margin: 1.15rem 0 0.65rem; font-size: clamp(1.5rem, 2.4vw, 2.25rem); line-height: 1.32; letter-spacing: -0.04em; }
+  .featured-copy > p { display: -webkit-box; max-width: 35rem; margin: 0; overflow: hidden; color: var(--text-soft); font-size: 0.85rem; line-height: 1.8; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+  .featured-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.55rem; width: 100%; margin-top: 1.5rem; color: var(--text-faint); font-family: var(--font-mono); font-size: 0.64rem; }
+  .featured-read { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: auto; color: var(--primary-strong); font-family: var(--font-sans); font-size: 0.76rem; font-weight: 700; }
+  .featured-image { position: relative; min-height: 230px; overflow: hidden; background: var(--surface-2); }
+  .featured-image::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgb(19 37 31 / 0.44), transparent 46%); }
+  .featured-image img { width: 100%; height: 100%; min-height: 100%; object-fit: cover; filter: saturate(0.72) contrast(1.05); transition: transform 0.6s cubic-bezier(.2,.75,.25,1); }
+  .featured-note:hover .featured-image img { transform: scale(1.035); }
+  .featured-image-index { position: absolute; z-index: 1; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
+  .featured-image-arrow { position: absolute; z-index: 1; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
+  .recent-feed .post-list { gap: 0.9rem; }
+  @media (max-width: 900px) {
+    .home-masthead { min-height: 430px; padding-top: 6rem; }
+    .masthead-art { right: -2rem; width: 34vw; opacity: 0.48; }
+    .masthead-inner { max-width: 100%; }
+  }
+  @media (max-width: 640px) {
+    .home-masthead { min-height: 480px; padding: 6.7rem 1.3rem 4.6rem; }
+    .masthead-kicker { flex-wrap: wrap; gap: 0.45rem; font-size: 0.56rem; }
+    .masthead-edition { flex-basis: 100%; margin-left: 2.7rem; }
+    .masthead-inner h1 { position: relative; z-index: 2; margin-top: 2.4rem; font-size: clamp(2.55rem, 12vw, 4rem); }
+    .masthead-inner > p { position: relative; z-index: 2; max-width: 22rem; font-size: 0.88rem; }
+    .desktop-break { display: none; }
+    .masthead-art { top: 58%; right: -5.5rem; width: 62vw; opacity: 0.25; }
+    .masthead-index { right: 0; top: -2.2rem; }
+    .masthead-bottom { right: 1.3rem; left: 1.3rem; bottom: 0.8rem; gap: 0.5rem; font-size: 0.48rem; }
+    .masthead-bottom span:nth-child(2) { display: none; }
+    .featured-note { grid-template-columns: 1fr; }
+    .featured-copy { padding: 1.3rem; }
+    .featured-copy h3 { margin-top: 0.85rem; font-size: 1.5rem; }
+    .featured-image { grid-row: 1; min-height: 180px; max-height: 230px; }
+    .featured-read { margin-left: 0; flex-basis: 100%; margin-top: 0.25rem; }
+    .section-edition { font-size: 0.55rem; letter-spacing: 0.04em; }
+  }
 
   /* ===== 分类导航条 ===== */
   .cat-card {
@@ -581,7 +750,7 @@ const maxCatCount = Math.max(1, ...catCounts.map((c) => c.count));
     background: var(--gradient-primary);
     border-color: transparent;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px oklch(62% 0.14 300 / 0.28);
+    box-shadow: 0 4px 12px oklch(62% 0.14 158 / 0.28);
   }
   .cloud-tag:hover em { background: oklch(100% 0 0 / 0.22); color: inherit; }
 
