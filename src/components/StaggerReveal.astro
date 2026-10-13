@@ -42,7 +42,9 @@
 
 <script is:inline>
   (function () {
-    var DONE_AT = 1900; // 最长一段：标题末节延迟 440ms + 1.05s ≈ 1.5s，留 0.4s 余量
+    var DONE_AT = 2900; // 最长一段：标题末节延迟 900ms + 1.25s ≈ 2.15s；滚动指示器 2.35s+1.1s
+                        // ≈ 3.45s 但它在横幅内部、不依赖 intro-run，所以收尾取 2.9s
+                        // —— 留足余量给"标题→副标题→指示器"这条链的视觉落定。
     var root = document.documentElement;
 
     var finished = false;

@@ -116,54 +116,109 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             `.main-layout` 里装着浮动按钮和左下角音乐播放器（都是 fixed），
             一旦给它挂带 filter/transform 的动画，这些固定元素就会以 main 的盒子为参照
             —— 表现是揭幕过程中按钮从屏幕上"飘走"。这个坑在本项目撞过不止一次。
-         所以：
-            · 绝不含 fixed 后代的层（top-row / 页脚 / 壁纸）→ rv-rise（位移 + 模糊）
-            · 含 fixed 后代的层（main-layout）            → rv-fade（**只动不透明度**） -->
+         所以本文件里所有入场动画严格分两类：
+            · 绝不含 fixed 后代的层（top-row / 页脚 / 壁纸）→ hero-rise（位移 + 模糊）
+            · 含 fixed 后代的层（main-layout / 其内所有区块）→ 一律**只动不透明度** -->
     <style is:inline>
-      /* ===== 首屏入场的「首帧隐藏」=====
+      /* ============ 首屏入场的「首帧隐藏」==========
          必须在 <head> 内联输出：Astro 的 <style> 会打包成外链 CSS，
          而抢首帧脚本走同步路径 —— 那一刻外链还没解析，会先画一帧完整页面再从头播。
 
          只藏两样东西：
-           · 导航栏 —— 它要"轻微下移后淡入"（首屏分镜的第 ⑤ 拍）
+           · 导航栏 —— 它要"轻微下移后淡入"（时间轴的中段）
            · 内容主体（内页限定）—— 内页没有壁纸分镜，让内容自己淡入就够
          首页的壁纸/标题/副标题**不在这里藏**，它们的入场由 WallpaperBanner 自己管
-         （intro-run 下的 wp-bg-in / wp-line-up / wp-sub-in），这样职责不交叉。 */
+         （intro-run 下的 wp-depth-in / wp-bg-in / wp-glow-in / wp-line-up / wp-sub-in），
+         这样职责不交叉。 */
       html.intro-pending .top-row { opacity: 0; }
       html.intro-pending .main-layout:not(:has([data-reveal])) { opacity: 0; }
 
-      /* ===== 导航栏：轻微下移 → 淡入 =====
-         位移只给 10px（比内容层的 22px 更克制）：导航是"始终在那儿的框架"，
-         动得比内容还多就会喧宾夺主。延迟 100ms，让背景先出来一点。 */
+      /* ============ 统一入场时间轴 ============
+         所有元素共用一条时间线，按**视觉重要性**排：背景 → 主标题 → 副标题 →
+         导航 → 侧栏 → 内容。每条都用品牌级缓动 cubic-bezier(0.16, 1, 0.3, 1)。
+         位移量按重要性递减（主标题上百 px，辅助元素十几 px），
+         越不重要的元素动得越少 —— 这是"克制"的关键，不是所有元素都弹一样的距离。 */
+
+      /* ---- 导航栏：轻微下移 → 淡入 ----
+         位移只给 12px（比内容的 26px 更克制）：导航是"始终在那儿的框架"，
+         动得比内容还多就会喧宾夺主。1700ms 起（主标题落定之后），持续 0.85s。 */
       html.intro-run .top-row {
-        animation: nav-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) 100ms both;
+        animation: nav-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) 1700ms both;
       }
       @keyframes nav-in {
-        from { opacity: 0; transform: translateY(-10px); }
+        from { opacity: 0; transform: translateY(-12px); }
         to   { opacity: 1; transform: none; }
       }
 
-      /* ===== 内容主体（内页）：只淡入，绝不动 transform / filter =====
+      /* ---- 内容主体（内页）：只淡入，绝不动 transform / filter ----
          ⚠️ .main-layout 里装着浮动按钮和左下角音乐播放器，它们都是 position:fixed。
             `transform` / `filter` / `perspective` 都会让元素成为 fixed 后代的**包含块**，
             一旦给它挂带位移或模糊的动画，那些固定元素就会以 main 的盒子为参照
             —— 表现是入场过程中按钮从屏幕上"飘走"。这个坑在本项目撞过不止一次。
-         首页的 main 内部有自己的分镜层，容器再淡入会变成 opacity 相乘（0.5×0.5=0.25）
-         内容发灰，所以用 :not(:has([data-reveal])) 把它排除掉。 */
+         首页的 main 内部有自己的分镜层（[data-reveal] 与侧栏卡片），
+         容器再淡入会变成 opacity 相乘（0.5×0.5=0.25）内容发灰，
+         所以用 :not(:has([data-reveal])) 把它排除掉，只让内页走这条。 */
       html.intro-run .main-layout:not(:has([data-reveal])) {
-        animation: rv-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) 260ms both;
+        animation: rv-fade 0.95s cubic-bezier(0.16, 1, 0.3, 1) 700ms both;
       }
       @keyframes rv-fade {
         from { opacity: 0; }
         to   { opacity: 1; }
       }
 
-      /* ===== 首页内容各区块的错峰 =====
-         壁纸分镜演完之后（约 800ms）内容再往下铺 —— 让首屏先"讲完自己的故事"。
-         同样只动 opacity：这些 section 内部也有 fixed 后代（浮动控件的锚点在 main 里，
-         而 section 是 main 的兄弟层级结构里的普通块，为稳妥起见统一走纯淡入）。 */
+      /* ---- 首页：侧栏卡片 / 内容区块的错峰 ----
+         全部只动 opacity。理由有两条（都很实在，不是保守）：
+           · 这些卡片在布局上与 .floating-controls 有重叠层级关系，
+             保险起见不与 fixed 元素共处一个包含块；
+           · 卡片本身有 hover 的 box-shadow / border 过渡，
+             一旦父层带 transform，子元素的 hover 阴影在部分浏览器上会被裁。
+         每个卡片用自己的 --rv 延迟（由 SidebarLeft / SidebarRight / index 的模板给出）。
+
+         ⚠️ 这里**只认 [data-reveal]**，不认旧的 `.onload-animation`。
+            原因：`.onload-animation` 是全局遗留类，还散落在文章卡片（PostCard）、
+            归档时间线、相册、资源库、关于页的时间轴上，那些地方靠 inline
+            `animation-delay: i*0.05s` 做逐项错峰。若把它也纳入这条规则，
+            `animation:` 简写会**连 delay 一起覆盖**成 var(--rv, 0ms)，
+            于是所有列表项同时出现、逐项错峰全废。所以两者严格分开：
+              · [data-reveal]      → 首页首屏，走本条统一时间轴
+              · .onload-animation  → 列表/次级页面，保持各自的 inline delay 不动 */
       html.intro-run [data-reveal] {
-        animation: rv-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) var(--rv, 0ms) both;
+        animation: rv-fade 0.85s cubic-bezier(0.16, 1, 0.3, 1) var(--rv, 0ms) both;
+      }
+
+      /* ---- 抑制首页首屏内的"逐项小动画" ----
+         PostCard 自带 `.onload-animation` + inline `animation-delay: i*0.06s`
+         （服务的是列表页/归档页那种"卡片逐张浮现"）。
+         但在首页首屏，这些卡片的父级 [data-reveal] 区块已经做了一次淡入，
+         两层叠加会 opacity 相乘（区块 0.5 × 卡片 0.5 = 0.25）→ 内容明显发灰；
+         而且卡片的 delay 只有 0~0.5s，比主标题（0.7s 起）还早，会抢走视觉焦点。
+         所以：**父级是 [data-reveal] 的卡片，在入场期间不做自己的动画**。
+         用 `:where()` 把父级那段的特异性抹掉，避免和 `.onload-animation` 打架。 */
+      html.intro-run :where([data-reveal]) .onload-animation {
+        animation: none;
+      }
+
+      /* ---- 左栏的头像卡：整条时间轴里"最靠近主标题"的一块 ----
+         给它一个轻微的右向位移（从左侧滑入一点点），因为它在主标题正下方，
+         是视觉动线从标题延伸到内容的第一个落点。位移只 14px，且**只作用在卡片自身**
+         （卡片内部没有 fixed 后代，安全）。 */
+      html.intro-run .ref-sidebar-left > [data-reveal]:first-child,
+      html.intro-run .ref-sidebar-left .profile-card {
+        animation: aside-left-in 0.95s cubic-bezier(0.16, 1, 0.3, 1) var(--rv, 0ms) both;
+      }
+      @keyframes aside-left-in {
+        from { opacity: 0; transform: translateX(-14px); }
+        to   { opacity: 1; transform: none; }
+      }
+
+      /* ---- 右栏的第一张卡（搜索）：与左栏对称，从右侧轻滑入 ----
+         只给第一张，避免右栏整列一起"横移"显得闹。 */
+      html.intro-run .ref-sidebar-right > [data-reveal]:first-child {
+        animation: aside-right-in 0.95s cubic-bezier(0.16, 1, 0.3, 1) var(--rv, 0ms) both;
+      }
+      @keyframes aside-right-in {
+        from { opacity: 0; transform: translateX(14px); }
+        to   { opacity: 1; transform: none; }
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -344,7 +399,7 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
     <SakuraEffect />
 
     <!-- 页脚 -->
-    <footer class="site-footer" data-reveal style="--rv: 380ms">
+    <footer class="site-footer" data-reveal style="--rv: 2800ms">
       <div class="container footer-inner">
         <p>© {site.footer.since}–{new Date().getFullYear()} {site.author}</p>
         {site.icp && <p><a href="https://beian.miit.gov.cn/" rel="nofollow" target="_blank">{site.icp}</a></p>}

@@ -23,19 +23,22 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
 ---
 
 <aside class="ref-sidebar-right" data-variant={full ? 'full' : 'compact'}>
-  <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+  <!-- ⚠️ 入场时间轴统一由 Base.astro 编排，这里只给 --rv 时间点。
+       右栏整体比左栏晚一拍（2150ms 起，逐卡 +130ms），
+       这样视线是「主标题 → 左栏头像 → 右栏工具卡片」自然扫过去，而不是两边同时砸出来。 -->
+  <div class="card-base widget-card" data-reveal style="--rv: 2150ms">
     <h3 class="widget-title"><Icon name="search" size="1.05rem" /> 搜索</h3>
     <SearchWidget />
   </div>
 
-  <div class="card-base widget-card onload-animation" style="animation-delay: 0.2s">
+  <div class="card-base widget-card" data-reveal style="--rv: 2280ms">
     <h3 class="widget-title"><Icon name="calendar" size="1.05rem" /> 日历</h3>
     <CalendarWidget />
   </div>
 
   {
     full && (
-      <div class="card-base widget-card onload-animation" style="animation-delay: 0.3s">
+      <div class="card-base widget-card" data-reveal style="--rv: 2410ms">
         <h3 class="widget-title">
           <Icon name="clock" size="1.05rem" /> 节假日
         </h3>
@@ -44,7 +47,7 @@ const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').le
     )
   }
 
-  <div class="card-base widget-card onload-animation" style="animation-delay: 0.4s">
+  <div class="card-base widget-card" data-reveal style="--rv: 2540ms">
     <h3 class="widget-title"><Icon name="chart" size="1.05rem" /> 站点</h3>
     <SiteStats
       postsCount={posts.length}

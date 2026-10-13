@@ -53,7 +53,7 @@ const catCounts = categories.map((c) => ({
       <!-- 主内容 -->
       <main class="ref-main" id="main-content" aria-label="文章列表">
         <!-- 快捷导航条：首页 + 归档 -->
-        <section class="block onload-animation" data-reveal style="--rv: 900ms">
+        <section class="block onload-animation" data-reveal style="--rv: 2350ms">
           <div class="cat-card card-base" id="category-bar">
             <div class="cat-bar-inner">
               <a class="cat-pill cat-pill-home is-active" href="/" aria-label="首页">
@@ -83,7 +83,7 @@ const catCounts = categories.map((c) => ({
 
         <!-- 文章主编精选 + 最近更新 -->
         {featured && (
-          <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 1020ms">
+          <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 2500ms">
             <div class="section-head">
               <h2 class="section-title"><span class="section-index">01 /</span> 最新手记</h2>
               <span class="section-edition">按时间持续更新</span>
@@ -108,7 +108,7 @@ const catCounts = categories.map((c) => ({
           </section>
         )}
         {recentPosts.length > 0 && (
-          <section class="block recent-feed" data-reveal style="--rv: 1140ms">
+          <section class="block recent-feed" data-reveal style="--rv: 2650ms">
             <div class="section-head">
               <h2 class="section-title"><span class="section-index">02 /</span> 继续阅读</h2>
               <a class="section-more" href="/archive/">全部归档 <Icon name="arrow_right" size="0.85rem" /></a>

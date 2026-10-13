@@ -18,7 +18,12 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 ---
 
 <aside class="ref-sidebar-left">
-  <div class="card-base profile-card onload-animation">
+  <!-- ⚠️ 入场动画全部由 Base.astro 的 html.intro-run 时间轴统一编排：
+       这里只负责给出**各自的时间点**（--rv）与标记（data-reveal），不写 animation 属性。
+       旧的 `onload-animation` + inline `animation-delay` 已废弃 —— 那套是 0.5s ease 的
+       廉价淡入，而且所有卡片几乎同时冒出来，会抢在主标题前面，把开场节奏打散。
+       现在的时间点：头像卡 1950ms（紧跟主标题/副标题），主题卡 2100ms。 -->
+  <div class="card-base profile-card" data-reveal style="--rv: 1950ms">
     <div class="avatar-ring">
       <img class="profile-avatar" src={site.avatar} alt="头像" width="78" height="78" />
       <span class="avatar-status" title="在线"></span>
@@ -35,7 +40,7 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
     </nav>
   </div>
 
-  <div class="card-base widget-card onload-animation" style="animation-delay: 0.1s">
+  <div class="card-base widget-card" data-reveal style="--rv: 2100ms">
     <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
     <ThemeToggle />
   </div>

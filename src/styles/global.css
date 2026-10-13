@@ -449,12 +449,21 @@ code, pre, kbd { font-family: var(--font-mono); }
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* ============ 入场动画 ============ */
+/* ============ 入场动画 ============
+   这里的 `.onload-animation` 服务的是**次级页面**（归档时间线、相册、资源库、
+   关于页、404）里的列表项，它们靠 inline `animation-delay: i*0.05s` 做逐项错峰。
+   首页首屏**不走这条** —— 那边由 Base.astro 的 `html.intro-run [data-reveal]`
+   统一编排（并且要求只动 opacity）。
+
+   曲线从旧的 `ease` 换成 `cubic-bezier(0.16, 1, 0.3, 1)`：
+   同样的位移，`ease` 收尾是"慢慢停下"，这条是"快速进入、极缓收尾"，
+   后者才读作"稳定下来"，也是品牌站的通用语言。时长 0.5s → 0.62s，
+   给曲线留出减速的空间，否则短时长会把它又压回"生硬"。 */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.onload-animation { animation: fade-in-up 0.5s ease both; }
+.onload-animation { animation: fade-in-up 0.62s cubic-bezier(0.16, 1, 0.3, 1) both; }
 
 /* ============ 浮动按钮 ============ */
 .floating-controls {
