@@ -11,14 +11,14 @@
  */
 
 const PASTEL = [
-  '/images/covers/cover-01.jpg',
-  '/images/covers/cover-02.jpg',
-  '/images/covers/cover-03.jpg',
-  '/images/covers/cover-04.jpg',
-  '/images/covers/cover-05.jpg',
-  '/images/covers/cover-06.jpg',
-  '/images/covers/cover-07.jpg',
-  '/images/covers/cover-08.jpg',
+  '/images/covers/cover-01.svg',
+  '/images/covers/cover-02.svg',
+  '/images/covers/cover-03.svg',
+  '/images/covers/cover-04.svg',
+  '/images/covers/cover-05.svg',
+  '/images/covers/cover-06.svg',
+  '/images/covers/cover-07.svg',
+  '/images/covers/cover-08.svg',
 ];
 
 export const COVER_POOLS: Record<string, string[]> = {

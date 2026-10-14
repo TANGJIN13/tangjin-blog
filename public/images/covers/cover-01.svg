@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+<stop offset="0%" stop-color="#e9d5ff"/>
+<stop offset="52%" stop-color="#b39ddb"/>
+<stop offset="100%" stop-color="#7e57c2"/>
+</linearGradient>
+<radialGradient id="sun" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ffd9ec" stop-opacity="1"/>
+<stop offset="30%" stop-color="#ffd9ec" stop-opacity="0.55"/>
+<stop offset="100%" stop-color="#ffd9ec" stop-opacity="0"/>
+</radialGradient>
+<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
+</defs>
+<rect width="800" height="450" fill="url(#bg)"/>
+<circle cx="411" cy="233" r="259" fill="url(#sun)"/>
+<path d="M-60 490 L-60 288 C6 288 6 281 71 281 C137 281 137 245 203 245 C269 245 269 226 334 226 C400 226 400 251 466 251 C531 251 531 281 597 281 C663 281 663 292 729 292 C794 292 794 267 860 267 L860 490 Z" fill="#b39ddb" opacity="0.55"/>
+<path d="M-60 490 L-60 364 C6 364 6 347 71 347 C137 347 137 315 203 315 C269 315 269 285 334 285 C400 285 400 306 466 306 C531 306 531 351 597 351 C663 351 663 350 729 350 C794 350 794 327 860 327 L860 490 Z" fill="#7e57c2" opacity="0.75"/>
+<path d="M-60 490 L-60 418 C6 418 6 405 71 405 C137 405 137 377 203 377 C269 377 269 361 334 361 C400 361 400 371 466 371 C531 371 531 414 597 414 C663 414 663 426 729 426 C794 426 794 401 860 401 L860 490 Z" fill="#7e57c2" opacity="0.95"/>
+<ellipse cx="411" cy="405" rx="180" ry="34" fill="#ffd9ec" opacity="0.28" filter="url(#soft)"/>
+<rect width="800" height="450" fill="url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E")"/>
+</svg>

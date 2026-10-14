@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+<stop offset="0%" stop-color="#f6e3ff"/>
+<stop offset="52%" stop-color="#c79ce0"/>
+<stop offset="100%" stop-color="#8e5bb0"/>
+</linearGradient>
+<radialGradient id="sun" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ffe2f0" stop-opacity="1"/>
+<stop offset="30%" stop-color="#ffe2f0" stop-opacity="0.55"/>
+<stop offset="100%" stop-color="#ffe2f0" stop-opacity="0"/>
+</radialGradient>
+<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
+</defs>
+<rect width="800" height="450" fill="url(#bg)"/>
+<circle cx="381" cy="133" r="236" fill="url(#sun)"/>
+<circle cx="469" cy="192" r="34" fill="none" stroke="#ff9ec4" stroke-width="3" opacity="0.62"/>
+<circle cx="469" cy="192" r="65" fill="none" stroke="#ffe2f0" stroke-width="3" opacity="0.55"/>
+<circle cx="469" cy="192" r="78" fill="none" stroke="#ff9ec4" stroke-width="5" opacity="0.48"/>
+<circle cx="469" cy="192" r="118" fill="none" stroke="#ffe2f0" stroke-width="2" opacity="0.41"/>
+<circle cx="469" cy="192" r="138" fill="none" stroke="#ff9ec4" stroke-width="5" opacity="0.34"/>
+<circle cx="469" cy="192" r="159" fill="none" stroke="#ffe2f0" stroke-width="5" opacity="0.27"/>
+<circle cx="469" cy="192" r="202" fill="none" stroke="#ff9ec4" stroke-width="4" opacity="0.20"/>
+<rect width="800" height="450" fill="url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E")"/>
+</svg>

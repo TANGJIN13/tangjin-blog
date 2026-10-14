@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+<stop offset="0%" stop-color="#dce7ff"/>
+<stop offset="52%" stop-color="#8fa8e0"/>
+<stop offset="100%" stop-color="#5468b8"/>
+</linearGradient>
+<radialGradient id="sun" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ffe9c9" stop-opacity="1"/>
+<stop offset="30%" stop-color="#ffe9c9" stop-opacity="0.55"/>
+<stop offset="100%" stop-color="#ffe9c9" stop-opacity="0"/>
+</radialGradient>
+<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
+<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
+</defs>
+<rect width="800" height="450" fill="url(#bg)"/>
+<circle cx="460" cy="170" r="166" fill="url(#sun)"/>
+<g filter="url(#softer)" opacity="0.8">
+<path d="M71 470 C131 312 41 228 141 20" stroke="#ffe9c9" stroke-width="78" stroke-linecap="round" fill="none" opacity="0.32"/>
+<path d="M220 470 C280 329 190 256 290 20" stroke="#ffc48f" stroke-width="55" stroke-linecap="round" fill="none" opacity="0.49"/>
+<path d="M343 470 C403 287 313 189 413 20" stroke="#ffe9c9" stroke-width="87" stroke-linecap="round" fill="none" opacity="0.33"/>
+<path d="M560 470 C620 285 530 186 630 20" stroke="#ffc48f" stroke-width="55" stroke-linecap="round" fill="none" opacity="0.38"/>
+<path d="M663 470 C723 341 633 276 733 20" stroke="#ffe9c9" stroke-width="73" stroke-linecap="round" fill="none" opacity="0.29"/>
+</g>
+<rect width="800" height="450" fill="url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E")"/>
+</svg>
