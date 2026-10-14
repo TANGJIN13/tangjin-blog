@@ -7,11 +7,20 @@ import OceanDive from './OceanDive.astro';
 interface Props {
   images?: string[];
   height?: string;
+  mobileHeight?: string;
   /** 是否在手机 / 平板上也显示（内页横幅建议 false：小屏放它会多滑一屏） */
   mobile?: boolean;
+  /** 单图模式：不轮播（文章页用封面图时开启） */
+  single?: boolean;
+  /**
+   * 是否启用「下潜」滚动效果。
+   * 默认全开：首页和内页都要（用户明确要求内页也加）。
+   * 留这个开关是为了将来某类页面想关掉时不用改组件本身。
+   */
+  dive?: boolean;
 }
 
-/** 各皮肤的首屏壁纸池。默认皮肤不写 data-skin，走 default 这一组。 */
+/** 各皮肤的壁纸池。默认皮肤不写 data-skin 属性，走 default 这一组。 */
 const SKIN_WALLPAPERS: Record<string, string[]> = {
   default: [
     '/images/wallpapers/banner-pastel-01.webp',
@@ -36,17 +45,23 @@ const {
   //    "粉色樱花枝夹住两边"的近乎同一构图，轮播到第二张像"没换图"，
   //    所以去掉 -03，留 4 张各不相同的画面。
   images = SKIN_WALLPAPERS.default,
-  /** 皮肤 id —— 只有显式传入时才启用多皮肤；默认不传＝只有一组图，行为与改版前一致 */
-  skin,
   height = 'clamp(520px, 88vh, 920px)',
   mobileHeight = 'clamp(320px, 65vh, 520px)',
   /** 单图模式：不轮播（文章页用封面图时开启） */
   single = false,
+  /** 下潜效果：首页与内页都开 */
+  dive = true,
 } = Astro.props;
 
 // 有插槽内容时用它替代默认的「头像 + 座右铭」，文章页据此放自己的标题
 const hasSlot = Astro.slots.has('default');
 const slides = single ? images.slice(0, 1) : images;
+
+// 皮肤壁纸层只在「用默认池轮播」时渲染。
+// 文章页会传自己的封面图（single），那时不该再叠一层海洋壁纸。
+// 用 images === SKIN_WALLPAPERS.default 判断，而不是再加一个 prop ——
+// 这样调用方不用关心皮肤机制，行为自动正确。
+const renderSkinLayer = !single && images === SKIN_WALLPAPERS.default;
 
 // 逐行揭幕的「行」怎么切：
 //   箴言都是「上句，下句」的骈句（如 "凡心所向，素履以往"），所以按中文逗号切最自然
@@ -80,14 +95,14 @@ const splitLine = (text) => {
   </div>
   </div>
 
-  <!-- 皮肤壁纸层：只在传入 skin 时渲染。
+  <!-- 皮肤壁纸层：两组图都渲染进 DOM，由 CSS 按 data-skin 切显隐。
        为什么不用 JS 换 src：换 src 必然有一次解码延迟 —— 点完切换会先白一下再出新图。
-       两组图都渲染在 DOM 里、用 CSS 控制显隐，切换是即时的（图片早就解码好了）。
+       两组都在 DOM 里、图片早就解码好了，切换是即时的。
        代价是首屏多下载一组图；壁纸池里只有一张是 eager，其余 lazy，
-       海洋那组用 SVG（4~7KB），成本可忽略。 -->
-  {skin && (
+       海洋那组是 SVG（7~10KB），成本可忽略。 -->
+  {renderSkinLayer && (
     <div class="wp-skin-layer" aria-hidden="true">
-      {SKIN_WALLPAPERS[skin].map((src, i) => (
+      {SKIN_WALLPAPERS.ocean.map((src, i) => (
         <img src={src} alt="" loading="lazy" decoding="async" data-skin-slide={i} />
       ))}
     </div>
@@ -109,10 +124,11 @@ const splitLine = (text) => {
   <!-- 暗角遮罩 -->
   <div class="wallpaper-dim" aria-hidden="true"></div>
 
-  <!-- 下潜效果：随滚动「潜进水里」。只在首页出现 ——
-       内页横幅是给页面标题做背景的，加这个会抢标题的注意力；
-       而且内页横幅矮（240~540px），走不完 1.2 屏的下潜节奏。 -->
-  {!hasSlot && <OceanDive />}
+  <!-- 下潜效果：随滚动「潜进水里」。首页与内页都有 ——
+       用户明确要求"点其他页面也要有壁纸"，且要同一套体验。
+       内页横幅比首页矮，所以 OceanDive 里的下潜距离会用视口高度兜底，
+       保证矮横幅上也能走完整个节奏（见该组件 applyDive 的 base 计算）。 -->
+  {dive && <OceanDive />}
 
   <!-- 星光层：细腻的渐显 / 微弱闪烁 / 缓慢漂浮。
        纯 CSS 生成（radial-gradient 点 + 各自的闪烁相位），不占 JS、不读像素。

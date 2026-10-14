@@ -346,16 +346,19 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
               内容会暗一段再亮回来，观感是"发灰"。让错峰只发生在**一层**里，才不会打架。
          内页（没有独立区块错峰的）由 .main-layout 兜底淡入，见 <head> 里的 CSS。 -->
     <main class="main-layout">
-      <!-- 内页横幅：与首页**同一套**水彩轮播壁纸 + 底部波浪。
-           用户要求"其他页面也要和首页一样有壁纸"，所以这里不再用纯文字的 .page-intro，
-           而是直接复用 WallpaperBanner（slot 模式，放本页的图标 + 标题 + 描述）。
-           复用同一个组件的好处：轮播 / 波浪 / 渐变 / 星光(非 slot 模式才开) / 关掉冲突动画
+      <!-- 内页横幅：与首页**同一套**壁纸轮播 + 底部海浪 + 下潜效果。
+           用户要求"其他页面也要和首页一样有壁纸"、"壁纸要磅礴"，
+           所以这里不再用纯文字的 .page-intro，而是复用 WallpaperBanner
+           （slot 模式，放本页的图标 + 标题 + 描述）。
+           复用同一个组件的好处：轮播 / 海浪 / 渐变 / 下潜 / 皮肤壁纸池
            这些逻辑只有一份，内页自动跟首页保持一致。
-           高度比首页矮（不抢内容），且手机端也保留（用户希望所有页面都有）。 -->
+
+           高度：比首页略矮（首页是 88vh，这里 68vh）—— 内页的重点是内容，
+           但也不能矮成一条，否则「磅礴」出不来。 -->
       {pageBanner && (
         <WallpaperBanner
-          height="clamp(300px, 42vh, 460px)"
-          mobileHeight="clamp(230px, 34vh, 340px)"
+          height="clamp(420px, 68vh, 760px)"
+          mobileHeight="clamp(300px, 52vh, 460px)"
           mobile
         >
           <div class="wp-page-head">

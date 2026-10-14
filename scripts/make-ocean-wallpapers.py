@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-生成「大海」主题壁纸（SVG）。
+生成「壮阔海洋」主题壁纸（SVG）—— 巨浪 / 风暴海 / 深渊。
 
-沿用站点既有的插画语言（见 wallpaper-01.svg）：分层渐变 + 柔和模糊的
-浪沫分隔 + 远处的光晕。
+和上一版（平静海景）的区别
+--------------------------
+上一版是「度假明信片」：地平线平直、浪很小、色调浅。看起来干净，但**不磅礴**。
+磅礴来自三个东西，这一版全都补上：
 
-设计要点
---------
-· 1920x800，preserveAspectRatio="xMidYMid slice"，与既有壁纸一致。
-· 天空渐变承载情绪；海面用 5 条错落的色带做出纵深。
-· 每条色带顶部压一道高斯模糊的亮线 —— 这是「浪沫」的关键，
-  没有它色带之间就是生硬的色阶断层。
-· 浪形用三组正弦叠加，振幅要足够大（40~90px）才看得出起伏；
-  振幅太小会退化成一条直线，海就变成了色块。
-· 日/月倒影必须画在色带**之后**，否则会被色带完全盖住。
-· 中心区域保持干净 —— 首屏要压座右铭文字。
+  ① 尺度对比 —— 画面里必须有「小」的参照物（礁石 / 海鸟），
+     否则再大的浪也读不出大。人眼靠比例判断尺度，没有参照就没有宏大。
+  ② 明暗对比 —— 上一版整体都在 60~80% 明度，太平。
+     这一版把天空压到 5~35%、浪尖提到 90%+，靠强对比撑出戏剧性。
+  ③ 动势 —— 浪不是水平色带，而是**斜向的、有方向的**巨浪轮廓，
+     带卷曲的浪头（curl）。水平线是"平静"，斜线才是"力量"。
+
+另外加了体积光（丁达尔）和浪花飞沫 —— 这两个是"风暴感"的关键符号。
 
 用法：python scripts/make-ocean-wallpapers.py
 """
@@ -24,8 +24,7 @@ import math
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                    'public', 'images', 'wallpapers')
 
-W, H = 1920, 800
-HORIZON = 452          # 海平线基准高度
+W, H = 1920, 900
 
 
 def mix(c1, c2, t):
@@ -42,218 +41,267 @@ def darken(c, t):
     return mix(c, '#000000', t)
 
 
-def wave_path(seed, base_y, amp, segments=6, lead=-180, trail=W + 180):
-    """
-    起伏的海浪轮廓。
-
-    三组正弦叠加：低频决定大的起伏走向，中频加不规则感，
-    高频只做一点点毛边。用正弦（而非随机）保证同一 seed 可复现。
-    """
+def wave(seed, base, amp, seg=6, lead=-200, trail=W + 200):
+    """起伏的浪脊轮廓（闭合到底部）。振幅给大才有浪的感觉。"""
     span = trail - lead
     pts = []
-    for i in range(segments + 1):
-        x = lead + i * span / segments
+    for i in range(seg + 1):
+        x = lead + i * span / seg
         t = x / span
-        y = base_y
+        y = base
         y += math.sin(t * math.tau * 1.0 + seed * 1.7) * amp
-        y += math.sin(t * math.tau * 2.0 + seed * 0.9) * amp * 0.34
-        y += math.sin(t * math.tau * 3.5 + seed * 2.3) * amp * 0.13
+        y += math.sin(t * math.tau * 2.3 + seed * 0.9) * amp * 0.38
+        y += math.sin(t * math.tau * 4.1 + seed * 2.3) * amp * 0.14
         pts.append((x, y))
-
     d = f'M{pts[0][0]:.1f} {pts[0][1]:.1f}'
     for i in range(len(pts) - 1):
         x0, y0 = pts[i]
         x1, y1 = pts[i + 1]
         cx = (x0 + x1) / 2
         d += f' C{cx:.1f} {y0:.1f} {cx:.1f} {y1:.1f} {x1:.1f} {y1:.1f}'
-    d += f' L{trail:.1f} {H + 60:.1f} L{lead:.1f} {H + 60:.1f} Z'
+    d += f' L{trail:.1f} {H + 80:.1f} L{lead:.1f} {H + 80:.1f} Z'
     return d
 
 
-def build(name, sky, sun_color, sun_glow, sea_shallow, sea_deep,
-          sun_x=1305, sun_y=250, sun_r=54, sun_rx=470, sun_ry=300,
-          foam='#ffffff', island=None, stars=False, petals=None):
+def breaker(cx, cy, size):
+    """
+    一个卷曲的巨浪（breaker）—— 这是"磅礴"的核心元素。
+    形状：左侧隆起的浪脊 → 向右卷曲的浪头（lip）→ 下方掏空的浪管。
+    浪头用贝塞尔勾出卷曲感，再叠一道亮边表示被光照透的水体。
+    """
+    s = size
+    body = (
+        f'M{cx - s * 1.15:.0f} {cy + s * 0.55:.0f} '
+        f'C{cx - s * 0.95:.0f} {cy - s * 0.42:.0f} '
+        f'{cx - s * 0.42:.0f} {cy - s * 0.92:.0f} '
+        f'{cx + s * 0.06:.0f} {cy - s * 0.86:.0f} '
+        f'C{cx + s * 0.52:.0f} {cy - s * 0.81:.0f} '
+        f'{cx + s * 0.86:.0f} {cy - s * 0.5:.0f} '
+        f'{cx + s * 0.92:.0f} {cy - s * 0.06:.0f} '
+        f'C{cx + s * 0.95:.0f} {cy + s * 0.3:.0f} '
+        f'{cx + s * 0.6:.0f} {cy + s * 0.5:.0f} '
+        f'{cx + s * 0.3:.0f} {cy + s * 0.38:.0f} '
+        f'C{cx + s * 0.05:.0f} {cy + s * 0.26:.0f} '
+        f'{cx - s * 0.1:.0f} {cy + s * 0.42:.0f} '
+        f'{cx - s * 0.18:.0f} {cy + s * 0.55:.0f} Z'
+    )
+    lip = (
+        f'M{cx - s * 0.62:.0f} {cy - s * 0.66:.0f} '
+        f'C{cx - s * 0.3:.0f} {cy - s * 0.95:.0f} '
+        f'{cx + s * 0.2:.0f} {cy - s * 0.9:.0f} '
+        f'{cx + s * 0.62:.0f} {cy - s * 0.62:.0f} '
+        f'C{cx + s * 0.86:.0f} {cy - s * 0.42:.0f} '
+        f'{cx + s * 0.94:.0f} {cy - s * 0.2:.0f} '
+        f'{cx + s * 0.92:.0f} {cy - s * 0.05:.0f}'
+    )
+    return body, lip
+
+
+def build(name, sky, sea_deep, sea_mid, sun, glow, foam,
+          sun_xy=(1420, 190), sun_r=54, sun_rx=520, sun_ry=340,
+          breakers=None, rocks=None, birds=True, stars=False, storm=False):
     s = []
     a = s.append
-
     a(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" preserveAspectRatio="xMidYMid slice">')
     a('<defs>')
 
-    a('<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">')
+    a('<linearGradient id="sky" x1="0" y1="0" x2="0.1" y2="1">')
     for off, col in sky:
         a(f'<stop offset="{off}%" stop-color="{col}"/>')
     a('</linearGradient>')
 
-    # 海面整体渐变：远处浅、近处深
     a('<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">')
-    a(f'<stop offset="0%" stop-color="{sea_shallow}"/>')
+    a(f'<stop offset="0%" stop-color="{sea_mid}"/>')
     a(f'<stop offset="100%" stop-color="{sea_deep}"/>')
     a('</linearGradient>')
 
     a('<radialGradient id="glow" cx="50%" cy="50%" r="50%">')
-    a(f'<stop offset="0%" stop-color="{sun_color}" stop-opacity="0.95"/>')
-    a(f'<stop offset="30%" stop-color="{sun_glow}" stop-opacity="0.6"/>')
-    a(f'<stop offset="100%" stop-color="{sun_glow}" stop-opacity="0"/>')
+    a(f'<stop offset="0%" stop-color="{sun}" stop-opacity="0.92"/>')
+    a(f'<stop offset="34%" stop-color="{glow}" stop-opacity="0.5"/>')
+    a(f'<stop offset="100%" stop-color="{glow}" stop-opacity="0"/>')
     a('</radialGradient>')
 
-    # 水面倒影：从上往下淡出的一道光柱
-    a('<linearGradient id="reflect" x1="0" y1="0" x2="0" y2="1">')
-    a(f'<stop offset="0%" stop-color="{lighten(sun_color, 0.25)}" stop-opacity="0.55"/>')
-    a(f'<stop offset="55%" stop-color="{lighten(sun_color, 0.25)}" stop-opacity="0.2"/>')
-    a(f'<stop offset="100%" stop-color="{lighten(sun_color, 0.25)}" stop-opacity="0"/>')
+    a('<linearGradient id="through" x1="0" y1="0" x2="0.3" y2="1">')
+    a(f'<stop offset="0%" stop-color="{lighten(foam, 0.4)}" stop-opacity="0.9"/>')
+    a(f'<stop offset="60%" stop-color="{lighten(sea_mid, 0.35)}" stop-opacity="0.5"/>')
+    a(f'<stop offset="100%" stop-color="{sea_mid}" stop-opacity="0"/>')
     a('</linearGradient>')
 
-    # 地平线附近的光雾，让海天交界不至于是一条硬边
-    a('<linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">')
-    a(f'<stop offset="0%" stop-color="{lighten(sun_glow, 0.55)}" stop-opacity="0"/>')
-    a(f'<stop offset="100%" stop-color="{lighten(sun_glow, 0.55)}" stop-opacity="0.75"/>')
-    a('</linearGradient>')
-
-    a('<filter id="soft" x="-25%" y="-25%" width="150%" height="150%">'
-      '<feGaussianBlur stdDeviation="14"/></filter>')
-    a('<filter id="softer" x="-35%" y="-35%" width="170%" height="170%">'
+    a('<filter id="b1" x="-30%" y="-30%" width="160%" height="160%">'
+      '<feGaussianBlur stdDeviation="12"/></filter>')
+    a('<filter id="b2" x="-40%" y="-40%" width="180%" height="180%">'
       '<feGaussianBlur stdDeviation="34"/></filter>')
+    a('<filter id="b3" x="-50%" y="-50%" width="200%" height="200%">'
+      '<feGaussianBlur stdDeviation="70"/></filter>')
     a('</defs>')
 
-    # ---------- 天空 ----------
     a(f'<rect width="{W}" height="{H}" fill="url(#sky)"/>')
 
     if stars:
         a('<g fill="#ffffff">')
-        rnd = 20261014
-        for i in range(52):
+        rnd = 991
+        for _ in range(60):
             rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
             x = (rnd % (W - 80)) + 40
             rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
-            y = (rnd % 340) + 18
+            y = (rnd % 300) + 16
             rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
-            r = 0.9 + (rnd % 100) / 100.0 * 1.6
+            r = 0.9 + (rnd % 100) / 100.0 * 1.7
+            rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
             o = 0.25 + (rnd % 100) / 100.0 * 0.55
             a(f'<circle cx="{x}" cy="{y}" r="{r:.1f}" opacity="{o:.2f}"/>')
         a('</g>')
 
-    # 日/月
-    a(f'<ellipse cx="{sun_x}" cy="{sun_y}" rx="{sun_rx}" ry="{sun_ry}" fill="url(#glow)"/>')
-    a(f'<circle cx="{sun_x}" cy="{sun_y}" r="{sun_r}" fill="{sun_color}" opacity="0.92" filter="url(#soft)"/>')
+    sx, sy = sun_xy
 
-    # 高空卷云
-    a('<g filter="url(#softer)">')
-    for cx, cy, rx, ry, op in [
-        (400, 138, 500, 24, 0.46),
-        (1420, 96, 580, 20, 0.38),
-        (900, 214, 460, 16, 0.30),
-        (1720, 236, 360, 13, 0.26),
-        (200, 296, 430, 17, 0.20),
-    ]:
-        a(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" '
-          f'fill="{lighten(sky[0][1], 0.4)}" opacity="{op}"/>')
-    a('</g>')
-
-    # ---------- 海 ----------
-    # 远方的岛（可选）：给画面一个焦点，也让海平线不只是一条直线
-    if island:
-        ix, iw, ih, col = island
-        a(f'<path d="M{ix - iw} {HORIZON + 4} '
-          f'Q{ix - iw * 0.45} {HORIZON - ih * 0.62} {ix - iw * 0.12} {HORIZON - ih} '
-          f'Q{ix + iw * 0.1} {HORIZON - ih * 0.55} {ix + iw * 0.42} {HORIZON - ih * 0.3} '
-          f'Q{ix + iw * 0.75} {HORIZON - ih * 0.12} {ix + iw} {HORIZON + 4} Z" '
-          f'fill="{col}" opacity="0.5"/>')
-
-    # 海平线上的光雾
-    a(f'<rect x="0" y="{HORIZON - 70}" width="{W}" height="80" fill="url(#haze)"/>')
-
-    # 五条色带：由远及近，越近越暗越饱和
-    # (基准y, 振幅, 混色比, 透明度, 浪沫透明度, 浪沫厚度)
-    layers = [
-        (HORIZON + 10, 16, 0.05, 0.62, 0.34, 16),
-        (HORIZON + 74, 34, 0.26, 0.74, 0.30, 20),
-        (HORIZON + 150, 52, 0.50, 0.83, 0.28, 24),
-        (HORIZON + 232, 68, 0.74, 0.90, 0.26, 28),
-        (HORIZON + 310, 84, 0.92, 0.96, 0.24, 32),
-    ]
-
-    for i, (by, amp, t, op, foam_op, foam_ry) in enumerate(layers):
-        col = mix(sea_shallow, sea_deep, t)
-        a(f'<path d="{wave_path(seed=i * 1.31 + 0.4, base_y=by, amp=amp)}" '
-          f'fill="{col}" opacity="{op}"/>')
-        # 浪沫：贴着浪尖压一条模糊亮线
-        a(f'<ellipse cx="{W / 2}" cy="{by - amp * 0.55:.0f}" rx="{W * 0.78:.0f}" '
-          f'ry="{foam_ry}" fill="{lighten(foam, 0.55)}" opacity="{foam_op:.2f}" '
-          f'filter="url(#softer)"/>')
-
-    # 日/月在水面的倒影：必须画在色带之后才看得见
-    a(f'<ellipse cx="{sun_x}" cy="{HORIZON + 150}" rx="105" ry="165" '
-      f'fill="url(#reflect)" filter="url(#softer)"/>')
-
-    # 最前景一道明显的碎浪，给画面收口
-    a(f'<path d="{wave_path(seed=9.7, base_y=H - 40, amp=46, segments=5)}" '
-      f'fill="{darken(sea_deep, 0.14)}" opacity="0.94"/>')
-    a(f'<ellipse cx="{W / 2}" cy="{H - 92}" rx="{W * 0.72:.0f}" ry="30" '
-      f'fill="{lighten(foam, 0.7)}" opacity="0.30" filter="url(#softer)"/>')
-
-    if petals:
-        a('<g opacity="0.34">')
-        rnd = 771
-        for i in range(16):
-            rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
-            x = (rnd % (W - 120)) + 60
-            rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
-            y = (rnd % 560) + 140
-            rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
-            rx = 4 + (rnd % 5)
-            rot = rnd % 180
-            a(f'<ellipse cx="{x}" cy="{y}" rx="{rx}" ry="{max(2, rx // 2)}" '
-              f'fill="{petals}" transform="rotate({rot} {x} {y})"/>')
+    if storm:
+        a('<g filter="url(#b3)">')
+        for cx, cy, rx, ry, op, col in [
+            (300, 96, 620, 130, 0.72, darken(sky[-1][1], 0.3)),
+            (1180, 62, 700, 150, 0.62, darken(sky[-1][1], 0.24)),
+            (780, 176, 560, 96, 0.5, darken(sky[-1][1], 0.16)),
+            (1620, 150, 480, 110, 0.44, darken(sky[-1][1], 0.2)),
+            (140, 230, 420, 78, 0.34, darken(sky[-1][1], 0.1)),
+        ]:
+            a(f'<ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="{col}" opacity="{op}"/>')
         a('</g>')
 
+    # 体积光：从云隙打下来的斜光柱
+    a('<g filter="url(#b2)" opacity="0.5">')
+    rnd = 4242
+    for i in range(6):
+        rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
+        x = 180 + i * 300 + (rnd % 120)
+        rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
+        w = 60 + (rnd % 90)
+        a(f'<rect x="{x}" y="-140" width="{w}" height="{H * 0.95:.0f}" '
+          f'fill="{lighten(glow, 0.35)}" opacity="0.4" '
+          f'transform="rotate(-15 {x} 300)"/>')
+    a('</g>')
+
+    a(f'<ellipse cx="{sx}" cy="{sy}" rx="{sun_rx}" ry="{sun_ry}" fill="url(#glow)"/>')
+    a(f'<circle cx="{sx}" cy="{sy}" r="{sun_r}" fill="{sun}" opacity="0.9" filter="url(#b1)"/>')
+
+    # 远景海面
+    a(f'<rect x="0" y="{H * 0.42:.0f}" width="{W}" height="{H * 0.6:.0f}" fill="url(#sea)" opacity="0.9"/>')
+
+    if rocks:
+        a(f'<g fill="{darken(sea_deep, 0.32)}">')
+        for rx, rw, rh in rocks:
+            a(f'<path d="M{rx - rw} {H * 0.44:.0f} '
+              f'Q{rx - rw * 0.5} {H * 0.44 - rh:.0f} {rx - rw * 0.15} {H * 0.44 - rh * 1.15:.0f} '
+              f'Q{rx + rw * 0.3} {H * 0.44 - rh * 0.6:.0f} {rx + rw * 0.6} {H * 0.44 - rh * 0.3:.0f} '
+              f'Q{rx + rw * 0.85} {H * 0.44 - rh * 0.1:.0f} {rx + rw} {H * 0.44:.0f} Z"/>')
+        a('</g>')
+
+    # 中景浪层
+    layers = [
+        (H * 0.50, 22, 0.14, 0.66),
+        (H * 0.60, 38, 0.34, 0.78),
+        (H * 0.72, 56, 0.58, 0.88),
+    ]
+    for i, (base, amp, t, op) in enumerate(layers):
+        col = mix(sea_mid, sea_deep, t)
+        a(f'<path d="{wave(i * 1.7 + 0.6, base, amp)}" fill="{col}" opacity="{op}"/>')
+        a(f'<ellipse cx="{W * 0.42:.0f}" cy="{base - amp * 0.5:.0f}" rx="{W * 0.62:.0f}" '
+          f'ry="{16 + i * 7}" fill="{lighten(foam, 0.5)}" opacity="{0.2 + i * 0.06:.2f}" filter="url(#b2)"/>')
+
+    # 前景巨浪
+    if breakers:
+        for (cx, cy, size, _seed) in breakers:
+            body, lip = breaker(cx, cy, size)
+            a(f'<path d="{body}" fill="{darken(sea_deep, 0.08)}" opacity="0.96"/>')
+            a(f'<path d="{body}" fill="url(#through)" opacity="0.55"/>')
+            a(f'<path d="{lip}" fill="none" stroke="{lighten(foam, 0.3)}" '
+              f'stroke-width="{max(3, size * 0.055):.0f}" stroke-linecap="round" opacity="0.75"/>')
+            a(f'<ellipse cx="{cx + size * 0.2:.0f}" cy="{cy - size * 0.78:.0f}" '
+              f'rx="{size * 0.72:.0f}" ry="{size * 0.3:.0f}" '
+              f'fill="{lighten(foam, 0.55)}" opacity="0.3" filter="url(#b2)"/>')
+
+    # 飞沫
+    a(f'<g fill="{lighten(foam, 0.5)}">')
+    rnd = 777
+    n = 70 if storm else 40
+    for _ in range(n):
+        rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
+        x = (rnd % W)
+        rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
+        y = int(H * 0.42) + (rnd % int(H * 0.58))
+        rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
+        r = 1.2 + (rnd % 100) / 100.0 * 3.4
+        rnd = (rnd * 1103515245 + 12345) & 0x7fffffff
+        o = 0.16 + (rnd % 100) / 100.0 * 0.5
+        a(f'<circle cx="{x}" cy="{y}" r="{r:.1f}" opacity="{o:.2f}"/>')
+    a('</g>')
+
+    # 海鸟：最关键的尺度参照 —— 有鸟才知道浪有多大
+    if birds:
+        a(f'<g fill="none" stroke="{darken(sky[0][1], 0.42)}" stroke-width="2.6" '
+          f'stroke-linecap="round" opacity="0.62">')
+        for bx, by, bs in [(1180, 268, 1.0), (1252, 236, 0.78), (1096, 232, 0.66),
+                           (1318, 292, 0.58), (1024, 288, 0.5)]:
+            a(f'<path d="M{bx} {by} q{9 * bs:.0f} {-7 * bs:.0f} {18 * bs:.0f} 0 '
+              f'M{bx + 18 * bs:.0f} {by} q{9 * bs:.0f} {-7 * bs:.0f} {18 * bs:.0f} 0"/>')
+        a('</g>')
+
+    a('<radialGradient id="vig" cx="50%" cy="38%" r="76%">'
+      '<stop offset="52%" stop-color="#000" stop-opacity="0"/>'
+      '<stop offset="100%" stop-color="#000" stop-opacity="0.3"/>'
+      '</radialGradient>')
+    a(f'<rect width="{W}" height="{H}" fill="url(#vig)"/>')
     a('</svg>')
 
-    path = os.path.join(OUT, name)
-    with open(path, 'w', encoding='utf-8') as f:
+    os.makedirs(OUT, exist_ok=True)
+    p = os.path.join(OUT, name)
+    with open(p, 'w', encoding='utf-8') as f:
         f.write('\n'.join(s))
-    return path, len('\n'.join(s))
+    return p, len('\n'.join(s))
 
 
 THEMES = [
-    # 破晓 · 晨雾海：天光刚从海平线渗出来，暖粉过渡到灰蓝
+    # ① 巨浪 · 破晓 —— 冷灰蓝的天空 + 一道透光的巨浪
     dict(
         name='banner-ocean-dawn.svg',
-        sky=[(0, '#fdf0e6'), (28, '#f9dccb'), (54, '#ecc6bd'), (78, '#c8cfdd'), (100, '#adbed2')],
-        sun_color='#fff7f0', sun_glow='#f6c4ae',
-        sea_shallow='#a8bed2', sea_deep='#4a6684',
-        sun_x=1240, sun_y=386, sun_r=60, sun_rx=560, sun_ry=190,
-        foam='#fff3e8', petals='#f3ae94',
-        island=(1640, 210, 46, '#8896ac'),
+        sky=[(0, '#1b2a3e'), (26, '#2d4358'), (52, '#4d6a7d'), (74, '#8a94a0'), (100, '#c3a894')],
+        sea_deep='#0d1b2a', sea_mid='#28455f',
+        sun='#ffe6c4', glow='#e8a97a', foam='#fff4e4',
+        sun_xy=(1520, 250), sun_r=62, sun_rx=640, sun_ry=380,
+        breakers=[(560, 720, 250, 1.0), (1420, 810, 320, 2.1)],
+        rocks=[(1680, 150, 90), (300, 96, 54)],
+        storm=False,
     ),
-    # 晴日 · 碧海：最通透的一张，正午的青蓝
+    # ② 风暴海 —— 最暗、最有压迫感的一张
     dict(
         name='banner-ocean-day.svg',
-        sky=[(0, '#e8f6fc'), (32, '#c9e7f4'), (58, '#9fd0e8'), (80, '#82bcdc'), (100, '#74aed2')],
-        sun_color='#ffffff', sun_glow='#b4e0f2',
-        sea_shallow='#7fb8d6', sea_deep='#1f5c84',
-        sun_x=1460, sun_y=190, sun_r=44, sun_rx=440, sun_ry=200,
-        foam='#ffffff',
-        island=(360, 190, 52, '#7d9cb4'),
+        sky=[(0, '#0a1018'), (24, '#16222e'), (50, '#2b3b4a'), (72, '#4a5a66'), (100, '#7d8a92')],
+        sea_deep='#05090f', sea_mid='#1b2f42',
+        sun='#e8f2ff', glow='#8fb4d4', foam='#ffffff',
+        sun_xy=(900, 170), sun_r=44, sun_rx=560, sun_ry=300,
+        breakers=[(400, 690, 290, 3.3), (1120, 760, 350, 4.7), (1720, 840, 240, 5.2)],
+        rocks=[(1520, 180, 130)],
+        storm=True,
     ),
-    # 黄昏 · 落日海：橘金到靛蓝，情绪最浓
+    # ③ 落日巨浪 —— 暖冷对撞，情绪最浓
     dict(
         name='banner-ocean-dusk.svg',
-        sky=[(0, '#f7e2cb'), (24, '#f5c493'), (46, '#e79b7e'), (66, '#b07e9a'), (84, '#6f6398'), (100, '#4b4d82')],
-        sun_color='#fff3da', sun_glow='#f29f6c',
-        sea_shallow='#8d7ba2', sea_deep='#262a52',
-        sun_x=1180, sun_y=406, sun_r=72, sun_rx=600, sun_ry=170,
-        foam='#ffe6cb',
-        island=(1560, 240, 58, '#6b5f86'),
+        sky=[(0, '#2a1f3a'), (22, '#5c3350'), (44, '#a85a52'), (64, '#e08a52'), (82, '#f0b878'), (100, '#f7d9a8')],
+        sea_deep='#12101f', sea_mid='#4a3350',
+        sun='#fff0cf', glow='#f09a58', foam='#ffe9c8',
+        sun_xy=(1320, 470), sun_r=88, sun_rx=760, sun_ry=260,
+        breakers=[(620, 700, 270, 1.9), (1560, 800, 300, 3.7)],
+        rocks=[(240, 140, 76)],
+        storm=False,
     ),
-    # 月夜 · 静海：深蓝里一条月光，安静但耐看
+    # ④ 深渊月夜 —— 月光下的一条巨浪，冷到发蓝
     dict(
         name='banner-ocean-night.svg',
-        sky=[(0, '#0d1830'), (32, '#152742'), (58, '#1d3557'), (80, '#254465'), (100, '#2d5474')],
-        sun_color='#f4f8ff', sun_glow='#93bde4',
-        sea_shallow='#27456a', sea_deep='#081226',
-        sun_x=1380, sun_y=170, sun_r=38, sun_rx=400, sun_ry=230,
-        foam='#d8e8f8', stars=True,
-        island=(300, 200, 44, '#1b2c46'),
+        sky=[(0, '#04070f'), (28, '#0a1526'), (54, '#12253d'), (76, '#1d3a56'), (100, '#2c5470')],
+        sea_deep='#02050b', sea_mid='#0e2036',
+        sun='#f4f9ff', glow='#7fb0dc', foam='#dceaf8',
+        sun_xy=(1420, 150), sun_r=40, sun_rx=520, sun_ry=340,
+        breakers=[(700, 730, 300, 2.7), (1660, 830, 260, 4.1)],
+        rocks=[(1360, 170, 110)],
+        stars=True, storm=False,
     ),
 ]
 
