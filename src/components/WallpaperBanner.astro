@@ -2,6 +2,7 @@
 // 顶部壁纸横幅 —— 全宽多图轮播 + 底部波浪 + 渐变淡出
 // 全宽 720px、多图轮播、底部波浪 + 渐变淡出
 import { site } from '../site';
+import OceanDive from './OceanDive.astro';
 
 interface Props {
   images?: string[];
@@ -107,6 +108,11 @@ const splitLine = (text) => {
 
   <!-- 暗角遮罩 -->
   <div class="wallpaper-dim" aria-hidden="true"></div>
+
+  <!-- 下潜效果：随滚动「潜进水里」。只在首页出现 ——
+       内页横幅是给页面标题做背景的，加这个会抢标题的注意力；
+       而且内页横幅矮（240~540px），走不完 1.2 屏的下潜节奏。 -->
+  {!hasSlot && <OceanDive />}
 
   <!-- 星光层：细腻的渐显 / 微弱闪烁 / 缓慢漂浮。
        纯 CSS 生成（radial-gradient 点 + 各自的闪烁相位），不占 JS、不读像素。
@@ -681,7 +687,8 @@ const splitLine = (text) => {
   .wallpaper-content {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    /* 3：压在下潜层（2）之上 —— 越往下滚背景越暗，但标题始终清晰 */
+    z-index: 3;
     display: flex;
     align-items: center;
     justify-content: center;

@@ -1,0 +1,336 @@
+---
+// 下潜效果 —— 随着向下滚动，首屏像镜头潜进水里
+//
+// 设计意图
+// --------
+// 参考「随着滚动逐渐进入海洋」这类 scroll-driven 场景过渡。核心不是加特效，
+// 而是让四个物理线索**同时**随滚动深度衰减，合起来读作「我沉下去了」：
+//
+//   ① 水面掠过   —— 一条水面焦散带从底部升到顶部，掠过 = 穿过水线
+//   ② 光线衰减   —— 越深越暗越蓝（水会吸红光，所以是往青蓝收，不是往黑收）
+//   ③ 光柱摇曳   —— 从水面上方打下来的丁达尔光柱，随深度变暗并轻微摇摆
+//   ④ 气泡上浮   —— 越深气泡越多，向上飘
+//
+// 为什么用「滚动进度」而不是定时器驱动：
+//   定时动画和用户的滚动是脱钩的，快滚时会觉得画面在自说自话。
+//   绑到滚动进度上，画面和手指是同一个动作的两个表现，才有沉浸感。
+//
+// 克制在哪（用户明确要求"高级感、不要炫"）：
+//   · 全程只改 1 个 CSS 变量 --dive，其余靠 calc() 派生 —— 每帧只有一次样式写入
+//   · 只动 transform / opacity / filter，全部走合成器，不触发重排重绘
+//   · 幅度都压得很小：水面带只有 22vh，光柱透明度 0.1~0.22，气泡 18 颗
+//   · 走完整个下潜需要滚过约 1.2 屏，节奏慢，不会一闪而过
+//   · prefers-reduced-motion 下整个组件不渲染
+//
+// 只在首页出现（内页横幅没有这个必要，也怕抢内容的注意力）。
+---
+
+<div
+  class="ocean-dive"
+  id="ocean-dive"
+  aria-hidden="true"
+  data-depth="0"
+>
+  <!-- ① 水面焦散带：从底部升起掠过顶部，代表"穿过水线" -->
+  <div class="dive-surface"></div>
+
+  <!-- ② 水体加深：越深越青蓝，叠在最上层做整体色偏 -->
+  <div class="dive-deepen"></div>
+
+  <!-- ③ 丁达尔光柱：从上方打下来，随深度变暗 -->
+  <div class="dive-rays">
+    <i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+
+  <!-- ④ 气泡：向上飘，深度越大气泡越多 -->
+  <div class="dive-bubbles">
+    <b></b><b></b><b></b><b></b><b></b><b></b>
+    <b></b><b></b><b></b><b></b><b></b><b></b>
+    <b></b><b></b><b></b><b></b><b></b><b></b>
+  </div>
+</div>
+
+<script>
+  // ⚠️ 与站点其他脚本一致：ClientRouter 换页会替换 DOM，
+  //    模块脚本只执行一次，所以必须在每次 astro:page-load 重新绑定。
+  //    滚动监听本身是幂等的（先 remove 再 add），重复初始化不会叠加。
+
+  const REDUCED = (() => {
+    try { return window.matchMedia('(prefers-reduced-motion: reduce)'); }
+    catch { return null; }
+  })();
+
+  let raf = 0;
+  let bound = false;
+  /** 上一次写进去的值，只有真的变了才写 DOM —— 省掉大量无意义的样式重算 */
+  let lastDive = -1;
+
+  function layer() {
+    return document.getElementById('ocean-dive');
+  }
+
+  /**
+   * 计算并写入下潜进度。
+   *
+   * 进度 0 = 首屏完全没滚（水面之上）
+   * 进度 1 = 滚过约 1.2 屏（已在水下）
+   *
+   * 用 1.2 屏而不是 1 屏：效果要在用户"已经看够了首屏、开始往下读"的过程中
+   * 才走完，太快走完会像开场特效而不是过渡。
+   */
+  function applyDive() {
+    raf = 0;
+    const el = layer();
+    if (!el) return;
+
+    const wrap = document.querySelector('.wallpaper-wrapper');
+    if (!wrap) return;
+
+    const rect = wrap.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+
+    // 横幅彻底离开视口：冻结在"完全下潜"状态，不再计算（滚动到底部长列表时省 CPU）
+    if (rect.bottom < -vh) {
+      if (lastDive !== 1) {
+        el.style.setProperty('--dive', '1');
+        el.dataset.depth = '1';
+        lastDive = 1;
+      }
+      return;
+    }
+
+    // 下潜要滚过的距离。
+    //
+    // 为什么不用固定倍数：小屏的横幅矮（350~510px），如果也只按高度算，
+    // 整段下潜只要滚 400px 左右就走完了 —— 手机上手指一划就到底，
+    // 反而像"闪了一下"，失去"逐渐沉下去"的过程感。
+    // 所以取「横幅高度」和「视口高度」里较大的那个做基准：
+    // 矮屏上由视口高度兜底，节奏和大屏一致。
+    const base = Math.max(rect.height || 1, vh * 0.9);
+    const span = base * 1.2;
+    let p = -rect.top / span;
+    p = p < 0 ? 0 : p > 1 ? 1 : p;
+
+    // 缓动：起步慢、中段快、收尾慢。线性会显得机械。
+    const eased = p * p * (3 - 2 * p);
+
+    // 量化到 1/200 —— 低于这个差异人眼看不出来，
+    // 但能挡掉大量浮点抖动导致的重复写入
+    const q = Math.round(eased * 200) / 200;
+    if (q === lastDive) return;
+    lastDive = q;
+
+    el.style.setProperty('--dive', String(q));
+    // depth 档位供 CSS 做"只在某几档才出现"的显隐控制
+    el.dataset.depth = q < 0.02 ? '0' : q < 0.5 ? '1' : q < 0.98 ? '2' : '3';
+  }
+
+  function onScroll() {
+    if (raf) return;
+    raf = requestAnimationFrame(applyDive);
+  }
+
+  function bind() {
+    const el = layer();
+    if (!el) return;
+
+    // 降级：用户要求减少动态效果 → 直接摘掉整个层，不做任何计算
+    if (REDUCED && REDUCED.matches) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = '';
+
+    // 幂等：先摘再挂，重复调用不会叠加监听
+    window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('resize', onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
+
+    bound = true;
+    lastDive = -1; // 强制重算一次
+    applyDive();
+  }
+
+  bind();
+  document.addEventListener('astro:page-load', bind);
+
+  // 系统在运行中切换"减少动态"偏好时立刻响应
+  if (REDUCED && REDUCED.addEventListener) {
+    REDUCED.addEventListener('change', () => { lastDive = -1; bind(); });
+  }
+</script>
+
+<style>
+  /* ============================================================
+     下潜层
+     ------------------------------------------------------------
+     整个组件只用到一个输入：--dive（0 → 1）。
+     其余所有数值都从它派生，改一处即可整体调节强度。
+     ============================================================ */
+  .ocean-dive {
+    --dive: 0;
+    /* 水体色偏（默认＝大海皮肤的海洋蓝） */
+    --dive-tint-1: oklch(58% 0.11 232 / 0.1);
+    --dive-tint-2: oklch(46% 0.12 236 / 0.42);
+    --dive-tint-3: oklch(30% 0.1 242 / 0.72);
+    position: absolute;
+    inset: 0;
+    /* ⚠️ 层级：必须压在壁纸之上、**文字之下**。
+       壁纸 0 / 遮罩 1 / 下潜 2 / 文字 3 —— 所以这里只能是 2。
+       如果把下潜放到文字之上，越往下滚标题越灰，直接读不清了。 */
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+    /* 单独提层，保证里面的动画不会牵连主文档重绘 */
+    contain: paint;
+  }
+
+  /* 默认（雾紫）皮肤：把水体色偏换成偏紫的深色。
+     不这么做的话，暖粉壁纸上压一层青蓝会脏成灰绿。 */
+  html:not([data-skin='ocean']) .ocean-dive {
+    --dive-tint-1: oklch(56% 0.07 292 / 0.1);
+    --dive-tint-2: oklch(44% 0.08 290 / 0.4);
+    --dive-tint-3: oklch(28% 0.06 286 / 0.7);
+  }
+
+  /* ---------- ① 水面焦散带 ----------
+     一条横向的亮带，从视口底部升到顶部。它掠过的那一刻 = 穿过水线。
+     用 multiple radial-gradient 做焦散(caustics)：水面波浪把阳光折射成
+     一片游动的亮网，这是"水下感"最关键的视觉符号。
+     位移靠 translateY + 负 margin，不碰 top（避免重排）。 */
+  .dive-surface {
+    position: absolute;
+    left: -10%;
+    right: -10%;
+    bottom: 0;
+    height: 34vh;
+    opacity: calc(var(--dive) * 1.6 - var(--dive) * var(--dive) * 0.6);
+    transform: translate3d(0, calc(var(--dive) * -168vh), 0);
+    background:
+      radial-gradient(38% 42% at 22% 46%, oklch(98% 0.04 210 / 0.5), transparent 62%),
+      radial-gradient(30% 36% at 58% 62%, oklch(97% 0.05 205 / 0.42), transparent 64%),
+      radial-gradient(34% 40% at 84% 40%, oklch(99% 0.035 215 / 0.44), transparent 62%),
+      linear-gradient(180deg,
+        oklch(99% 0.03 210 / 0) 0%,
+        oklch(99% 0.03 210 / 0.26) 46%,
+        oklch(99% 0.03 210 / 0) 100%);
+    filter: blur(10px);
+    will-change: transform, opacity;
+  }
+
+  /* ---------- ② 水体加深 ----------
+     水会选择性吸收长波，所以往下不是变黑而是往青蓝收。
+     这层是整体色偏，透明度跟着深度线性上涨，上限刻意只到 0.62 ——
+     再深内容区就读不清了（这个层压在壁纸上、但在文字之下）。
+
+     ⚠️ 颜色跟着皮肤走：默认（雾紫）皮肤下换成偏紫的深色。
+        否则暖色壁纸上压一层青蓝，会脏成灰绿。 */
+  .dive-deepen {
+    position: absolute;
+    inset: 0;
+    opacity: calc(var(--dive) * 0.62);
+    background:
+      linear-gradient(180deg,
+        var(--dive-tint-1) 0%,
+        var(--dive-tint-2) 52%,
+        var(--dive-tint-3) 100%);
+    mix-blend-mode: multiply;
+    will-change: opacity;
+  }
+
+  /* ---------- ③ 丁达尔光柱 ----------
+     从水面上方斜射下来的光。每条独立相位缓慢摇摆，
+     随深度变暗（透明度 = (1 - dive) × 强度），模拟光被水吸收。
+     用 skew + 窄条渐变，比画真实几何体轻得多。 */
+  .dive-rays {
+    position: absolute;
+    inset: -20% -10% auto;
+    height: 150%;
+    opacity: calc((1 - var(--dive)) * 0.9);
+    will-change: opacity;
+  }
+  .dive-rays i {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(180deg,
+      oklch(98% 0.05 205 / 0.3) 0%,
+      oklch(96% 0.06 200 / 0.14) 42%,
+      transparent 78%);
+    filter: blur(14px);
+    transform-origin: top center;
+    animation: ray-sway 14s ease-in-out infinite;
+  }
+  .dive-rays i:nth-child(1) { left: 6%;  width: 5.5%; animation-delay: -1s;  animation-duration: 15s; }
+  .dive-rays i:nth-child(2) { left: 21%; width: 3.2%; animation-delay: -6s;  animation-duration: 19s; opacity: 0.8; }
+  .dive-rays i:nth-child(3) { left: 38%; width: 7%;   animation-delay: -3s;  animation-duration: 13s; }
+  .dive-rays i:nth-child(4) { left: 57%; width: 4%;   animation-delay: -9s;  animation-duration: 17s; opacity: 0.85; }
+  .dive-rays i:nth-child(5) { left: 74%; width: 6%;   animation-delay: -4s;  animation-duration: 21s; }
+  .dive-rays i:nth-child(6) { left: 89%; width: 3.6%; animation-delay: -11s; animation-duration: 16s; opacity: 0.75; }
+
+  @keyframes ray-sway {
+    0%, 100% { transform: skewX(-7deg) scaleY(1); }
+    50%      { transform: skewX(6deg) scaleY(1.06); }
+  }
+
+  /* ---------- ④ 气泡 ----------
+     越深越多：用 --dive 控制整体透明度，再让每颗气泡自己的动画相位错开。
+     只做位移 + 淡出，不做缩放（缩放在低端机上更贵，且视觉收益很小）。 */
+  .dive-bubbles {
+    position: absolute;
+    inset: 0;
+    opacity: calc(var(--dive) * 1.15 - var(--dive) * var(--dive) * 0.15);
+    will-change: opacity;
+  }
+  .dive-bubbles b {
+    position: absolute;
+    bottom: -6%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: oklch(99% 0.02 205 / 0.5);
+    box-shadow: inset 0 0 0 1px oklch(100% 0 0 / 0.6);
+    animation: bubble-rise linear infinite;
+    will-change: transform, opacity;
+  }
+
+  /* 18 颗气泡的位置/大小/时长各自错开，避免看出周期。
+     left 用百分比分布，size 2~7px，时长 9~22s，延迟负值让它们一开始就在半途。 */
+  .dive-bubbles b:nth-child(1)  { left: 4%;  width: 4px; height: 4px; animation-duration: 14s; animation-delay: -2s; }
+  .dive-bubbles b:nth-child(2)  { left: 11%; width: 6px; height: 6px; animation-duration: 19s; animation-delay: -11s; }
+  .dive-bubbles b:nth-child(3)  { left: 18%; width: 3px; height: 3px; animation-duration: 11s; animation-delay: -5s; }
+  .dive-bubbles b:nth-child(4)  { left: 25%; width: 5px; height: 5px; animation-duration: 16s; animation-delay: -14s; }
+  .dive-bubbles b:nth-child(5)  { left: 31%; width: 7px; height: 7px; animation-duration: 22s; animation-delay: -7s; }
+  .dive-bubbles b:nth-child(6)  { left: 37%; width: 3px; height: 3px; animation-duration: 12s; animation-delay: -9s; }
+  .dive-bubbles b:nth-child(7)  { left: 43%; width: 5px; height: 5px; animation-duration: 17s; animation-delay: -3s; }
+  .dive-bubbles b:nth-child(8)  { left: 49%; width: 4px; height: 4px; animation-duration: 13s; animation-delay: -16s; }
+  .dive-bubbles b:nth-child(9)  { left: 55%; width: 6px; height: 6px; animation-duration: 20s; animation-delay: -6s; }
+  .dive-bubbles b:nth-child(10) { left: 61%; width: 3px; height: 3px; animation-duration: 10s; animation-delay: -12s; }
+  .dive-bubbles b:nth-child(11) { left: 67%; width: 5px; height: 5px; animation-duration: 18s; animation-delay: -1s; }
+  .dive-bubbles b:nth-child(12) { left: 73%; width: 4px; height: 4px; animation-duration: 15s; animation-delay: -10s; }
+  .dive-bubbles b:nth-child(13) { left: 79%; width: 7px; height: 7px; animation-duration: 21s; animation-delay: -8s; }
+  .dive-bubbles b:nth-child(14) { left: 85%; width: 3px; height: 3px; animation-duration: 12s; animation-delay: -4s; }
+  .dive-bubbles b:nth-child(15) { left: 90%; width: 5px; height: 5px; animation-duration: 16s; animation-delay: -13s; }
+  .dive-bubbles b:nth-child(16) { left: 95%; width: 4px; height: 4px; animation-duration: 14s; animation-delay: -17s; }
+  .dive-bubbles b:nth-child(17) { left: 8%;  width: 3px; height: 3px; animation-duration: 23s; animation-delay: -19s; }
+  .dive-bubbles b:nth-child(18) { left: 46%; width: 6px; height: 6px; animation-duration: 24s; animation-delay: -15s; }
+
+  @keyframes bubble-rise {
+    0%   { transform: translate3d(0, 0, 0);          opacity: 0; }
+    12%  { opacity: 0.75; }
+    70%  { opacity: 0.6; }
+    100% { transform: translate3d(14px, -118vh, 0);  opacity: 0; }
+  }
+
+  /* ---------- 只在下潜中段显示光柱 ----------
+     水面之上不该有水下光柱；完全下潜之后人也离开首屏了。
+     用 data-depth 做档位显隐，比让浏览器每帧算透明度更省。 */
+  .ocean-dive[data-depth='0'] .dive-rays { opacity: 0; }
+  .ocean-dive[data-depth='0'] .dive-bubbles { opacity: 0; }
+
+  /* ---------- 无障碍 / 低端降级 ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .ocean-dive { display: none !important; }
+  }
+</style>
