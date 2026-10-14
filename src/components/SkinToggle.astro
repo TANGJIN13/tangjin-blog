@@ -1,0 +1,183 @@
+---
+// 皮肤切换组件 —— 雾紫（默认）/ 大海
+//
+// 与 ThemeToggle（亮/暗/跟随系统）是**两条正交的轴**，两者互不干扰：
+//   data-theme = light | dark       → 明暗
+//   data-skin  = (无) | ocean       → 配色气质
+// 存储键用 'skin'，和主题的 'theme' 分开，避免两套状态互相覆盖。
+//
+// 默认皮肤**不写 data-skin 属性**，直接沿用 global.css 里 :root 的原始配色，
+// 这样没切过皮肤的用户看到的仍是改版前那套雾紫，零感知。
+import Icon from './Icon.astro';
+
+interface Props {
+  /** 紧凑模式：只显示图标（放在导航栏用） */
+  compact?: boolean;
+}
+const { compact = false } = Astro.props;
+
+const skins = [
+  { id: 'default', label: '雾紫', icon: 'palette', hint: '柔和的水彩雾紫' },
+  { id: 'ocean', label: '大海', icon: 'wave', hint: '通透的海洋青蓝' },
+] as const;
+---
+
+<div class:list={['skin-toggle', { 'is-compact': compact }]} id="skin-toggle">
+  <span class="skin-thumb" aria-hidden="true"></span>
+  {skins.map((s) => (
+    <button
+      class="skin-btn"
+      data-skin={s.id}
+      title={s.hint}
+      aria-label={`${s.label}主题`}
+      type="button"
+    >
+      <Icon name={s.icon} size="1rem" />
+      {!compact && <span class="skin-label">{s.label}</span>}
+    </button>
+  ))}
+</div>
+
+<script>
+  // ⚠️ 站点启用了 ClientRouter，模块脚本只在首次加载执行一次，
+  //    换页后 DOM 被替换，所以必须在每次 astro:page-load 重新绑定。
+  //    用 onclick= 赋值（而非 addEventListener）保证幂等。
+  const root = document.documentElement;
+  const KEY = 'skin';
+
+  type Skin = 'default' | 'ocean';
+
+  function getSkin(): Skin {
+    try {
+      const v = localStorage.getItem(KEY);
+      if (v === 'ocean') return 'ocean';
+    } catch {}
+    return 'default';
+  }
+
+  function apply(skin: Skin) {
+    if (skin === 'default') {
+      // 默认皮肤靠 :root 生效，去掉属性即可回退
+      root.removeAttribute('data-skin');
+    } else {
+      root.setAttribute('data-skin', skin);
+    }
+  }
+
+  function paint() {
+    const toggle = document.getElementById('skin-toggle');
+    // 即使页面上没有这个组件（比如某些内页），也要保证皮肤属性已应用 ——
+    // 首帧脚本只处理"恢复"，这里兜底一次，防止软导航丢属性。
+    const current = getSkin();
+    apply(current);
+    if (!toggle) return;
+
+    toggle.dataset.active = current;
+    toggle.querySelectorAll<HTMLButtonElement>('.skin-btn').forEach((b) => {
+      const id = b.dataset.skin as Skin;
+      b.classList.toggle('active', id === current);
+      b.onclick = () => {
+        if (id === getSkin()) return;
+        // ⚠️ 顺序很关键：transition 类必须**先**挂上、并强制一次样式重算，
+        //    再去改 data-skin。反过来（先改属性后加类）浏览器已经把新颜色
+        //    算进当前帧了，transition 不会触发，切换就是硬跳。
+        root.classList.add('skin-switching');
+        void root.offsetHeight; // 强制重算，让 transition 在属性变更前生效
+        apply(id);
+        try {
+          localStorage.setItem(KEY, id);
+        } catch {}
+        window.setTimeout(() => root.classList.remove('skin-switching'), 560);
+        paint();
+      };
+    });
+  }
+
+  paint();
+  document.addEventListener('astro:page-load', paint);
+
+  // 多标签页同步：另一个标签改了皮肤，这边跟着走
+  window.addEventListener('storage', (e) => {
+    if (e.key === KEY) paint();
+  });
+</script>
+
+<style>
+  .skin-toggle {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.2rem;
+    padding: 0.25rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+
+  /* 会滑动的指示块 */
+  .skin-thumb {
+    position: absolute;
+    top: 0.25rem;
+    bottom: 0.25rem;
+    left: 0.25rem;
+    width: calc((100% - 0.7rem) / 2);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: 0 2px 8px oklch(0% 0 0 / 0.14), 0 1px 2px oklch(0% 0 0 / 0.08);
+    transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+    pointer-events: none;
+  }
+  :global([data-theme='dark']) .skin-thumb {
+    background: oklch(30% 0.02 282);
+    box-shadow: 0 2px 10px oklch(0% 0 0 / 0.45);
+  }
+  .skin-toggle[data-active='ocean'] .skin-thumb {
+    transform: translateX(calc(100% + 0.2rem));
+  }
+
+  .skin-btn {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.34rem;
+    height: 34px;
+    padding-inline: 0.6rem;
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--text-faint);
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+  .skin-btn:hover { color: var(--primary); }
+  .skin-btn.active { color: var(--primary); }
+
+  /* 紧凑模式：只有图标 */
+  .skin-toggle.is-compact .skin-btn { padding-inline: 0.5rem; }
+
+  .skin-label { line-height: 1; }
+
+  /* 皮肤切换时的一次性柔和过渡：
+     只在大范围换色那一刻开启，避免平时也挂着一堆 transition 拖慢滚动。
+     挂在 html 上，由脚本 480ms 后移除。 */
+  :global(html.skin-switching),
+  :global(html.skin-switching) body,
+  :global(html.skin-switching) .glass-card,
+  :global(html.skin-switching) .card-base {
+    transition: background-color 0.42s ease, color 0.42s ease,
+      border-color 0.42s ease, box-shadow 0.42s ease !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(html.skin-switching),
+    :global(html.skin-switching) body,
+    :global(html.skin-switching) .glass-card,
+    :global(html.skin-switching) .card-base {
+      transition: none !important;
+    }
+  }
+</style>

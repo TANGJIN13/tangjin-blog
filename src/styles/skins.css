@@ -1,0 +1,133 @@
+/* ============================================================
+   主题皮肤（skin）
+   ------------------------------------------------------------
+   与 data-theme 是**两条正交的轴**：
+     · data-theme  = light / dark / system   → 明暗
+     · data-skin   = default / ocean          → 配色气质
+   两者可以任意组合（海洋 + 暗色 也是合法状态）。
+
+   默认皮肤不在这里重复声明 —— 它就是 global.css 里 :root 的那一套
+   （雾紫 + 杏粉）。只有切到 ocean 时才覆盖，这样：
+     ① 没装过皮肤的旧用户看到的还是原来的样子，零风险
+     ② 想改默认配色时只改 global.css 一处，不会两处打架
+
+   ⚠️ 覆盖必须写在 :root/[data-theme] 之后（本文件在 global.css 之后导入），
+      且用 [data-skin='ocean'] 这种属性选择器提升特异性，
+      否则会被 global.css 的 :root / [data-theme='dark'] 压回去。
+   ============================================================ */
+
+/* ---------------- 大海 · 亮色 ---------------- */
+[data-skin='ocean'] {
+  /* 主色：从灰紫换成海水青蓝。彩度给到 0.125，
+     比原来的 0.105 略高一点，海才「蓝」得起来而不是灰的 */
+  --primary: oklch(58% 0.125 233);
+  --primary-strong: oklch(45% 0.135 236);
+  --primary-soft: oklch(94% 0.032 226);
+  --primary-light: oklch(78% 0.095 226);
+  --primary-glow: oklch(66% 0.13 230 / 0.3);
+  /* 点缀色：暖沙金，对应海边落日/沙滩，避免整页全是蓝显冷 */
+  --accent: oklch(74% 0.105 68);
+  --accent-soft: oklch(96% 0.03 72);
+
+  /* 底色：带一点青的雾白，比纯灰更有海的通透 */
+  --bg: oklch(97.4% 0.011 224);
+  --surface: oklch(100% 0 0);
+  --surface-hover: oklch(96% 0.016 224);
+  --surface-2: oklch(94.8% 0.016 224);
+
+  --text: oklch(24% 0.028 236);
+  --text-soft: oklch(47% 0.026 234);
+  --text-faint: oklch(61% 0.02 230);
+
+  --border: oklch(28% 0.03 236 / 0.11);
+  --border-light: oklch(28% 0.03 236 / 0.06);
+
+  --gradient-primary: linear-gradient(120deg, oklch(55% 0.13 236), oklch(74% 0.105 68));
+  --gradient-card: linear-gradient(145deg, oklch(99.5% 0.008 224), oklch(96% 0.015 224));
+
+  --shadow-sm: 0 1px 2px oklch(28% 0.03 236 / 0.05);
+  --shadow: 0 8px 24px oklch(28% 0.03 236 / 0.075);
+  --shadow-lg: 0 16px 44px oklch(28% 0.03 236 / 0.11);
+  --shadow-glow: 0 0 16px oklch(58% 0.125 233 / 0.2);
+
+  /* 玻璃：海面反光偏冷，高光用极淡的青白而不是纯白，
+     否则叠在蓝色壁纸上会发灰 */
+  --glass-bg: oklch(100% 0 0 / 0.54);
+  --glass-bg-hover: oklch(100% 0 0 / 0.68);
+  --glass-sheen: oklch(98% 0.03 220 / 0.55);
+  --glass-top: oklch(100% 0 0 / 0.3);
+  --glass-edge: oklch(100% 0 0 / 0.7);
+  --glass-hairline: oklch(20% 0.04 236 / 0.06);
+  --glass-shadow: 0 12px 32px oklch(45% 0.09 233 / 0.11), 0 3px 10px oklch(45% 0.08 233 / 0.065);
+  --glass-shadow-hover: 0 18px 44px oklch(45% 0.1 233 / 0.15), 0 4px 12px oklch(45% 0.08 233 / 0.075);
+
+  /* 热力图 / 各组件共用的色相旋钮，跟着主色走 */
+  --hue: 233;
+}
+
+/* ---------------- 大海 · 暗色 ----------------
+   深海的蓝：底色压到很暗但要留住蓝味（chroma 给 0.03），
+   纯黑会丢掉「海」的感觉。 */
+[data-theme='dark'][data-skin='ocean'] {
+  --bg: oklch(17% 0.028 240);
+  --surface: oklch(21% 0.03 240);
+  --surface-hover: oklch(25% 0.034 240);
+  --surface-2: oklch(24.5% 0.032 240);
+
+  --primary: oklch(74% 0.115 226);
+  --primary-strong: oklch(82% 0.1 224);
+  --primary-soft: oklch(31% 0.055 234);
+  --primary-light: oklch(82% 0.1 224);
+  --primary-glow: oklch(74% 0.115 226 / 0.32);
+  --accent: oklch(78% 0.1 72);
+  --accent-soft: oklch(31% 0.055 72);
+
+  --text: oklch(93% 0.016 230);
+  --text-soft: oklch(74% 0.018 230);
+  --text-faint: oklch(58% 0.016 232);
+
+  --border: oklch(90% 0.016 230 / 0.13);
+  --border-light: oklch(90% 0.016 230 / 0.075);
+
+  --gradient-primary: linear-gradient(120deg, oklch(74% 0.115 226), oklch(78% 0.1 72));
+  --gradient-card: linear-gradient(145deg, oklch(23% 0.032 240), oklch(19.5% 0.028 240));
+
+  --shadow-sm: 0 1px 3px oklch(0% 0 0 / 0.24);
+  --shadow: 0 8px 24px oklch(0% 0 0 / 0.26);
+  --shadow-lg: 0 16px 44px oklch(0% 0 0 / 0.32);
+
+  --glass-bg: oklch(23% 0.032 240 / 0.94);
+  --glass-bg-hover: oklch(27% 0.036 240 / 0.98);
+  --glass-sheen: oklch(100% 0 0 / 0.025);
+  --glass-top: oklch(100% 0 0 / 0.02);
+  --glass-edge: oklch(100% 0 0 / 0.1);
+  --glass-hairline: oklch(0% 0 0 / 0.2);
+  --glass-shadow: 0 12px 32px oklch(0% 0 0 / 0.3);
+  --glass-shadow-hover: 0 16px 38px oklch(0% 0 0 / 0.36);
+
+  --hue: 233;
+}
+
+/* ---------------- 皮肤切换的过渡 ----------------
+   只过渡颜色，不过渡布局属性 —— 全属性过渡会让卡片在切换瞬间
+   抖一下（transform/box-shadow 被卷进来）。
+   prefers-reduced-motion 下由 global.css 的统一规则关掉。 */
+html {
+  transition: background-color 0.42s ease, color 0.42s ease;
+}
+html[data-skin] body {
+  transition: background-color 0.42s ease, color 0.42s ease;
+}
+
+/* ============================================================
+   各皮肤的壁纸池
+   ------------------------------------------------------------
+   壁纸按皮肤分组，由 WallpaperBanner 根据 data-skin 选择。
+   这里只声明尺寸节奏之类的差异；图片 URL 在组件里给。
+   ============================================================ */
+
+/* 海洋壁纸是冷色，暗色模式下要压得更沉一点，
+   否则浅色的天空段在深色界面里会显得刺眼 */
+[data-theme='dark'][data-skin='ocean'] .wp-slide img {
+  filter: brightness(0.82) saturate(0.95);
+}
