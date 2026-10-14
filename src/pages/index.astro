@@ -34,8 +34,11 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
        ⚠️ 这一层**不加** data-reveal：首屏壁纸的分镜（背景模糊→清晰、星光渐显、
           标题逐节揭幕）全部由 WallpaperBanner 自己在 intro-run 下驱动。
           在这里再包一层淡入会让壁纸整体先发灰一次，两层 opacity 相乘。 -->
-  <!-- 首页壁纸：给足高度，"磅礴"需要画面有纵深，矮横幅撑不起来 -->
-  <WallpaperBanner height="clamp(520px, 82vh, 900px)" mobileHeight="clamp(380px, 62vh, 560px)" />
+  <!-- 首页壁纸高度：60vh（和你原来"刚好能看到置顶文章"的设置一致）。
+       实测 900px 视口：壁纸 540px + 置顶卡 291px ≈ 831px，留 ~70px 余量。
+       上一版试过 64vh / 82vh，分别只剩 13px 余量和直接超出 149px ——
+       壁纸不是越高越好看，把置顶卡顶出首屏反而显得空。 -->
+  <WallpaperBanner height="clamp(420px, 60vh, 620px)" mobileHeight="clamp(340px, 54vh, 500px)" />
 
   <!-- 三栏内容 -->
   <div class="container">
