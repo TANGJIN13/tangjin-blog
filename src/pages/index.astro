@@ -7,6 +7,7 @@ import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import { formatDate, getPublishedPosts, getTags, pinToTop, readingTime } from '../lib/posts';
+import { coverPair } from '../lib/covers';
 import { categories } from '../data/categories';
 
 const posts = await getPublishedPosts();
@@ -17,17 +18,13 @@ const tags = await getTags();
 const ordered = pinToTop(posts);
 const featured = ordered[0] ?? null;
 const featuredCategory = featured ? categories.find((c) => c.slug === featured.data.category) : null;
-// 文章没写 cover 时，用同色系水彩插画兜底。
+// 文章没写 cover 时，用同色系插画兜底。
 // ⚠️ 这里**不能**再用壁纸池（banner-pastel-*）—— 那个池子同时服务首屏大壁纸，
-//    复用会让"壁纸"和"文章封面"在同一屏里撞图。改走 covers/ 这套独立插画。
-const fallbackCovers = [
-  '/images/covers/cover-01.jpg',
-  '/images/covers/cover-02.jpg',
-  '/images/covers/cover-03.jpg',
-  '/images/covers/cover-04.jpg',
-  '/images/covers/cover-05.jpg',
-];
-const featuredCover = featured?.data.cover ?? fallbackCovers[0];
+//    复用会让"壁纸"和"文章封面"在同一屏里撞图。
+//    池子定义在 lib/covers.ts，按皮肤分组，和 PostCard / PostListItem 共用一份。
+const featPair = coverPair(0);
+const featuredCover = featured?.data.cover ?? featPair.primary;
+const featuredCoverAlt = featured?.data.cover ?? featPair.alt;
 const recentPosts = featured ? ordered.slice(1) : ordered;
 ---
 
@@ -62,7 +59,9 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
                 </div>
               </div>
               <div class="featured-image">
-                <img src={featuredCover} alt="" fetchpriority="high" />
+                <!-- 两套封面叠放，按 data-skin 切显隐（理由同 PostListItem） -->
+                <img class="feat-a" src={featuredCover} alt="" fetchpriority="high" />
+                <img class="feat-b" src={featuredCoverAlt} alt="" loading="lazy" />
                 <span class="featured-image-index">LATEST / 01</span>
                 <span class="featured-image-arrow"><Icon name="arrow_right" size="1.15rem" /></span>
               </div>
@@ -376,11 +375,28 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   .featured-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.55rem; width: 100%; margin-top: 1.5rem; color: var(--text-faint); font-family: var(--font-mono); font-size: 0.64rem; }
   .featured-read { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: auto; color: var(--primary-strong); font-family: var(--font-sans); font-size: 0.76rem; font-weight: 700; }
   .featured-image { position: relative; min-height: 230px; overflow: hidden; background: var(--surface-2); }
-  .featured-image::after { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgb(19 37 31 / 0.44), transparent 46%); }
-  .featured-image img { width: 100%; height: 100%; min-height: 100%; object-fit: cover; filter: saturate(0.72) contrast(1.05); transition: transform 0.6s cubic-bezier(.2,.75,.25,1); }
+  .featured-image::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, rgb(19 37 31 / 0.44), transparent 46%); }
+  .featured-image img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    object-fit: cover;
+    /* 海洋封面本身彩度就够，压低一点让它别抢标题；
+       默认皮肤那套是暖粉水彩，同样适用 */
+    filter: saturate(0.82) contrast(1.04);
+    transition: transform 0.6s cubic-bezier(.2,.75,.25,1), opacity 0.4s ease;
+  }
   .featured-note:hover .featured-image img { transform: scale(1.035); }
-  .featured-image-index { position: absolute; z-index: 1; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
-  .featured-image-arrow { position: absolute; z-index: 1; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
+
+  /* 两套封面按皮肤切显隐（同 PostListItem） */
+  .feat-b { opacity: 0; }
+  :global(html[data-skin='ocean']) .feat-a { opacity: 0; }
+  :global(html[data-skin='ocean']) .feat-b { opacity: 1; }
+
+  .featured-image-index { position: absolute; z-index: 2; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
+  .featured-image-arrow { position: absolute; z-index: 2; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
   .recent-feed .post-rows { gap: 0.7rem; }
   @media (max-width: 640px) {
     .featured-note { grid-template-columns: 1fr; }

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.25" y2="1">
+<stop offset="0%" stop-color="#b3dcea"/>
+<stop offset="100%" stop-color="#35789c"/>
+</linearGradient>
+<radialGradient id="warm" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ffe0b0" stop-opacity="0.55"/>
+<stop offset="100%" stop-color="#ffe0b0" stop-opacity="0"/>
+</radialGradient>
+<filter id="b1" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+<filter id="b2" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="26"/></filter>
+</defs>
+<rect width="800" height="450" fill="url(#bg)"/>
+<g filter="url(#b2)">
+<rect x="812" y="-120" width="43" height="690" fill="#d9eef4" opacity="0.16" transform="rotate(-28 812 225.0)"/>
+<rect x="704" y="-120" width="31" height="690" fill="#d9eef4" opacity="0.33" transform="rotate(-24 704 225.0)"/>
+<rect x="612" y="-120" width="31" height="690" fill="#d9eef4" opacity="0.30" transform="rotate(-36 612 225.0)"/>
+<rect x="728" y="-120" width="47" height="690" fill="#d9eef4" opacity="0.29" transform="rotate(-32 728 225.0)"/>
+<rect x="340" y="-120" width="55" height="690" fill="#d9eef4" opacity="0.20" transform="rotate(-28 340 225.0)"/>
+<rect x="472" y="-120" width="27" height="690" fill="#d9eef4" opacity="0.26" transform="rotate(-24 472 225.0)"/>
+<rect x="732" y="-120" width="39" height="690" fill="#d9eef4" opacity="0.23" transform="rotate(-36 732 225.0)"/>
+</g>
+<ellipse cx="672" cy="405" rx="300" ry="220" fill="url(#warm)"/>
+<circle cx="544.0" cy="135.0" r="52" fill="#eaf5f9" opacity="0.85" filter="url(#b1)"/>
+<ellipse cx="544.0" cy="135.0" rx="150" ry="150" fill="#d9eef4" opacity="0.2" filter="url(#b2)"/>
+<rect x="0" y="279" width="800" height="450" fill="#2a607d" opacity="0.5"/>
+<ellipse cx="544.0" cy="351" rx="80" ry="90" fill="#d1eaf2" opacity="0.22" filter="url(#b2)"/>
+<rect width="800" height="450" fill="none"/>
+<radialGradient id="vig" cx="50%" cy="45%" r="72%"><stop offset="60%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.18"/></radialGradient>
+<rect width="800" height="450" fill="url(#vig)"/>
+</svg>

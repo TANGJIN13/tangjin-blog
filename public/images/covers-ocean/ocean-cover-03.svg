@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0.25" y2="1">
+<stop offset="0%" stop-color="#8fc6e2"/>
+<stop offset="100%" stop-color="#1d4a70"/>
+</linearGradient>
+<radialGradient id="warm" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#f2b98d" stop-opacity="0.55"/>
+<stop offset="100%" stop-color="#f2b98d" stop-opacity="0"/>
+</radialGradient>
+<filter id="b1" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+<filter id="b2" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="26"/></filter>
+</defs>
+<rect width="800" height="450" fill="url(#bg)"/>
+<g filter="url(#b2)">
+<rect x="574" y="-120" width="77" height="690" fill="#c7e2f0" opacity="0.12" transform="rotate(-22 574 225.0)"/>
+<rect x="82" y="-120" width="77" height="690" fill="#c7e2f0" opacity="0.17" transform="rotate(-34 82 225.0)"/>
+<rect x="774" y="-120" width="85" height="690" fill="#c7e2f0" opacity="0.16" transform="rotate(-30 774 225.0)"/>
+<rect x="194" y="-120" width="49" height="690" fill="#c7e2f0" opacity="0.22" transform="rotate(-26 194 225.0)"/>
+<rect x="198" y="-120" width="81" height="690" fill="#c7e2f0" opacity="0.30" transform="rotate(-22 198 225.0)"/>
+<rect x="290" y="-120" width="49" height="690" fill="#c7e2f0" opacity="0.21" transform="rotate(-34 290 225.0)"/>
+<rect x="510" y="-120" width="77" height="690" fill="#c7e2f0" opacity="0.27" transform="rotate(-30 510 225.0)"/>
+</g>
+<ellipse cx="672" cy="405" rx="300" ry="220" fill="url(#warm)"/>
+<g filter="url(#b1)">
+<rect x="90" y="-60" width="34" height="570" fill="#d4e9f4" opacity="0.3" transform="rotate(-19 90 225.0)"/>
+<rect x="271" y="-60" width="41" height="570" fill="#d4e9f4" opacity="0.3" transform="rotate(-19 271 225.0)"/>
+<rect x="430" y="-60" width="48" height="570" fill="#d4e9f4" opacity="0.3" transform="rotate(-19 430 225.0)"/>
+<rect x="617" y="-60" width="55" height="570" fill="#d4e9f4" opacity="0.3" transform="rotate(-19 617 225.0)"/>
+<rect x="766" y="-60" width="62" height="570" fill="#d4e9f4" opacity="0.3" transform="rotate(-19 766 225.0)"/>
+</g>
+<ellipse cx="400.0" cy="189.0" rx="150" ry="110" fill="#d2e8f3" opacity="0.22" filter="url(#b2)"/>
+<rect width="800" height="450" fill="none"/>
+<radialGradient id="vig" cx="50%" cy="45%" r="72%"><stop offset="60%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.18"/></radialGradient>
+<rect width="800" height="450" fill="url(#vig)"/>
+</svg>

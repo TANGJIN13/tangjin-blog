@@ -30,7 +30,7 @@ const SKIN_WALLPAPERS: Record<string, string[]> = {
 const {
   mobile = true,
   // 首屏壁纸轮播池。
-  // ⚠️ 约束：这个池子必须与 PostCard / index 的兜底封面池（covers/cover-01..08）
+  // ⚠️ 约束：这个池子必须与文章封面池（lib/covers.ts，covers/ 与 covers-ocean/）
   //    **完全不重叠** —— 一旦重叠，同屏里就会出现"壁纸 = 某张卡片封面"的廉价撞图。
   //    所以这里只放壁纸目录自己的图。曾经有 5 张，但 -02 和 -03 都是
   //    "粉色樱花枝夹住两边"的近乎同一构图，轮播到第二张像"没换图"，
