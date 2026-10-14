@@ -46,7 +46,7 @@ const pick = typeof index === 'number' ? index : 0;
 const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
 ---
 
-<a class="post-row onload-animation" href={`/posts/${post.id}/`}>
+<a class="post-row glass-card onload-animation" href={`/posts/${post.id}/`}>
   <div class="post-row-thumb">
     <img src={coverSrc} alt="" loading="lazy" />
   </div>
@@ -74,24 +74,16 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
 </a>
 
 <style>
+  /* 卡片外观（背景 / 边框 / 阴影 / 毛玻璃）统一由全局 .glass-card 提供，
+     这里只负责布局与排版，避免两套卡片语言打架。 */
   .post-row {
     display: flex;
     align-items: stretch;
     gap: 1rem;
     padding: 0.95rem 1rem;
     border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
-    background: var(--surface);
     text-decoration: none !important;
-    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-  }
-  .post-row:hover {
-    transform: translateY(-2px);
-    border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.05), 0 14px 30px oklch(62% 0.13 282 / 0.14);
-  }
-  :global([data-theme='dark'] .post-row:hover) {
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 14px 30px oklch(0% 0 0 / 0.45);
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
   /* 左缩略图：固定 140×96 */

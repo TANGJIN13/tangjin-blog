@@ -50,7 +50,7 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
         <!-- 文章主编精选 + 最近更新 -->
         {featured && (
           <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 2500ms">
-            <a class="featured-note" href={`/posts/${featured.id}/`}>
+            <a class="featured-note glass-card" href={`/posts/${featured.id}/`}>
               <div class="featured-copy">
                 <span class="featured-kicker"><span class="featured-mark"></span> 置顶 · {featuredCategory?.name ?? '随笔'}</span>
                 <h3>{featured.data.title}</h3>
@@ -357,20 +357,17 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   .editorial-feed .section-title::before, .recent-feed .section-title::before { display: none; }
   .section-index { color: var(--primary); font-size: 0.68rem; letter-spacing: 0.05em; }
   .section-edition { color: var(--text-faint); font-size: 0.62rem; }
+  /* 外观（背景 / 边框 / 阴影 / 毛玻璃）交给全局 .glass-card，这里只留布局 */
   .featured-note {
     display: grid;
     grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
     min-height: 280px;
     overflow: hidden;
     color: var(--text);
-    background: var(--surface);
-    border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent);
     text-decoration: none !important;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
-  .featured-note:hover { border-color: color-mix(in srgb, var(--primary) 38%, var(--border)); box-shadow: 0 14px 34px color-mix(in srgb, var(--text) 9%, transparent); }
   .featured-copy { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: clamp(1.5rem, 3vw, 2.6rem); }
   .featured-kicker { display: inline-flex; align-items: center; gap: 0.55rem; color: var(--text-faint); font-size: 0.6rem; }
   .featured-mark { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }

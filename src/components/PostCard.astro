@@ -65,7 +65,7 @@ const pick = typeof index === 'number' ? index : Math.abs(hash);
 const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
 ---
 
-<article class="post-card onload-animation" {style}>
+<article class="post-card glass-card onload-animation" {style}>
   <!-- 封面：置顶，16:9（文章自带 cover 优先，没有就用风景照兜底） -->
   <a class="post-card-cover" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
     <img src={coverSrc} alt="" loading="lazy" />
@@ -109,27 +109,17 @@ const coverSrc = cover ?? fallbackCovers[pick % fallbackCovers.length];
 </article>
 
 <style>
+  /* 外观（背景 / 边框 / 阴影 / 毛玻璃）由全局 .glass-card 统一提供 */
   .post-card {
     position: relative;
     display: flex;
     flex-direction: column;
     border-radius: var(--radius-xl);
     overflow: hidden;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04), 0 6px 18px oklch(0% 0 0 / 0.05);
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s ease, border-color 0.28s ease;
-  }
-  :global([data-theme='dark'] .post-card) {
-    box-shadow: 0 1px 2px oklch(0% 0 0 / 0.25), 0 6px 18px oklch(0% 0 0 / 0.28);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
   }
   .post-card:hover {
     transform: translateY(-4px);
-    border-color: oklch(70% 0.14 282 / 0.5);
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.06), 0 18px 38px oklch(62% 0.13 282 / 0.18);
-  }
-  :global([data-theme='dark'] .post-card:hover) {
-    box-shadow: 0 2px 6px oklch(0% 0 0 / 0.3), 0 18px 38px oklch(0% 0 0 / 0.5);
   }
 
   /* ===== 封面：顶部通栏 16:9 ===== */
