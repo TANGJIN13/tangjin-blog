@@ -1,13 +1,14 @@
 ---
 import Base from '../layouts/Base.astro';
 import PostListItem from '../components/PostListItem.astro';
+import PostCard from '../components/PostCard.astro';
 import Paginate from '../components/Paginate.astro';
 import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
 import { formatDate, getPublishedPosts, getTags, pinToTop, readingTime } from '../lib/posts';
-import { coverPair } from '../lib/covers';
+import { fallbackCover } from '../lib/covers';
 import { categories } from '../data/categories';
 
 const posts = await getPublishedPosts();
@@ -22,9 +23,7 @@ const featuredCategory = featured ? categories.find((c) => c.slug === featured.d
 // ⚠️ 这里**不能**再用壁纸池（banner-pastel-*）—— 那个池子同时服务首屏大壁纸，
 //    复用会让"壁纸"和"文章封面"在同一屏里撞图。
 //    池子定义在 lib/covers.ts，按皮肤分组，和 PostCard / PostListItem 共用一份。
-const featPair = coverPair(0);
-const featuredCover = featured?.data.cover ?? featPair.primary;
-const featuredCoverAlt = featured?.data.cover ?? featPair.alt;
+const featuredCover = featured?.data.cover ?? fallbackCover(0);
 const recentPosts = featured ? ordered.slice(1) : ordered;
 ---
 
@@ -60,9 +59,7 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
                 </div>
               </div>
               <div class="featured-image">
-                <!-- 两套封面叠放，按 data-skin 切显隐（理由同 PostListItem） -->
-                <img class="feat-a" src={featuredCover} alt="" fetchpriority="high" />
-                <img class="feat-b" src={featuredCoverAlt} alt="" loading="lazy" />
+                <img src={featuredCover} alt="" fetchpriority="high" />
                 <span class="featured-image-index">LATEST / 01</span>
                 <span class="featured-image-arrow"><Icon name="arrow_right" size="1.15rem" /></span>
               </div>
@@ -73,13 +70,34 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
           <section class="block recent-feed" data-reveal style="--rv: 2650ms">
             <div class="section-head">
               <h2 class="section-title"><Icon name="article" size="1.05rem" /> 最新文章</h2>
-              <a class="section-more" href="/archive/">查看更多 <Icon name="arrow_right" size="0.85rem" /></a>
+              <div class="section-head-right">
+                <!-- 布局切换：卡片网格 ↔ 单列卡片行。和主题/明暗一样存 localStorage，
+                     偏好跨页面、跨刷新保持。 -->
+                <div class="layout-switch" id="feed-layout-switch" data-active="list">
+                  <span class="layout-thumb" aria-hidden="true"></span>
+                  <button type="button" class="layout-btn is-list" data-layout="list" title="列表视图" aria-label="列表视图">
+                    <Icon name="text" size="0.9rem" />
+                  </button>
+                  <button type="button" class="layout-btn is-grid" data-layout="grid" title="卡片网格" aria-label="卡片网格">
+                    <Icon name="archive" size="0.9rem" />
+                  </button>
+                </div>
+                <a class="section-more" href="/archive/">查看更多 <Icon name="arrow_right" size="0.85rem" /></a>
+              </div>
             </div>
-            <div class="post-rows">
+            <!-- 两种布局同屏渲染、CSS 切显隐 —— 不用 JS 重建 DOM，切换是即时的。
+                 .post-rows（单列卡片行）与 .post-grid（卡片网格）共用同一批文章，
+                 两侧的封面/标题/内容各自独立显示，互不干扰。 -->
+            <div class="post-rows" data-feed="list">
               {recentPosts.map((p, i) => (
                 <div class="paginate-item">
                   <PostListItem post={p} index={i + 1} />
                 </div>
+              ))}
+            </div>
+            <div class="post-grid" data-feed="grid">
+              {recentPosts.map((p, i) => (
+                <PostCard post={p} index={i + 1} />
               ))}
             </div>
             <Paginate pageSize={15} />
@@ -330,6 +348,76 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   }
   .section-more:hover { transform: translateX(3px); }
 
+  /* ===== 布局切换：列表视图 ↔ 卡片网格 ===== */
+  .section-head-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .layout-switch {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.15rem;
+    padding: 0.16rem;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+  }
+  .layout-thumb {
+    position: absolute;
+    top: 0.16rem;
+    bottom: 0.16rem;
+    left: 0.16rem;
+    width: calc((100% - 0.4rem) / 2);
+    border-radius: 999px;
+    background: var(--surface);
+    box-shadow: 0 1px 4px oklch(0% 0 0 / 0.12);
+    transition: transform 0.3s cubic-bezier(0.34, 1.4, 0.64, 1);
+    pointer-events: none;
+  }
+  :global([data-theme='dark']) .layout-thumb { background: oklch(30% 0.02 282); }
+  .layout-switch[data-active='grid'] .layout-thumb {
+    transform: translateX(calc(100% + 0.15rem));
+  }
+  .layout-btn {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--text-faint);
+    transition: color 0.2s ease;
+  }
+  .layout-btn:hover { color: var(--primary); }
+  .layout-switch[data-active='list'] .layout-btn.is-list,
+  .layout-switch[data-active='grid'] .layout-btn.is-grid { color: var(--primary); }
+
+  /* 两种布局同屏渲染、按需显隐 —— 切换是即时，不重建 DOM。
+     用 [hidden] 而不是 display:none，避免被 Astro/浏览器的默认样式覆盖。 */
+  .post-grid[hidden], .post-rows[hidden] { display: none !important; }
+
+  /* 卡片网格：默认两列，宽屏三列 */
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+  @media (min-width: 1600px) {
+    .post-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .post-grid { grid-template-columns: 1fr; }
+  }
+  /* 网格里的卡片自带 onload-animation 的延迟，这里不用再包一层 */
+  .post-grid > .post-card { width: 100%; }
+
   /* 分区之间的定向间距（用户要求"贴近一些"）：
        · 最新手记 → 继续阅读：卡片底部到下一个标题，0.9rem 就够（原来 56~80px）
        · 继续阅读 → 底部分页：留 1.5rem 收尾 */
@@ -378,8 +466,6 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   .featured-image { position: relative; min-height: 230px; overflow: hidden; background: var(--surface-2); }
   .featured-image::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, rgb(19 37 31 / 0.44), transparent 46%); }
   .featured-image img {
-    position: absolute;
-    inset: 0;
     width: 100%;
     height: 100%;
     min-height: 100%;
@@ -390,11 +476,6 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
     transition: transform 0.6s cubic-bezier(.2,.75,.25,1), opacity 0.4s ease;
   }
   .featured-note:hover .featured-image img { transform: scale(1.035); }
-
-  /* 两套封面按皮肤切显隐（同 PostListItem） */
-  .feat-b { opacity: 0; }
-  :global(html[data-skin='ocean']) .feat-a { opacity: 0; }
-  :global(html[data-skin='ocean']) .feat-b { opacity: 1; }
 
   .featured-image-index { position: absolute; z-index: 2; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
   .featured-image-arrow { position: absolute; z-index: 2; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
@@ -452,3 +533,54 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   }
   .post-rows .post-row { width: 100%; }
 </style>
+
+<script>
+  // 文章列表布局切换：卡片网格 ↔ 单列卡片行。
+  // 偏好存 localStorage（键 'feed-layout'），跨页面、跨刷新保持。
+  //
+  // 为什么两种布局都渲染在 DOM 里：切布局是「即时的」—— 图早就解码好了，
+  // 只切 display。若用 JS 按布局重建 DOM，网格→列表会重新触发封面解码，
+  // 切换时先白一下。
+  const LS_KEY = 'feed-layout';
+
+  function readPref(): 'list' | 'grid' {
+    try {
+      const v = localStorage.getItem(LS_KEY);
+      if (v === 'list' || v === 'grid') return v;
+    } catch {}
+    return 'list';
+  }
+
+  function apply(mode: 'list' | 'grid') {
+    const wrap = document.getElementById('feed-layout-switch');
+    const rows = document.querySelector('.post-rows');
+    const grid = document.querySelector('.post-grid');
+    if (!wrap) return;
+
+    wrap.dataset.active = mode;
+
+    // [hidden] 用属性切换，Astro 组件 scoped 样式里的 display:grid/flex
+    // 会盖掉 [hidden] 的默认 display:none，所以 CSS 里额外用 .post-grid[hidden] { display:none!important } 兜底。
+    if (rows) rows.toggleAttribute('hidden', mode !== 'list');
+    if (grid) grid.toggleAttribute('hidden', mode !== 'grid');
+  }
+
+  function bind() {
+    const wrap = document.getElementById('feed-layout-switch');
+    if (!wrap) return;
+
+    const current = readPref();
+    apply(current);
+
+    wrap.querySelectorAll<HTMLButtonElement>('.layout-btn').forEach((b) => {
+      const mode = b.dataset.layout as 'list' | 'grid';
+      b.onclick = () => {
+        apply(mode);
+        try { localStorage.setItem(LS_KEY, mode); } catch {}
+      };
+    });
+  }
+
+  bind();
+  document.addEventListener('astro:page-load', bind);
+</script>

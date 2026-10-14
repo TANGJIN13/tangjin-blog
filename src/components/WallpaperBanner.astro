@@ -20,31 +20,21 @@ interface Props {
   dive?: boolean;
 }
 
-/** 各皮肤的壁纸池。默认皮肤不写 data-skin 属性，走 default 这一组。 */
-const SKIN_WALLPAPERS: Record<string, string[]> = {
-  default: [
+
+const {
+  mobile = true,
+  // 首屏壁纸轮播池。
+  // ⚠️ 约束：这个池子必须与文章封面池（lib/covers.ts，covers/）
+  //    **完全不重叠** —— 一旦重叠，同屏里就会出现"壁纸 = 某张卡片封面"的廉价撞图。
+  //    所以这里只放壁纸目录自己的图。曾经有 5 张，但 -02 和 -03 都是
+  //    "粉色樱花枝夹住两边"的近乎同一构图，轮播到第二张像"没换图"，
+  //    所以去掉 -03，留 4 张各不相同的画面。
+  images = [
     '/images/wallpapers/banner-pastel-01.webp',
     '/images/wallpapers/banner-pastel-02.webp',
     '/images/wallpapers/banner-pastel-04.webp',
     '/images/wallpapers/banner-pastel-05.webp',
   ],
-  ocean: [
-    '/images/wallpapers/banner-ocean-dawn.svg',
-    '/images/wallpapers/banner-ocean-day.svg',
-    '/images/wallpapers/banner-ocean-dusk.svg',
-    '/images/wallpapers/banner-ocean-night.svg',
-  ],
-};
-
-const {
-  mobile = true,
-  // 首屏壁纸轮播池。
-  // ⚠️ 约束：这个池子必须与文章封面池（lib/covers.ts，covers/ 与 covers-ocean/）
-  //    **完全不重叠** —— 一旦重叠，同屏里就会出现"壁纸 = 某张卡片封面"的廉价撞图。
-  //    所以这里只放壁纸目录自己的图。曾经有 5 张，但 -02 和 -03 都是
-  //    "粉色樱花枝夹住两边"的近乎同一构图，轮播到第二张像"没换图"，
-  //    所以去掉 -03，留 4 张各不相同的画面。
-  images = SKIN_WALLPAPERS.default,
   height = 'clamp(520px, 88vh, 920px)',
   mobileHeight = 'clamp(320px, 65vh, 520px)',
   /** 单图模式：不轮播（文章页用封面图时开启） */
@@ -56,12 +46,6 @@ const {
 // 有插槽内容时用它替代默认的「头像 + 座右铭」，文章页据此放自己的标题
 const hasSlot = Astro.slots.has('default');
 const slides = single ? images.slice(0, 1) : images;
-
-// 皮肤壁纸层只在「用默认池轮播」时渲染。
-// 文章页会传自己的封面图（single），那时不该再叠一层海洋壁纸。
-// 用 images === SKIN_WALLPAPERS.default 判断，而不是再加一个 prop ——
-// 这样调用方不用关心皮肤机制，行为自动正确。
-const renderSkinLayer = !single && images === SKIN_WALLPAPERS.default;
 
 // 逐行揭幕的「行」怎么切：
 //   箴言都是「上句，下句」的骈句（如 "凡心所向，素履以往"），所以按中文逗号切最自然
@@ -95,18 +79,7 @@ const splitLine = (text) => {
   </div>
   </div>
 
-  <!-- 皮肤壁纸层：两组图都渲染进 DOM，由 CSS 按 data-skin 切显隐。
-       为什么不用 JS 换 src：换 src 必然有一次解码延迟 —— 点完切换会先白一下再出新图。
-       两组都在 DOM 里、图片早就解码好了，切换是即时的。
-       代价是首屏多下载一组图；壁纸池里只有一张是 eager，其余 lazy，
-       海洋那组是 SVG（7~10KB），成本可忽略。 -->
-  {renderSkinLayer && (
-    <div class="wp-skin-layer" aria-hidden="true">
-      {SKIN_WALLPAPERS.ocean.map((src, i) => (
-        <img src={src} alt="" loading="lazy" decoding="async" data-skin-slide={i} />
-      ))}
-    </div>
-  )}
+
 
   <!-- 景深层（「远景」）：把当前这张壁纸再放大 + 重模糊铺一层，入场时从更远处推近。
        为什么要单独一层而不是给 .wallpaper-images 加更重的模糊：
@@ -237,7 +210,6 @@ const splitLine = (text) => {
   // 轮播 / 座右铭的定时器：每次（重新）初始化前先清掉旧的，避免换页后越转越快
   let slideTimer = null;
   let quoteTimer = null;
-  let skinSlideTimer = null;
 
   // 当前壁纸 / 座右铭序号都存在 sessionStorage 里：换页、刷新都不会清零，
   // 所以导航到别的页面时壁纸会「接着上一张」继续轮播，而不是每次都从第一张重新开始。
@@ -261,7 +233,6 @@ const splitLine = (text) => {
   function startRotations() {
     clearInterval(slideTimer);
     clearInterval(quoteTimer);
-    clearInterval(skinSlideTimer);
 
     // 壁纸轮播：多张壁纸每隔几秒淡入切换（和首页同一套节奏）
     const wrap = document.querySelector('.wallpaper-wrapper');
@@ -282,21 +253,6 @@ const splitLine = (text) => {
         setWpIdx(slideIdx);
       }, interval);
       setWpIdx(slideIdx);
-    }
-
-    // 皮肤壁纸轮播：海洋那组独立走一遍同样的节奏。
-    // 为什么单独一套索引：两组的张数将来可能不同，共用一个下标会错位。
-    const skinSlides = Array.from(document.querySelectorAll('.wp-skin-layer img'));
-    if (skinSlides.length > 0) {
-      let si = 0;
-      skinSlides.forEach((s, i) => s.setAttribute('data-active', i === 0 ? 'true' : 'false'));
-      if (skinSlides.length > 1) {
-        skinSlideTimer = setInterval(() => {
-          skinSlides[si].setAttribute('data-active', 'false');
-          si = (si + 1) % skinSlides.length;
-          skinSlides[si].setAttribute('data-active', 'true');
-        }, interval);
-      }
     }
 
     // 座右铭轮换：淡入浮现 → 停留几秒 → 淡出，再换下一句
@@ -429,52 +385,6 @@ const splitLine = (text) => {
   }
   .wp-slide.active { opacity: 1; transform: scale(1); }
   .wp-slide img { width: 100%; height: 100%; object-fit: cover; }
-
-  /* ===== 皮肤壁纸层 =====
-     默认皮肤用 .wp-slide 那套（含轮播）；切到 ocean 时把它整层淡出，
-     再把 .wp-skin-layer 里的海洋图淡入。
-     两层都常驻 DOM，切换只是 opacity 变化 —— 没有解码延迟，点下去立刻换。
-     海洋那组是 SVG，可以随便拉伸不会糊。 */
-  .wp-skin-layer {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease;
-  }
-  .wp-skin-layer img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0;
-    transition: opacity 1.4s ease;
-  }
-  /* 海洋组内部也轮播：和 .wp-slide 一样由脚本切 active，
-     这里用 nth-child 之外的属性选择器，脚本只改 data-active */
-  .wp-skin-layer img[data-active='true'] { opacity: 1; }
-
-  /* 默认皮肤：海洋层隐藏 */
-  html:not([data-skin='ocean']) .wp-skin-layer { opacity: 0; }
-
-  /* 海洋皮肤：默认层整体淡出，海洋层淡入 */
-  html[data-skin='ocean'] .wallpaper-images { opacity: 0; }
-  html[data-skin='ocean'] .wp-skin-layer { opacity: 1; }
-  /* 海洋壁纸没有 .wp-depth 那张放大模糊的底图对应关系，
-     直接把景深层的图也换掉做不到（它是 <img src>），
-     所以海洋皮肤下把景深层隐藏，避免闪出雾紫那张的残影 */
-  html[data-skin='ocean'] .wp-depth { opacity: 0; }
-
-  /* ⚠️ 换肤过渡只挂在 html.skin-switching 这一次性标记上。
-     不能常驻：.wallpaper-images / .wp-depth 身上跑着入场动画
-     （wp-bg-in / wp-depth-in），常驻 transition 会在动画被摘掉的那一刻
-     补一段多余的淡出，开场就不干净了。 */
-  html.skin-switching .wallpaper-images,
-  html.skin-switching .wp-skin-layer,
-  html.skin-switching .wp-depth {
-    transition: opacity 0.5s ease !important;
-  }
 
   /* ===== 景深层（远景）=====
      同一张壁纸放大到 1.22、重模糊 30px 铺在最底下，入场时缓慢推近并聚焦。

@@ -3,7 +3,7 @@
 //   左缩略图 + 标题 + 摘要 + 标签药丸 + 右下角阅读时长
 // 仅首页使用；归档 / 标签页仍用 PostCard（卡片网格）。
 import { readingTime, type Post } from '../lib/posts';
-import { coverPair } from '../lib/covers';
+import { fallbackCover } from '../lib/covers';
 import { categories } from '../data/categories';
 import Icon from './Icon.astro';
 
@@ -33,20 +33,13 @@ const plainBody = post.body
 const excerpt = (description ?? '').trim() || plainBody.slice(0, 110);
 
 // 缩略图兜底：与 PostCard 共用同一套池子（见 lib/covers.ts），按位置轮换避免相邻撞图。
-// 两组封面都渲染进 DOM，由 CSS 按 data-skin 控制显隐 ——
-// 用 JS 换 src 会有解码延迟，切皮肤时缩略图会先白一下。
 const pick = typeof index === 'number' ? index : 0;
-const pair = coverPair(pick);
-const coverSrc = cover ?? pair.primary;
-const coverAlt = cover ?? pair.alt;
+const coverSrc = cover ?? fallbackCover(pick);
 ---
 
 <a class="post-row glass-card onload-animation" href={`/posts/${post.id}/`}>
   <div class="post-row-thumb">
-    <!-- 两套封面叠在一起，按 data-skin 切显隐。只有一 px 差异，
-         但省掉了切皮肤时的解码白屏。 -->
-    <img class="thumb-a" src={coverSrc} alt="" loading="lazy" />
-    <img class="thumb-b" src={coverAlt} alt="" loading="lazy" />
+    <img src={coverSrc} alt="" loading="lazy" />
   </div>
 
   <div class="post-row-body">
@@ -103,14 +96,6 @@ const coverAlt = cover ?? pair.alt;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
   }
   .post-row:hover .post-row-thumb img { transform: scale(1.07); }
-
-  /* ---- 两套封面按皮肤切显隐 ----
-     .thumb-a 是「当前皮肤」的图，.thumb-b 是另一套。
-     默认皮肤下 a 显示、b 隐藏；ocean 皮肤下反过来。
-     用 opacity 而不是 display，这样切换时是柔和淡入而不是硬闪。 */
-  .thumb-b { opacity: 0; }
-  :global(html[data-skin='ocean']) .thumb-a { opacity: 0; }
-  :global(html[data-skin='ocean']) .thumb-b { opacity: 1; }
 
   .post-row-body {
     flex: 1;

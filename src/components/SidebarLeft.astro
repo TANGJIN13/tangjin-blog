@@ -2,7 +2,6 @@
 // 通用左侧栏：个人资料卡 + 主题切换（首页与各内页共用）
 import Icon from './Icon.astro';
 import ThemeToggle from './ThemeToggle.astro';
-import SkinToggle from './SkinToggle.astro';
 import { site } from '../site';
 
 const path = Astro.url.pathname;
@@ -43,22 +42,11 @@ const isActive = (href: string) => (href === '/' ? path === '/' : path.startsWit
 
   <div class="card-base widget-card" data-reveal style="--rv: 2100ms">
     <h3 class="widget-title"><Icon name="palette" size="1.05rem" /> 主题</h3>
-    <!-- 两条正交的轴：明暗（ThemeToggle）× 配色（SkinToggle） -->
-    <div class="theme-stack">
-      <ThemeToggle />
-      <SkinToggle />
-    </div>
+    <ThemeToggle />
   </div>
 </aside>
 
 <style>
-  /* 主题卡里叠两个切换器（明暗 / 配色），留一点间距免得挤在一起 */
-  .theme-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
   .profile-card {
     text-align: center;
     padding: 1.5rem 1rem 1.1rem;

@@ -1,8 +1,5 @@
 ---
 import '../styles/global.css';
-// 皮肤（配色气质）覆盖层，必须在 global.css 之后 —— 它靠源码顺序 + 属性选择器
-// 提升特异性来压过 :root / [data-theme='dark'] 的默认值
-import '../styles/skins.css';
 import { site } from '../site';
 import Icon from '../components/Icon.astro';
 import StaggerReveal from '../components/StaggerReveal.astro';
@@ -96,15 +93,6 @@ const canonical = Astro.url.pathname === '/' ? site.url : new URL(Astro.url.path
             ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
             : pref;
           document.documentElement.setAttribute('data-theme', resolved);
-        } catch (e) {}
-        // ①b 皮肤：和主题同一条理由 —— 必须在首帧前写好，
-        //     否则海洋用户会先闪一帧雾紫配色。默认皮肤不写属性，
-        //     让 :root 的原始配色生效（老用户零变化）。
-        try {
-          var skin = localStorage.getItem('skin');
-          if (skin && skin !== 'default') {
-            document.documentElement.setAttribute('data-skin', skin);
-          }
         } catch (e) {}
         // ② 首屏入场：**每次硬加载都播一次**（用户明确要求）。
         //    这里只排除"用户偏好减少动态"这一种情况 —— 不再读 sessionStorage，

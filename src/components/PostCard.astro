@@ -1,6 +1,6 @@
 ---
 import { formatDateTime, readingTime, type Post } from '../lib/posts';
-import { coverPair } from '../lib/covers';
+import { fallbackCover } from '../lib/covers';
 import { categories } from '../data/categories';
 import Icon from './Icon.astro';
 
@@ -54,17 +54,13 @@ for (const ch of post.id) {
   hash = Math.imul(hash, 16777619);
 }
 const pick = typeof index === 'number' ? index : Math.abs(hash);
-const pair = coverPair(pick);
-const coverSrc = cover ?? pair.primary;
-const coverAlt = cover ?? pair.alt;
+const coverSrc = cover ?? fallbackCover(pick);
 ---
 
 <article class="post-card glass-card onload-animation" {style}>
   <!-- 封面：置顶，16:9（文章自带 cover 优先，没有就用风景照兜底） -->
   <a class="post-card-cover" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
-    <!-- 两套封面叠放，按 data-skin 切显隐（理由同 PostListItem） -->
-    <img class="pc-a" src={coverSrc} alt="" loading="lazy" />
-    <img class="pc-b" src={coverAlt} alt="" loading="lazy" />
+    <img src={coverSrc} alt="" loading="lazy" />
     <span class="cover-shine" aria-hidden="true"></span>
     {pinned && (
       <span class="cover-flag"><Icon name="flag" size="0.68rem" />置顶</span>
@@ -130,19 +126,12 @@ const coverAlt = cover ?? pair.alt;
     text-decoration: none !important;
   }
   .post-card-cover img {
-    position: absolute;
-    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
     transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
   }
   .post-card:hover .post-card-cover img { transform: scale(1.06); }
-
-  /* 两套封面按皮肤切显隐（同 PostListItem） */
-  .pc-b { opacity: 0; }
-  :global(html[data-skin='ocean']) .pc-a { opacity: 0; }
-  :global(html[data-skin='ocean']) .pc-b { opacity: 1; }
 
   /* 封面上的斜向光泽扫过 */
   .cover-shine {
