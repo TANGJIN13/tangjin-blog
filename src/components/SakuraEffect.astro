@@ -12,6 +12,24 @@
 // 正好落在浮动按钮栈 [bottom 48px 起、高 119px] 的范围内，elementFromPoint 打到的
 // 永远是别人的图标，整颗按钮根本点不到）。本组件只负责行为：按 id 找到它、绑事件、同步状态。
 //
+// ⚠️ 入场时序（用户 2026-10-14 明确要求）：
+//   "樱花不应该在入场动效没演完的时候就出现"。
+//   所以「开站那一阵子」不再从 t=0 开始，而是**等 html.intro-run 摘掉（tj:intro-done）
+//   之后再飘**，并带 ~0.8s 的整体淡入，避免 32 片花瓣在 2.9s 那一刻硬生生地弹出来。
+//   判定方式见 waitIntro()：只在「入场真的在跑」（html 上有 intro-run）时才等 ——
+//   软导航换页时 StaggerReveal 不会重跑脚本、html 上只有 intro-pending，
+//   这时要立刻开飘，不能再等 3 秒。
+//
+// ⚠️ 性能约束（用户报「进网站卡卡的」后重做）：
+//   入场那 2.9 秒本来是全站最重的一段（三层模糊分镜 + 光晕 + 毛玻璃导航），
+//   而 canvas 是**整屏 fixed、每帧全量重绘**的一层，叠加进去就是雪上加霜。
+//   两条硬约束因此固定下来：
+//     ① 入场期间**一帧都不画**（见上）；
+//     ② 每帧的绘制必须只做贴图，不做路径 —— 花瓣/闪光都预渲染成离屏精灵
+//        （详见 buildSprites() 的说明：原先 32 片花瓣每帧要做 96 次路径绘制，
+//         每颗闪光还要现算 shadowBlur，那是 canvas 里最贵的操作之一）。
+//   另外：一阵子飘完之后把 canvas 整层 display:none，不再白占一个整屏合成层。
+//
 // 注意：脚本部分**必须写纯 JS**，Astro 的脚本块里塞 TS 类型标注会直接报错、整段不执行（踩过）。
 ---
 
@@ -23,6 +41,10 @@
   // 常开时的花瓣数量（少一点更像「偶尔飘落」而不是暴雪）
   const TARGET_PETALS = 32;
   const KEY = 'tj-sakura-mode';
+  // 入场分镜最长 2.9s（StaggerReveal 的 DONE_AT）+ 0.7s 余量。
+  // 兜底用：万一 tj:intro-done 事件没送到（组件顺序被改、脚本报错等），
+  // 也不能让樱花永远不出现 —— 到点自己开。
+  const INTRO_FALLBACK_MS = 3600;
 
   // 花瓣配色：比早期的浅粉更深。整站底色换成浅色水彩后，
   // 原来的 #ffb7c5 之类贴在浅色背景上色差只有 6% 左右，几乎看不见。
@@ -30,6 +52,15 @@
   // 描边：浅色背景（白色正文、浅色壁纸）上给花瓣一个轮廓，不然会糊在背景里
   const PETAL_EDGE = 'rgba(198, 88, 132, 0.42)';
   const SPARKLE_COLORS = ['#fff', '#ffe4f0', '#ffd7ec', '#fff0f5', '#ffe0ec'];
+
+  // ---- 精灵（预渲染）参数 ----
+  // 花瓣最大 size 是 16（见 createPetal），闪光最大 4（见 createSparkle）。
+  // 精灵按基准尺寸画一次，运行时按比例 drawImage 缩放。
+  const PETAL_BASE = 16;
+  const SPARKLE_BASE = 4;
+  // 超采样：贴图按 2 倍分辨率烤，缩小贴上去边缘才不毛
+  const SPRITE_SS = 2;
+  const SPARKLE_GLOW = 8; // 闪光外晕半径（shadowBlur 一次性烤进贴图）
 
   const rand = (a, b) => a + Math.random() * (b - a);
 
@@ -50,6 +81,11 @@
   let burstUntil = 0;
   // 一阵子模式到点后的整体淡出系数（1 → 0）。常开模式恒为 1。
   let burstFade = 1;
+  // 入场结束后那一次「淡入」系数（0 → 1）。其它情况恒为 1。
+  // 为什么要它：等入场演完才开飘，如果 32 片花瓣直接整屏出现，会像贴纸一样"啪"地糊上来。
+  let startFade = 1;
+  // 用户手动点过按钮 → 自动那一阵子就彻底让位，绝不再插手（否则会把用户的选择覆盖掉）
+  let manual = false;
   // 上一次 init 绑定的 canvas 元素。
   // ⚠️ 这是「樱花定住不动」那个 bug 的关键：ClientRouter 的首屏会先让脚本自己执行一次
   //（下面的 init()），紧接着又派发一次 astro:page-load 再调一次 init()。
@@ -57,6 +93,23 @@
   // 「本次会话已经飘过」的分支里直接 return —— 画面上就留下第一帧，永远不动了。
   // 用元素身份判断「是不是同一页被重复调用」：同一个 canvas 就直接跳过。
   let boundCanvas = null;
+
+  // 鼠标光晕的颜色：缓存起来。
+  // ⚠️ 原来是在每帧的 drawMouseGlow() 里 getComputedStyle(document.documentElement)，
+  // 那是**每帧强制一次样式解析**，纯白烧。色相只在切主题时才变，所以只在 init 时读一次，
+  // 再用 MutationObserver 盯 data-theme。
+  let hueCache = '300';
+  function refreshHue() {
+    try {
+      const v = getComputedStyle(document.documentElement).getPropertyValue('--hue').trim();
+      if (v) hueCache = v;
+    } catch (e) {}
+  }
+  try {
+    new MutationObserver(refreshHue).observe(document.documentElement, {
+      attributes: true, attributeFilter: ['data-theme'],
+    });
+  } catch (e) {}
 
   function readSaved() {
     try {
@@ -74,6 +127,9 @@
   function resize() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    // 尺寸一变，旧的渐变对象作废（虽然 CanvasGradient 本身还能用，
+    // 但位置是按旧画布算的，重来一次最省心）
+    glowGrad = null;
   }
 
   // initial = true 时把花瓣随机撒在整个视口里（一进来就已经是「在飘」的状态），
@@ -89,7 +145,7 @@
       rotSpeed: rand(-0.022, 0.022),
       // 透明度整体上调：浅色底需要更高的不透明度才看得出花瓣
       opacity: rand(0.55, 0.9),
-      color: PETAL_COLORS[Math.floor(Math.random() * PETAL_COLORS.length)],
+      colorIdx: Math.floor(Math.random() * PETAL_COLORS.length),
       swing: 0,
       swingSpeed: rand(0.008, 0.03),
     };
@@ -103,87 +159,134 @@
       opacity: 0,
       speed: rand(0.5, 2),
       angle: Math.random() * Math.PI * 2,
-      color: SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)],
+      colorIdx: Math.floor(Math.random() * SPARKLE_COLORS.length),
       life: 0,
       maxLife: rand(30, 70),
     };
   }
 
   // 花瓣形状：基部收窄、末端宽圆并带一个凹口 —— 比原来的「两头尖」更像樱花瓣
-  function petalPath(size) {
-    ctx.beginPath();
-    ctx.moveTo(0, -size);
-    ctx.bezierCurveTo(size * 0.74, -size * 0.44, size * 0.64, size * 0.5, size * 0.4, size * 0.84);
-    ctx.quadraticCurveTo(0, size * 0.6, -size * 0.4, size * 0.84);
-    ctx.bezierCurveTo(-size * 0.64, size * 0.5, -size * 0.74, -size * 0.44, 0, -size);
-    ctx.closePath();
+  function petalPath(g, size) {
+    g.beginPath();
+    g.moveTo(0, -size);
+    g.bezierCurveTo(size * 0.74, -size * 0.44, size * 0.64, size * 0.5, size * 0.4, size * 0.84);
+    g.quadraticCurveTo(0, size * 0.6, -size * 0.4, size * 0.84);
+    g.bezierCurveTo(-size * 0.64, size * 0.5, -size * 0.74, -size * 0.44, 0, -size);
+    g.closePath();
+  }
+
+  // ---- 预渲染精灵 ----
+  // 为什么要有这一层：tick() 是 60fps 常驻循环，里面每一个"路径绘制"都要乘以花瓣数。
+  // 原实现每片花瓣要 fill + stroke + ellipse 高光（3 次路径），32 片就是 96 次/帧；
+  // 每颗闪光还要现设 shadowBlur（canvas 里最贵的操作之一，随半径呈平方级开销）。
+  // 改成：每种颜色只画一次进离屏小画布，运行时只做 drawImage —— 绘制量从"每帧 N 次路径"
+  // 降到"每帧 N 次贴图"，且描边、高光、外晕全部一次性烤好，视觉完全一致。
+  let petalSprites = null;
+  let sparkleSprites = null;
+  let petalBox = 0;    // 精灵画布边长（设备像素）
+  let sparkleBox = 0;
+
+  function buildSprites() {
+    if (petalSprites) return;
+    const pad = 1.5; // 描边 1px + 抗锯齿余量
+    petalBox = Math.ceil((PETAL_BASE + pad) * 2 * SPRITE_SS);
+    const pc = petalBox / 2;
+    petalSprites = PETAL_COLORS.map(function (color) {
+      const c = document.createElement('canvas');
+      c.width = c.height = petalBox;
+      const g = c.getContext('2d');
+      g.translate(pc, pc);
+      g.scale(SPRITE_SS, SPRITE_SS);
+      g.fillStyle = color;
+      petalPath(g, PETAL_BASE);
+      g.fill();
+      // 描边：浅色区域（白色正文、浅色壁纸）上给花瓣一个轮廓，不然会糊在背景里
+      g.globalAlpha = 0.8;
+      g.strokeStyle = PETAL_EDGE;
+      g.lineWidth = 1;
+      g.stroke();
+      // 花瓣上的高光
+      g.globalAlpha = 0.35;
+      g.fillStyle = '#fff';
+      g.beginPath();
+      g.ellipse(-PETAL_BASE * 0.14, -PETAL_BASE * 0.1, PETAL_BASE * 0.13, PETAL_BASE * 0.26, -0.3, 0, Math.PI * 2);
+      g.fill();
+      return c;
+    });
+
+    sparkleBox = Math.ceil((SPARKLE_BASE + SPARKLE_GLOW) * 2 * SPRITE_SS);
+    const sc = sparkleBox / 2;
+    sparkleSprites = SPARKLE_COLORS.map(function (color) {
+      const c = document.createElement('canvas');
+      c.width = c.height = sparkleBox;
+      const g = c.getContext('2d');
+      g.translate(sc, sc);
+      g.scale(SPRITE_SS, SPRITE_SS);
+      g.fillStyle = color;
+      g.shadowColor = color;
+      g.shadowBlur = SPARKLE_GLOW;
+      const s = SPARKLE_BASE;
+      g.beginPath();
+      g.moveTo(0, -s);
+      g.lineTo(s * 0.2, -s * 0.2);
+      g.lineTo(s, 0);
+      g.lineTo(s * 0.2, s * 0.2);
+      g.lineTo(0, s);
+      g.lineTo(-s * 0.2, s * 0.2);
+      g.lineTo(-s, 0);
+      g.lineTo(-s * 0.2, -s * 0.2);
+      g.closePath();
+      g.fill();
+      return c;
+    });
+  }
+
+  // 把「逻辑 size」换算成精灵贴图的绘制边长
+  function petalDrawSize(size) {
+    return (size * petalBox) / (PETAL_BASE * SPRITE_SS);
+  }
+  function sparkleDrawSize(size) {
+    return (size * sparkleBox) / (SPARKLE_BASE * SPRITE_SS);
   }
 
   function drawPetal(p) {
+    const box = petalDrawSize(p.size);
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rotation);
-    ctx.globalAlpha = p.opacity * burstFade;
-    ctx.fillStyle = p.color;
-
-    petalPath(p.size);
-    ctx.fill();
-    // 描边：浅色区域（白色正文、浅色壁纸）上给花瓣一个轮廓，不然会糊在背景里
-    ctx.globalAlpha = p.opacity * 0.8;
-    ctx.strokeStyle = PETAL_EDGE;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    // 花瓣上的高光
-    ctx.globalAlpha = p.opacity * 0.35;
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(-p.size * 0.14, -p.size * 0.1, p.size * 0.13, p.size * 0.26, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-
+    ctx.globalAlpha = p.opacity * burstFade * startFade;
+    ctx.drawImage(petalSprites[p.colorIdx], -box / 2, -box / 2, box, box);
     ctx.restore();
   }
 
   function drawSparkle(s) {
     const fadeIn = Math.min(s.life / 10, 1);
     const fadeOut = Math.min((s.maxLife - s.life) / 15, 1);
-    const alpha = s.opacity * fadeIn * fadeOut;
+    const alpha = s.opacity * fadeIn * fadeOut * startFade;
     if (alpha <= 0) return;
-
-    ctx.save();
+    const box = sparkleDrawSize(s.size);
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = s.color;
-    ctx.shadowColor = s.color;
-    ctx.shadowBlur = 6;
-
-    ctx.translate(s.x, s.y);
-    ctx.beginPath();
-    ctx.moveTo(0, -s.size);
-    ctx.lineTo(s.size * 0.2, -s.size * 0.2);
-    ctx.lineTo(s.size, 0);
-    ctx.lineTo(s.size * 0.2, s.size * 0.2);
-    ctx.lineTo(0, s.size);
-    ctx.lineTo(-s.size * 0.2, s.size * 0.2);
-    ctx.lineTo(-s.size, 0);
-    ctx.lineTo(-s.size * 0.2, -s.size * 0.2);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.restore();
+    ctx.drawImage(sparkleSprites[s.colorIdx], s.x - box / 2, s.y - box / 2, box, box);
+    ctx.globalAlpha = 1;
   }
 
   // 鼠标跟随光晕（用站点主色相）
+  // ⚠️ 渐变对象按鼠标位置缓存：鼠标不动就不重建。
+  let glowGrad = null;
+  let glowX = -9999;
+  let glowY = -9999;
   function drawMouseGlow() {
     if (mouse.x < 0) return;
-    const hue = getComputedStyle(document.documentElement).getPropertyValue('--hue').trim() || '300';
-    ctx.save();
-    const grad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 120);
-    grad.addColorStop(0, 'hsl(' + hue + ' 80% 70% / 0.08)');
-    grad.addColorStop(0.5, 'hsl(' + hue + ' 80% 70% / 0.03)');
-    grad.addColorStop(1, 'transparent');
-    ctx.fillStyle = grad;
+    if (!glowGrad || mouse.x !== glowX || mouse.y !== glowY) {
+      glowGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 120);
+      glowGrad.addColorStop(0, 'hsl(' + hueCache + ' 80% 70% / 0.08)');
+      glowGrad.addColorStop(0.5, 'hsl(' + hueCache + ' 80% 70% / 0.03)');
+      glowGrad.addColorStop(1, 'transparent');
+      glowX = mouse.x;
+      glowY = mouse.y;
+    }
+    ctx.fillStyle = glowGrad;
     ctx.fillRect(mouse.x - 120, mouse.y - 120, 240, 240);
-    ctx.restore();
   }
 
   function tick() {
@@ -206,6 +309,8 @@
     } else {
       burstFade = 1;
     }
+    // 开场淡入（只有「等入场演完再开」那一次会用到，约 0.8s 到满）
+    if (startFade < 1) startFade = Math.min(1, startFade + 0.022);
 
     for (let i = petals.length - 1; i >= 0; i--) {
       const p = petals[i];
@@ -243,15 +348,21 @@
       petals = [];
       sparkles = [];
       animId = 0;
+      // 整层收掉：留着一个整屏透明 canvas 等于白占一个合成层，
+      // 页面往下滚的时候合成器还要带着它。下次开飘再放回来。
+      canvas.style.display = 'none';
       return;
     }
 
     animId = requestAnimationFrame(tick);
   }
 
-  function start(initial) {
+  function start(initial, gentle) {
+    if (canvas) canvas.style.display = '';
     resize();
+    buildSprites();
     burstFade = 1;
+    startFade = gentle ? 0 : 1;
     petals = Array.from({ length: initial ? TARGET_PETALS : 6 }, function () {
       return createPetal(initial);
     });
@@ -268,6 +379,8 @@
     sparkles = [];
     spawnDeadline = 0;
     burstFade = 1;
+    startFade = 1;
+    if (canvas) canvas.style.display = 'none';
   }
 
   function syncButton() {
@@ -278,7 +391,7 @@
     toggleBtn.setAttribute('aria-pressed', String(on));
   }
 
-  function setMode(next, initial) {
+  function setMode(next, initial, gentle) {
     mode = next;
     saveMode(next);
     syncButton();
@@ -287,11 +400,12 @@
     } else {
       if (next === 'burst') burstUntil = Date.now() + BURST_MS;
       spawnDeadline = next === 'burst' ? burstUntil : 0;
-      start(!!initial);
+      start(!!initial, !!gentle);
     }
   }
 
   function onClick() {
+    manual = true;
     setMode(mode === 'on' ? 'off' : 'on');
   }
 
@@ -310,6 +424,25 @@
   window.addEventListener('mousemove', onMove);
   window.addEventListener('mouseleave', onLeave);
   window.addEventListener('resize', onResize);
+
+  // 等入场分镜演完再回调。
+  // 判据只看 html 上有没有 intro-run：
+  //   · 硬加载 → StaggerReveal 的脚本（在 body 里比本组件靠前）已经把
+  //     intro-pending 换成 intro-run，这里必须等；
+  //   · 软导航换页 → StaggerReveal 的脚本不会重跑，html 上只有 intro-pending，
+  //     没有 intro-run，立刻开飘（换页本来就不重播入场）；
+  //   · prefers-reduced-motion → 直接是 intro-done，立刻开飘。
+  function waitIntro(cb) {
+    if (!document.documentElement.classList.contains('intro-run')) return cb();
+    let fired = false;
+    const go = function () {
+      if (fired) return;
+      fired = true;
+      cb();
+    };
+    document.addEventListener('tj:intro-done', go, { once: true });
+    window.setTimeout(go, INTRO_FALLBACK_MS);
+  }
 
   // 初始化：每次换页（客户端路由会换掉 canvas / 按钮元素）都要重新取元素、重绑事件。
   // ⚠️ 必须幂等：首屏会被调用两次（脚本自己一次 + astro:page-load 一次），
@@ -335,10 +468,25 @@
     ctx = canvas.getContext('2d');
     if (!ctx) return;
     toggleBtn.onclick = onClick;
+    refreshHue();
+    // 先整层收掉：入场期间本来就不该画，没必要白占一个整屏合成层。
+    // 真正开飘时由 start() 放回来。
+    canvas.style.display = 'none';
 
     const saved = readSaved();
     if (saved === 'off') return setMode('off', false);
-    if (saved === 'on') return setMode('on', true);
+    if (saved === 'on') {
+      // 「常开」也是**加载时自动上场**，同样等入场演完再飘 ——
+      // 判据是"用户此刻有没有动手"：只有当场点按钮（onClick）才立刻生效，
+      // 刷新 / 新开标签页恢复出来的常开态一律跟着入场时序走。
+      const onCanvas = canvas;
+      waitIntro(function () {
+        if (boundCanvas !== onCanvas) return;
+        if (manual) return;
+        setMode('on', true);
+      });
+      return syncButton();
+    }
 
     // 只尊重系统的「减少动态效果」；手机端也照常飘。
     // 之前这里还有一条 `window.innerWidth < 768` 直接跳过，「刚点开网站飘 10 秒」
@@ -359,8 +507,16 @@
       stop();
       return syncButton();
     }
-    burstPlayed = true;
-    setMode('burst', true);
+
+    // 首次：等入场分镜演完再飘（用户明确要求），并且带一点淡入。
+    const myCanvas = canvas;
+    waitIntro(function () {
+      if (boundCanvas !== myCanvas) return; // 这期间换页了，交给新页面的 init
+      if (burstPlayed) return;              // 已经被别的路径开过了
+      if (manual) return;                   // 用户已经手动点过按钮，自动那阵子让位
+      burstPlayed = true;
+      setMode('burst', true, true);
+    });
   }
 
   init();

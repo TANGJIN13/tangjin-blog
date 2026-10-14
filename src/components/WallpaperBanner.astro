@@ -420,9 +420,16 @@ const splitLine = (text) => {
   }
 
   /* 中景（真正的壁纸）：从「放大 + 模糊 + 略暗」推到「原位 + 清晰 + 正常亮度」。
-     1.9s 比原来长 0.4s，因为现在要和远景、光晕、标题错开，不能再抢。 */
+     1.9s 比原来长 0.4s，因为现在要和远景、光晕、标题错开，不能再抢。
+     ⚠️ will-change 只在入场期间挂（和 .wp-line-inner 同一套做法）：
+        blur 半径每帧都在变，这一层又是**整幅壁纸那么大**（1440×620 量级）。
+        不提前提升为合成层，浏览器每帧都要把整张图重新光栅化一遍再上模糊 ——
+        这是入场那 2 秒里最重的一笔。收尾摘掉 intro-run 时提示一起消失，不留常驻合成层。
+     ⚠️ 这一层里**没有 position:fixed 后代**（浮动按钮 / 音乐播放器都在 .main-layout 里），
+        所以挂 transform 类提示不会造成"固定元素改参照系"的老坑。 */
   html.intro-run .wallpaper-images {
     animation: wp-bg-in 1.9s cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+    will-change: transform, filter;
   }
   @keyframes wp-bg-in {
     from {

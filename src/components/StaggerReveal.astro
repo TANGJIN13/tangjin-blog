@@ -25,7 +25,8 @@
 //     开发时反复刷新也能看到。站内软导航（ClientRouter）换页不重播，保持不打断阅读。
 //   · prefers-reduced-motion → 完全不参与，内容直接可见。
 //   · 播完摘掉 intro-run（让 will-change / 动画终态都退场，页面回到完全静止的常态），
-//     同时挂上 intro-done（放行句尾光标闪烁等"常态动效"）。
+//     同时挂上 intro-done（放行句尾光标闪烁等"常态动效"），并广播 `tj:intro-done`
+//     —— 需要"等入场演完才上场"的组件（樱花特效）订阅它，见 announce() 的说明。
 //
 // ⚠️ 踩过的坑（务必保留这些约束）：
 //   1) `astro:page-load` 在**初次硬加载**时也会触发（不只是软导航），
@@ -47,12 +48,24 @@
                         // —— 留足余量给"标题→副标题→指示器"这条链的视觉落定。
     var root = document.documentElement;
 
+    // 收尾时广播一条事件，让"必须等入场演完才能上场"的东西（目前是樱花特效）接得上。
+    // 为什么用事件而不是让它们去轮询 / MutationObserver 盯 class：
+    //   · 收尾有三条路径（定时器 / animationend / 软导航），事件在**统一出口**发一次，
+    //     订阅方不需要知道有几条路径、也不需要自己去重；
+    //   · 订阅方在初次加载时通常**晚于本脚本**执行（本组件在 body 里排得更靠前），
+    //     所以还要配合"读一次当前 class"来判断是否已经错过 —— 见 SakuraEffect.waitIntro()。
+    // 事件名带 tj: 前缀，避免和其它库撞名。
+    function announce() {
+      try { document.dispatchEvent(new CustomEvent('tj:intro-done')); } catch (e) {}
+    }
+
     var finished = false;
     function finish() {
       if (finished) return;
       finished = true;
       root.classList.remove('intro-pending', 'intro-run');
       root.classList.add('intro-done');
+      announce();
     }
 
     // ---- 是否需要播 ----
@@ -66,6 +79,7 @@
       finished = true;
       root.classList.remove('intro-pending', 'intro-run');
       root.classList.add('intro-done');
+      announce();
     } else {
       root.classList.add('intro-run');
 
@@ -92,6 +106,7 @@
       finished = true;
       root.classList.remove('intro-pending', 'intro-run');
       root.classList.add('intro-done');
+      announce();
     });
   })();
 </script>
