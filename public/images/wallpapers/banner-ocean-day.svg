@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 800" preserveAspectRatio="xMidYMid slice">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#eaf6fb"/>
+<stop offset="34%" stop-color="#cfe9f4"/>
+<stop offset="62%" stop-color="#a8d4e8"/>
+<stop offset="84%" stop-color="#8dc0dc"/>
+<stop offset="100%" stop-color="#7fb2d2"/>
+</linearGradient>
+<linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#8fc0da"/>
+<stop offset="100%" stop-color="#2d6c92"/>
+</linearGradient>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+<stop offset="32%" stop-color="#bfe4f2" stop-opacity="0.55"/>
+<stop offset="100%" stop-color="#bfe4f2" stop-opacity="0"/>
+</radialGradient>
+<linearGradient id="reflect" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#ffffff" stop-opacity="0.62"/>
+<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+</linearGradient>
+<filter id="soft" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="16"/></filter>
+<filter id="softer" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="36"/></filter>
+</defs>
+<rect width="1920" height="800" fill="url(#sky)"/>
+<ellipse cx="1420" cy="214" rx="460" ry="230" fill="url(#glow)"/>
+<circle cx="1420" cy="214" r="46" fill="#ffffff" opacity="0.9" filter="url(#soft)"/>
+<g filter="url(#softer)">
+<ellipse cx="420" cy="150" rx="480" ry="22" fill="#f2f9fc" opacity="0.5"/>
+<ellipse cx="1380" cy="108" rx="560" ry="19" fill="#f2f9fc" opacity="0.42"/>
+<ellipse cx="930" cy="218" rx="450" ry="15" fill="#f2f9fc" opacity="0.36"/>
+<ellipse cx="1690" cy="232" rx="380" ry="13" fill="#f2f9fc" opacity="0.32"/>
+<ellipse cx="240" cy="300" rx="420" ry="16" fill="#f2f9fc" opacity="0.26"/>
+</g>
+<ellipse cx="1420" cy="600" rx="120" ry="150" fill="url(#reflect)" filter="url(#softer)"/>
+<path d="M-120.0 478.7 C34.3 478.7 34.3 490.7 188.6 490.7 C342.9 490.7 342.9 485.1 497.1 485.1 C651.4 485.1 651.4 475.2 805.7 475.2 C960.0 475.2 960.0 466.0 1114.3 466.0 C1268.6 466.0 1268.6 465.5 1422.9 465.5 C1577.1 465.5 1577.1 476.3 1731.4 476.3 C1885.7 476.3 1885.7 479.8 2040.0 479.8 L2040.0 840.0 L-120.0 840.0 Z" fill="#8dbed9" opacity="0.7"/>
+<ellipse cx="960.0" cy="476" rx="1440" ry="18" fill="#ffffff" opacity="0.25" filter="url(#softer)"/>
+<path d="M-120.0 546.8 C34.3 546.8 34.3 529.4 188.6 529.4 C342.9 529.4 342.9 516.2 497.1 516.2 C651.4 516.2 651.4 510.9 805.7 510.9 C960.0 510.9 960.0 529.2 1114.3 529.2 C1268.6 529.2 1268.6 552.6 1422.9 552.6 C1577.1 552.6 1577.1 548.0 1731.4 548.0 C1885.7 548.0 1885.7 534.9 2040.0 534.9 L2040.0 840.0 L-120.0 840.0 Z" fill="#7bafcc" opacity="0.8"/>
+<ellipse cx="960.0" cy="532" rx="1440" ry="21" fill="#ffffff" opacity="0.27" filter="url(#softer)"/>
+<path d="M-120.0 582.7 C34.3 582.7 34.3 585.5 188.6 585.5 C342.9 585.5 342.9 591.7 497.1 591.7 C651.4 591.7 651.4 618.9 805.7 618.9 C960.0 618.9 960.0 628.4 1114.3 628.4 C1268.6 628.4 1268.6 601.8 1422.9 601.8 C1577.1 601.8 1577.1 578.7 1731.4 578.7 C1885.7 578.7 1885.7 569.4 2040.0 569.4 L2040.0 840.0 L-120.0 840.0 Z" fill="#669dbc" opacity="0.87"/>
+<ellipse cx="960.0" cy="598" rx="1440" ry="24" fill="#ffffff" opacity="0.29" filter="url(#softer)"/>
+<path d="M-120.0 683.6 C34.3 683.6 34.3 677.4 188.6 677.4 C342.9 677.4 342.9 683.9 497.1 683.9 C651.4 683.9 651.4 668.3 805.7 668.3 C960.0 668.3 960.0 643.8 1114.3 643.8 C1268.6 643.8 1268.6 639.1 1422.9 639.1 C1577.1 639.1 1577.1 648.1 1731.4 648.1 C1885.7 648.1 1885.7 685.7 2040.0 685.7 L2040.0 840.0 L-120.0 840.0 Z" fill="#4e89aa" opacity="0.92"/>
+<ellipse cx="960.0" cy="666" rx="1440" ry="27" fill="#ffffff" opacity="0.31" filter="url(#softer)"/>
+<path d="M-120.0 721.4 C34.3 721.4 34.3 710.4 188.6 710.4 C342.9 710.4 342.9 705.0 497.1 705.0 C651.4 705.0 651.4 722.3 805.7 722.3 C960.0 722.3 960.0 738.7 1114.3 738.7 C1268.6 738.7 1268.6 743.5 1422.9 743.5 C1577.1 743.5 1577.1 765.5 1731.4 765.5 C1885.7 765.5 1885.7 755.1 2040.0 755.1 L2040.0 840.0 L-120.0 840.0 Z" fill="#39769b" opacity="0.96"/>
+<ellipse cx="960.0" cy="732" rx="1440" ry="30" fill="#ffffff" opacity="0.33" filter="url(#softer)"/>
+<path d="M-120.0 749.5 C60.0 749.5 60.0 719.4 240.0 719.4 C420.0 719.4 420.0 730.6 600.0 730.6 C780.0 730.6 780.0 757.1 960.0 757.1 C1140.0 757.1 1140.0 780.5 1320.0 780.5 C1500.0 780.5 1500.0 757.6 1680.0 757.6 C1860.0 757.6 1860.0 728.0 2040.0 728.0 L2040.0 840.0 L-120.0 840.0 Z" fill="#285f80" opacity="0.9"/>
+<ellipse cx="960.0" cy="742" rx="1344" ry="26" fill="#ffffff" opacity="0.34" filter="url(#softer)"/>
+
+</svg>
