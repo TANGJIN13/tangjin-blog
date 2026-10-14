@@ -12,6 +12,7 @@
 </radialGradient>
 <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
 <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
+<pattern id="grain" patternUnits="userSpaceOnUse" width="180" height="180"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="180" height="180" filter="url(#gn)" opacity="0.055"/></pattern>
 </defs>
 <rect width="800" height="450" fill="url(#bg)"/>
 <circle cx="282" cy="247" r="254" fill="url(#sun)"/>
@@ -21,5 +22,5 @@
 <path d="M-40 279 C33 279 33 302 107 302 C180 302 180 318 253 318 C327 318 327 312 400 312 C473 312 473 290 547 290 C620 290 620 270 693 270 C767 270 767 269 840 269" fill="none" stroke="#fff0d4" stroke-width="5.300000000000001" stroke-linecap="round" opacity="0.60"/>
 <path d="M-40 348 C33 348 33 366 107 366 C180 366 180 364 253 364 C327 364 327 343 400 343 C473 343 473 322 547 322 C620 322 620 317 693 317 C767 317 767 333 840 333" fill="none" stroke="#ffd08a" stroke-width="6.4" stroke-linecap="round" opacity="0.70"/>
 <path d="M-40 414 C33 414 33 415 107 415 C180 415 180 397 253 397 C327 397 327 374 400 374 C473 374 473 366 547 366 C620 366 620 379 693 379 C767 379 767 403 840 403" fill="none" stroke="#fff0d4" stroke-width="7.5" stroke-linecap="round" opacity="0.80"/>
-<rect width="800" height="450" fill="url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E")"/>
+<rect width="800" height="450" fill="url(#grain)"/>
 </svg>

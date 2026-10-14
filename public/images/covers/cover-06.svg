@@ -12,6 +12,7 @@
 </radialGradient>
 <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
 <filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
+<pattern id="grain" patternUnits="userSpaceOnUse" width="180" height="180"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="180" height="180" filter="url(#gn)" opacity="0.055"/></pattern>
 </defs>
 <rect width="800" height="450" fill="url(#bg)"/>
 <circle cx="646" cy="274" r="241" fill="url(#sun)"/>
@@ -22,5 +23,5 @@
 <rect x="0" y="338" width="800" height="2" fill="#e7dcff" opacity="0.24"/>
 <rect x="0" y="360" width="800" height="2" fill="#e7dcff" opacity="0.18"/>
 <rect x="0" y="382" width="800" height="2" fill="#e7dcff" opacity="0.12"/>
-<rect width="800" height="450" fill="url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E")"/>
+<rect width="800" height="450" fill="url(#grain)"/>
 </svg>

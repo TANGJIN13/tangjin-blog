@@ -42,15 +42,6 @@ PALETTES = [
     dict(name='cover-08', hi='#f3e6ff', mid='#a888d4', lo='#6d4e9c', glow='#ffe6c4', accent='#ffc27a'),  # 薰衣草
 ]
 
-NOISE = (
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' "
-    "width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence "
-    "type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E"
-    "%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E"
-    "%3Crect width='180' height='180' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E\")"
-)
-
-
 def build(p: dict, seed: int, motif: str):
     """motif: hills | aurora | waves | blobs | rings | sunset | mist | stars"""
     rnd = random.Random(seed)
@@ -78,6 +69,12 @@ def build(p: dict, seed: int, motif: str):
       '<feGaussianBlur stdDeviation="22"/></filter>')
     a('<filter id="softer" x="-50%" y="-50%" width="200%" height="200%">'
       '<feGaussianBlur stdDeviation="48"/></filter>')
+    a('<pattern id="grain" patternUnits="userSpaceOnUse" width="180" height="180">'
+      '<filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.9" '
+      'numOctaves="3" stitchTiles="stitch"/>'
+      '<feColorMatrix type="saturate" values="0"/></filter>'
+      '<rect width="180" height="180" filter="url(#gn)" opacity="0.055"/>'
+      '</pattern>')
     a('</defs>')
 
     a(f'<rect width="{W}" height="{H}" fill="url(#bg)"/>')
@@ -190,8 +187,12 @@ def build(p: dict, seed: int, motif: str):
         a(f'<path d="M{sx - 22} {sy} h44 M{sx} {sy - 22} v44" stroke="#ffffff" '
           f'stroke-width="1" opacity="0.55" stroke-linecap="round"/>')
 
-    # 颗粒：打散渐变色带，顺带一点纸感
-    a(f'<rect width="{W}" height="{H}" fill="{NOISE}"/>')
+    # 颗粒：打散渐变色带，顺带一点纸感。
+    # ⚠️ 这里用 <pattern> 而不是 data-URI 的 feTurbulence：
+    #    fill="url("data:image/svg+xml,...")" 里外层双引号会被提前截断，
+    #    整段 SVG 变成无效 XML —— 症状是 <img> 能加载（HTTP 200）但什么都不画，
+    #    排查时很容易误以为是路径或 lazy-loading 的问题。
+    a(f'<rect width="{W}" height="{H}" fill="url(#grain)"/>')
     a('</svg>')
     return '\n'.join(s)
 
