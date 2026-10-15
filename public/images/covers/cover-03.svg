@@ -1,26 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
 <defs>
-<linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
-<stop offset="0%" stop-color="#ffe4ec"/>
-<stop offset="52%" stop-color="#f0a0bd"/>
-<stop offset="100%" stop-color="#c75d86"/>
+<linearGradient id="sky" x1="0" y1="0" x2="0.08" y2="1">
+<stop offset="0%" stop-color="#e3f2f9"/>
+<stop offset="30%" stop-color="#b8dcee"/>
+<stop offset="55%" stop-color="#8fc4e2"/>
+<stop offset="78%" stop-color="#5e9cc4"/>
+<stop offset="100%" stop-color="#3f7ba3"/>
 </linearGradient>
-<radialGradient id="sun" cx="50%" cy="50%" r="50%">
-<stop offset="0%" stop-color="#fff0d4" stop-opacity="1"/>
-<stop offset="30%" stop-color="#fff0d4" stop-opacity="0.55"/>
-<stop offset="100%" stop-color="#fff0d4" stop-opacity="0"/>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#ffffff" stop-opacity="0.95"/>
+<stop offset="30%" stop-color="#ffffff" stop-opacity="0.5"/>
+<stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
 </radialGradient>
-<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
-<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
-<pattern id="grain" patternUnits="userSpaceOnUse" width="180" height="180"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="180" height="180" filter="url(#gn)" opacity="0.055"/></pattern>
+<linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#d4ecf5" stop-opacity="0"/>
+<stop offset="100%" stop-color="#d4ecf5" stop-opacity="0.5"/>
+</linearGradient>
+<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="42"/></filter>
+<pattern id="grain" patternUnits="userSpaceOnUse" width="160" height="160"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="160" height="160" filter="url(#gn)" opacity="0.045"/></pattern>
 </defs>
-<rect width="800" height="450" fill="url(#bg)"/>
-<circle cx="282" cy="247" r="254" fill="url(#sun)"/>
-<path d="M-40 139 C33 139 33 121 107 121 C180 121 180 121 253 121 C327 121 327 141 400 141 C473 141 473 163 547 163 C620 163 620 169 693 169 C767 169 767 154 840 154" fill="none" stroke="#ffd08a" stroke-width="2.0" stroke-linecap="round" opacity="0.30"/>
-<path d="M-40 172 C33 172 33 169 107 169 C180 169 180 187 253 187 C327 187 327 210 400 210 C473 210 473 219 547 219 C620 219 620 207 693 207 C767 207 767 184 840 184" fill="none" stroke="#fff0d4" stroke-width="3.1" stroke-linecap="round" opacity="0.40"/>
-<path d="M-40 218 C33 218 33 233 107 233 C180 233 180 256 253 256 C327 256 327 269 400 269 C473 269 473 260 547 260 C620 260 620 237 693 237 C767 237 767 219 840 219" fill="none" stroke="#ffd08a" stroke-width="4.2" stroke-linecap="round" opacity="0.50"/>
-<path d="M-40 279 C33 279 33 302 107 302 C180 302 180 318 253 318 C327 318 327 312 400 312 C473 312 473 290 547 290 C620 290 620 270 693 270 C767 270 767 269 840 269" fill="none" stroke="#fff0d4" stroke-width="5.300000000000001" stroke-linecap="round" opacity="0.60"/>
-<path d="M-40 348 C33 348 33 366 107 366 C180 366 180 364 253 364 C327 364 327 343 400 343 C473 343 473 322 547 322 C620 322 620 317 693 317 C767 317 767 333 840 333" fill="none" stroke="#ffd08a" stroke-width="6.4" stroke-linecap="round" opacity="0.70"/>
-<path d="M-40 414 C33 414 33 415 107 415 C180 415 180 397 253 397 C327 397 327 374 400 374 C473 374 473 366 547 366 C620 366 620 379 693 379 C767 379 767 403 840 403" fill="none" stroke="#fff0d4" stroke-width="7.5" stroke-linecap="round" opacity="0.80"/>
+<rect width="800" height="450" fill="url(#sky)"/>
+<circle cx="600" cy="135" r="130" fill="url(#glow)"/>
+<circle cx="600" cy="135" r="40" fill="#ffffff" opacity="0.92" filter="url(#soft)"/>
+<g filter="url(#softer)">
+<ellipse cx="647" cy="81" rx="160" ry="29" fill="#d4ecf5" opacity="0.47"/>
+<ellipse cx="540" cy="69" rx="256" ry="33" fill="#d4ecf5" opacity="0.33"/>
+<ellipse cx="703" cy="157" rx="213" ry="28" fill="#ffffff" opacity="0.42"/>
+<ellipse cx="72" cy="99" rx="195" ry="23" fill="#d4ecf5" opacity="0.47"/>
+<ellipse cx="760" cy="177" rx="199" ry="22" fill="#d4ecf5" opacity="0.39"/>
+<ellipse cx="697" cy="84" rx="120" ry="15" fill="#ffffff" opacity="0.47"/>
+</g>
+<rect x="0" y="279" width="800" height="171" fill="#3f7ba3" opacity="0.92"/>
+<rect x="574" y="279" width="52" height="171" fill="#ffffff" opacity="0.18" filter="url(#soft)"/>
+<rect x="0" y="299" width="800" height="2" fill="#ffffff" opacity="0.28"/>
+<rect x="0" y="322" width="800" height="2" fill="#ffffff" opacity="0.23"/>
+<rect x="0" y="337" width="800" height="2" fill="#ffffff" opacity="0.18"/>
+<rect x="0" y="239" width="800" height="90" fill="url(#haze)"/>
 <rect width="800" height="450" fill="url(#grain)"/>
+<radialGradient id="vig" cx="50%" cy="46%" r="72%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.24"/></radialGradient>
+<rect width="800" height="450" fill="url(#vig)"/>
 </svg>

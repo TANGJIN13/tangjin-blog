@@ -1,24 +1,42 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid slice">
 <defs>
-<linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
-<stop offset="0%" stop-color="#e9d5ff"/>
-<stop offset="52%" stop-color="#b39ddb"/>
-<stop offset="100%" stop-color="#7e57c2"/>
+<linearGradient id="sky" x1="0" y1="0" x2="0.08" y2="1">
+<stop offset="0%" stop-color="#e9e2f6"/>
+<stop offset="38%" stop-color="#cfc9ea"/>
+<stop offset="62%" stop-color="#a9b3d9"/>
+<stop offset="82%" stop-color="#8a9ac4"/>
+<stop offset="100%" stop-color="#7182ad"/>
 </linearGradient>
-<radialGradient id="sun" cx="50%" cy="50%" r="50%">
-<stop offset="0%" stop-color="#ffd9ec" stop-opacity="1"/>
-<stop offset="30%" stop-color="#ffd9ec" stop-opacity="0.55"/>
-<stop offset="100%" stop-color="#ffd9ec" stop-opacity="0"/>
+<radialGradient id="glow" cx="50%" cy="50%" r="50%">
+<stop offset="0%" stop-color="#f8f3ff" stop-opacity="0.95"/>
+<stop offset="30%" stop-color="#f8f3ff" stop-opacity="0.5"/>
+<stop offset="100%" stop-color="#f8f3ff" stop-opacity="0"/>
 </radialGradient>
-<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter>
-<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="48"/></filter>
-<pattern id="grain" patternUnits="userSpaceOnUse" width="180" height="180"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="180" height="180" filter="url(#gn)" opacity="0.055"/></pattern>
+<linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+<stop offset="0%" stop-color="#dfd7f0" stop-opacity="0"/>
+<stop offset="100%" stop-color="#dfd7f0" stop-opacity="0.5"/>
+</linearGradient>
+<filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="16"/></filter>
+<filter id="softer" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="42"/></filter>
+<pattern id="grain" patternUnits="userSpaceOnUse" width="160" height="160"><filter id="gn"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="3" stitchTiles="stitch"/><feColorMatrix type="saturate" values="0"/></filter><rect width="160" height="160" filter="url(#gn)" opacity="0.045"/></pattern>
 </defs>
-<rect width="800" height="450" fill="url(#bg)"/>
-<circle cx="411" cy="233" r="259" fill="url(#sun)"/>
-<path d="M-60 490 L-60 288 C6 288 6 281 71 281 C137 281 137 245 203 245 C269 245 269 226 334 226 C400 226 400 251 466 251 C531 251 531 281 597 281 C663 281 663 292 729 292 C794 292 794 267 860 267 L860 490 Z" fill="#b39ddb" opacity="0.55"/>
-<path d="M-60 490 L-60 364 C6 364 6 347 71 347 C137 347 137 315 203 315 C269 315 269 285 334 285 C400 285 400 306 466 306 C531 306 531 351 597 351 C663 351 663 350 729 350 C794 350 794 327 860 327 L860 490 Z" fill="#7e57c2" opacity="0.75"/>
-<path d="M-60 490 L-60 418 C6 418 6 405 71 405 C137 405 137 377 203 377 C269 377 269 361 334 361 C400 361 400 371 466 371 C531 371 531 414 597 414 C663 414 663 426 729 426 C794 426 794 401 860 401 L860 490 Z" fill="#7e57c2" opacity="0.95"/>
-<ellipse cx="411" cy="405" rx="180" ry="34" fill="#ffd9ec" opacity="0.28" filter="url(#soft)"/>
+<rect width="800" height="450" fill="url(#sky)"/>
+<circle cx="528" cy="162" r="134" fill="url(#glow)"/>
+<circle cx="528" cy="162" r="44" fill="#f8f3ff" opacity="0.92" filter="url(#soft)"/>
+<g filter="url(#softer)">
+<ellipse cx="573" cy="141" rx="205" ry="30" fill="#dfd7f0" opacity="0.30"/>
+<ellipse cx="524" cy="143" rx="251" ry="33" fill="#dfd7f0" opacity="0.27"/>
+<ellipse cx="310" cy="58" rx="113" ry="31" fill="#dfd7f0" opacity="0.42"/>
+<ellipse cx="42" cy="174" rx="191" ry="28" fill="#dfd7f0" opacity="0.40"/>
+<ellipse cx="161" cy="181" rx="93" ry="30" fill="#ffffff" opacity="0.26"/>
+<ellipse cx="247" cy="175" rx="97" ry="38" fill="#ffffff" opacity="0.36"/>
+<ellipse cx="200" cy="154" rx="149" ry="34" fill="#ffffff" opacity="0.25"/>
+<ellipse cx="87" cy="139" rx="257" ry="22" fill="#ffffff" opacity="0.39"/>
+</g>
+<path d="M-40 490 L-40 250 C15 250 15 260 70 260 C125 260 125 282 180 282 C235 282 235 299 290 299 C345 299 345 299 400 299 C455 299 455 281 510 281 C565 281 565 259 620 259 C675 259 675 250 730 250 C785 250 785 260 840 260 L840 490 Z" fill="#8a9ac4" opacity="0.90"/>
+<path d="M-40 490 L-40 281 C15 281 15 307 70 307 C125 307 125 310 180 310 C235 310 235 287 290 287 C345 287 345 256 400 256 C455 256 455 240 510 240 C565 240 565 251 620 251 C675 251 675 281 730 281 C785 281 785 307 840 307 L840 490 Z" fill="#6f7fae" opacity="0.78"/>
+<rect x="0" y="236" width="800" height="90" fill="url(#haze)"/>
 <rect width="800" height="450" fill="url(#grain)"/>
+<radialGradient id="vig" cx="50%" cy="46%" r="72%"><stop offset="55%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#000" stop-opacity="0.24"/></radialGradient>
+<rect width="800" height="450" fill="url(#vig)"/>
 </svg>
