@@ -7,24 +7,17 @@ import Icon from '../components/Icon.astro';
 import SidebarLeft from '../components/SidebarLeft.astro';
 import SidebarRight from '../components/SidebarRight.astro';
 import WallpaperBanner from '../components/WallpaperBanner.astro';
-import { formatDate, getPublishedPosts, getTags, pinToTop, readingTime } from '../lib/posts';
-import { fallbackCover } from '../lib/covers';
-import { categories } from '../data/categories';
+import { getPublishedPosts, getTags, pinToTop } from '../lib/posts';
 
 const posts = await getPublishedPosts();
 const totalWords = posts.reduce((sum, p) => sum + (p.body?.replace(/\s/g, '').length || 0), 0);
 const tags = await getTags();
 
 // 首页文章统一卡片网格；置顶文章浮到最前
+// （原先这里会把第一篇单独拎出来做一张「置顶大卡」+ 大封面图，
+//   用户反馈那张大卡太突兀，已移除 —— 现在全部文章走同一个列表。）
 const ordered = pinToTop(posts);
-const featured = ordered[0] ?? null;
-const featuredCategory = featured ? categories.find((c) => c.slug === featured.data.category) : null;
-// 文章没写 cover 时，用同色系插画兜底。
-// ⚠️ 这里**不能**再用壁纸池（banner-pastel-*）—— 那个池子同时服务首屏大壁纸，
-//    复用会让"壁纸"和"文章封面"在同一屏里撞图。
-//    池子定义在 lib/covers.ts，按皮肤分组，和 PostCard / PostListItem 共用一份。
-const featuredCover = featured?.data.cover ?? fallbackCover(0);
-const recentPosts = featured ? ordered.slice(1) : ordered;
+const recentPosts = ordered;
 ---
 
 <Base banner>
@@ -34,10 +27,11 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
        ⚠️ 这一层**不加** data-reveal：首屏壁纸的分镜（背景模糊→清晰、星光渐显、
           标题逐节揭幕）全部由 WallpaperBanner 自己在 intro-run 下驱动。
           在这里再包一层淡入会让壁纸整体先发灰一次，两层 opacity 相乘。 -->
-  <!-- 首页壁纸高度：60vh（和你原来"刚好能看到置顶文章"的设置一致）。
-       实测 900px 视口：壁纸 540px + 置顶卡 291px ≈ 831px，留 ~70px 余量。
+  <!-- 首页壁纸高度：60vh。
+       置顶大卡移除后，壁纸下面直接接文章列表；60vh 能在 900px 视口里
+       露出列表的前两三项，既保留首屏的开阔感，又不至于把内容顶得太远。
        上一版试过 64vh / 82vh，分别只剩 13px 余量和直接超出 149px ——
-       壁纸不是越高越好看，把置顶卡顶出首屏反而显得空。 -->
+       壁纸不是越高越好看。 -->
   <WallpaperBanner height="clamp(420px, 60vh, 620px)" mobileHeight="clamp(340px, 54vh, 500px)" />
 
   <!-- 三栏内容 -->
@@ -47,28 +41,7 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
       <SidebarLeft />
       <!-- 主内容 -->
       <main class="ref-main" id="main-content" aria-label="文章列表">
-        <!-- 文章主编精选 + 最近更新 -->
-        {featured && (
-          <section class="block editorial-feed" id="latest-notes" data-reveal style="--rv: 2500ms">
-            <a class="featured-note glass-card" href={`/posts/${featured.id}/`}>
-              <div class="featured-copy">
-                <span class="featured-kicker"><span class="featured-mark"></span> 置顶 · {featuredCategory?.name ?? '随笔'}</span>
-                <h3>{featured.data.title}</h3>
-                <p>{featured.data.description || featured.body.replace(/\s+/g, ' ').slice(0, 150)}</p>
-                <div class="featured-meta">
-                  <time datetime={featured.data.published.toISOString()}>{formatDate(featured.data.published)}</time>
-                  <span>·</span><span>{readingTime(featured.body)} 分钟阅读</span>
-                  <span class="featured-read">打开手记 <Icon name="arrow_right" size="0.9rem" /></span>
-                </div>
-              </div>
-              <div class="featured-image">
-                <img src={featuredCover} alt="" fetchpriority="high" />
-                <span class="featured-image-index">LATEST / 01</span>
-                <span class="featured-image-arrow"><Icon name="arrow_right" size="1.15rem" /></span>
-              </div>
-            </a>
-          </section>
-        )}
+        <!-- 文章列表（置顶文章仍会排在最前，但不再单独放大成一张大卡） -->
         {recentPosts.length > 0 && (
           <section class="block recent-feed" data-reveal style="--rv: 2650ms">
             <div class="section-head">
@@ -159,8 +132,8 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   }
 
   /* 主内容分区间距
-     用户明确要求：分类条与「最新手记」贴近、文章卡片与「继续阅读」贴近。
-     原先这里 gap: 1.5rem（24px），再叠上 .editorial-feed / .recent-feed 自己的
+     用户明确要求：分类条与文章列表贴近、文章卡片与分页贴近。
+     原先这里 gap: 1.5rem（24px），再叠上各 section 自己的
      margin-bottom: clamp(2rem,4vw,3.5rem)（32~56px），两段间距被加到 56~80px，非常空。
      改法：① 容器 gap 收到 0.5rem（只作最小兜底）；
            ② 各 section 改用**定向 margin**，不再用统一的大 margin-bottom。 */
@@ -421,18 +394,17 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   /* 网格里的卡片自带 onload-animation 的延迟，这里不用再包一层 */
   .post-grid > .post-card { width: 100%; }
 
-  /* 分区之间的定向间距（用户要求"贴近一些"）：
-       · 最新手记 → 继续阅读：卡片底部到下一个标题，0.9rem 就够（原来 56~80px）
-       · 继续阅读 → 底部分页：留 1.5rem 收尾 */
-  .editorial-feed { margin-bottom: 0.9rem; }
+  /* 分区间距（用户要求"贴近一些"）：列表底部到分页留 1.5rem 收尾。
+     原先这里还有一套「置顶大卡」(.editorial-feed / .featured-*) 的样式，
+     用户反馈那张大卡太突兀，已连同 HTML 一起移除。 */
   .recent-feed { margin-bottom: 1.5rem; }
-  .editorial-feed .section-head, .recent-feed .section-head {
+  .recent-feed .section-head {
     align-items: baseline;
     margin-bottom: 0.85rem;
     padding-bottom: 0.6rem;
     border-bottom: 1px solid var(--border);
   }
-  .editorial-feed .section-title, .recent-feed .section-title {
+  .recent-feed .section-title {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -445,50 +417,11 @@ const recentPosts = featured ? ordered.slice(1) : ordered;
   }
   .recent-feed .section-title :global(.icon) { color: var(--primary-strong); }
   :global([data-theme='dark']) .recent-feed .section-title :global(.icon) { color: var(--primary-light); }
-  .editorial-feed .section-title::before, .recent-feed .section-title::before { display: none; }
+  .recent-feed .section-title::before { display: none; }
   .section-index { color: var(--primary); font-size: 0.68rem; letter-spacing: 0.05em; }
   .section-edition { color: var(--text-faint); font-size: 0.62rem; }
-  /* 外观（背景 / 边框 / 阴影 / 毛玻璃）交给全局 .glass-card，这里只留布局 */
-  .featured-note {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
-    min-height: 280px;
-    overflow: hidden;
-    color: var(--text);
-    border-radius: var(--radius-lg);
-    text-decoration: none !important;
-    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  }
-  .featured-copy { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: clamp(1.5rem, 3vw, 2.6rem); }
-  .featured-kicker { display: inline-flex; align-items: center; gap: 0.55rem; color: var(--text-faint); font-size: 0.6rem; }
-  .featured-mark { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
-  .featured-copy h3 { margin: 1.15rem 0 0.65rem; font-size: clamp(1.5rem, 2.4vw, 2.25rem); line-height: 1.32; letter-spacing: -0.04em; }
-  .featured-copy > p { display: -webkit-box; max-width: 35rem; margin: 0; overflow: hidden; color: var(--text-soft); font-size: 0.85rem; line-height: 1.8; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-  .featured-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 0.55rem; width: 100%; margin-top: 1.5rem; color: var(--text-faint); font-family: var(--font-mono); font-size: 0.64rem; }
-  .featured-read { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: auto; color: var(--primary-strong); font-family: var(--font-sans); font-size: 0.76rem; font-weight: 700; }
-  .featured-image { position: relative; min-height: 230px; overflow: hidden; background: var(--surface-2); }
-  .featured-image::after { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, rgb(19 37 31 / 0.44), transparent 46%); }
-  .featured-image img {
-    width: 100%;
-    height: 100%;
-    min-height: 100%;
-    object-fit: cover;
-    /* 海洋封面本身彩度就够，压低一点让它别抢标题；
-       默认皮肤那套是暖粉水彩，同样适用 */
-    filter: saturate(0.82) contrast(1.04);
-    transition: transform 0.6s cubic-bezier(.2,.75,.25,1), opacity 0.4s ease;
-  }
-  .featured-note:hover .featured-image img { transform: scale(1.035); }
-
-  .featured-image-index { position: absolute; z-index: 2; left: 1rem; bottom: 0.85rem; color: white; font-size: 0.58rem; }
-  .featured-image-arrow { position: absolute; z-index: 2; right: 1rem; bottom: 0.8rem; display: grid; width: 2rem; height: 2rem; place-items: center; color: white; border: 1px solid rgb(255 255 255 / 0.48); border-radius: 50%; }
   .recent-feed .post-rows { gap: 0.7rem; }
   @media (max-width: 640px) {
-    .featured-note { grid-template-columns: 1fr; }
-    .featured-copy { padding: 1.3rem; }
-    .featured-copy h3 { margin-top: 0.85rem; font-size: 1.5rem; }
-    .featured-image { grid-row: 1; min-height: 180px; max-height: 230px; }
-    .featured-read { margin-left: 0; flex-basis: 100%; margin-top: 0.25rem; }
     .section-edition { font-size: 0.55rem; letter-spacing: 0.04em; }
   }
 
