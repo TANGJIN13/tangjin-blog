@@ -1,7 +1,6 @@
 ---
-// 首页「最新文章」单列横向行（参考 Firefly 首页列表形态）：
-//   左缩略图 + 标题 + 摘要 + 标签药丸 + 右下角阅读时长
-// 仅首页使用；归档 / 标签页仍用 PostCard（卡片网格）。
+// 首页「最新文章」单列横向行：左缩略图 + 标题 + 摘要 + 标签药丸 + 右下角阅读时长
+// 仅首页使用；归档 / 标签页用 PostCard（极简文本卡），与本组件同语言。
 import { readingTime, type Post } from '../lib/posts';
 import { fallbackCover } from '../lib/covers';
 import { categories } from '../data/categories';
@@ -37,7 +36,7 @@ const pick = typeof index === 'number' ? index : 0;
 const coverSrc = cover ?? fallbackCover(pick);
 ---
 
-<a class="post-row glass-card onload-animation" href={`/posts/${post.id}/`}>
+<a class="post-row" href={`/posts/${post.id}/`}>
   <div class="post-row-thumb">
     <img src={coverSrc} alt="" loading="lazy" />
   </div>
@@ -65,19 +64,26 @@ const coverSrc = cover ?? fallbackCover(pick);
 </a>
 
 <style>
-  /* 卡片外观（背景 / 边框 / 阴影 / 毛玻璃）统一由全局 .glass-card 提供，
-     这里只负责布局与排版，避免两套卡片语言打架。 */
+  /* 极简横向行卡：白底 + 细发丝线 + 悬停只换边框色。
+     不挂 .glass-card：和 PostCard 保持同一套语言，整站只剩一种卡片外观。 */
   .post-row {
     display: flex;
     align-items: stretch;
     gap: 1rem;
     padding: 0.95rem 1rem;
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-lg);
+    background: var(--surface);
     text-decoration: none !important;
-    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    color: inherit;
+    transition: border-color 0.18s ease, background-color 0.18s ease;
+  }
+  .post-row:hover {
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 3%, var(--surface));
   }
 
-  /* 左缩略图：固定 140×96 */
+  /* 左缩略图：固定 140×96，不再 hover 缩放 */
   .post-row-thumb {
     position: relative;
     flex-shrink: 0;
@@ -93,9 +99,8 @@ const coverSrc = cover ?? fallbackCover(pick);
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+    display: block;
   }
-  .post-row:hover .post-row-thumb img { transform: scale(1.07); }
 
   .post-row-body {
     flex: 1;

@@ -307,78 +307,45 @@ code, pre, kbd { font-family: var(--font-mono); }
   position: relative;
 }
 
-/* 侧栏里所有组件都吃同一套玻璃：名片卡 / 热力图 / 标签卡各自有自己的内边距，
-   所以几何属性留在上面那条单独的规则里，这里只管「玻璃长什么样」。 */
+/* 侧栏里所有组件的统一样式（极简版）：
+   改版前是半透明玻璃（backdrop-filter + 高光叠层 + 磨砂颗粒），
+   现在回到「白底 + 细发丝线 + 微阴影」——和文章卡同一套语言，
+   整站只剩一种卡片语言。
+   几何属性（padding）写在上面单独的 .card-base.widget-card 规则里。 */
 .card-base.widget-card,
 .card-base.profile-card,
 .card-base.heatmap-widget,
 .card-base.tag-card {
-  /* ① 半透明玻璃面（能透出背后的氛围光斑） */
-  background-color: var(--glass-bg);
-  /* ② 三层叠出「玻璃」：左上斜向高光 → 顶部竖向提亮 → 磨砂颗粒 */
-  background-image:
-    radial-gradient(130% 96% at 0% 0%, var(--glass-sheen), transparent 58%),
-    linear-gradient(180deg, var(--glass-top), transparent 46%),
-    var(--glass-noise);
-  background-repeat: no-repeat, no-repeat, repeat;
-  background-size: auto, auto, 160px 160px;
-  /* ③ 毛面：模糊 + 提饱和，背后有颜色时玻璃才会「吸色」 */
-  backdrop-filter: var(--glass-blur);
-  /* ④ 上缘内高光 + 下缘内暗线（厚度）+ 外圈发丝边（浅底上定形） */
-  border: 1px solid var(--glass-edge);
-  box-shadow:
-    inset 0 1px 0 0 var(--glass-edge),
-    inset 0 -1px 0 0 var(--glass-hairline),
-    0 0 0 1px var(--glass-hairline),
-    var(--glass-shadow);
-
-  /* 卡片**内部**的「内表面」变量也跟着变半透明。--surface / --surface-2 会被
-     输入框、日历胶囊、热力图 pill、标签片、状态点描边等内层元素继承使用，
-     在组件子树里就地改成半透明，它们就自然融进玻璃，
-     不用逐个组件去改——否则磨砂面上会贴出一块块实心白补丁。
-     只覆盖背景类变量；--border 保持原样，发丝线还是要暗的才看得见。 */
-  --surface: oklch(100% 0 0 / 0.62);
-  --surface-2: oklch(100% 0 0 / 0.42);
+  background-color: var(--surface);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04);
+  /* 卡片**内部**的「内表面」变量恢复成不透明，背景/边线全部实底。 */
+  --surface: oklch(100% 0 0 / 1);
+  --surface-2: oklch(98% 0 0 / 1);
 }
 [data-theme='dark'] .card-base.widget-card,
 [data-theme='dark'] .card-base.profile-card,
 [data-theme='dark'] .card-base.heatmap-widget,
 [data-theme='dark'] .card-base.tag-card {
-  --surface: oklch(28% 0.03 282 / 0.7);
-  --surface-2: oklch(32% 0.035 282 / 0.5);
+  --surface: oklch(22% 0.02 282 / 1);
+  --surface-2: oklch(26% 0.025 282 / 1);
+  background-color: var(--surface);
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.3);
 }
 
-/* 侧栏是一列组件、不算「内容卡片」：悬停不上浮跳动，只把玻璃提亮一档、阴影加深一点 */
+/* 悬停：只换边框色 + 轻微提亮背景，不位移、不加高光线、不加阴影。 */
 .card-base.widget-card:hover,
 .card-base.profile-card:hover,
 .card-base.heatmap-widget:hover,
 .card-base.tag-card:hover {
   transform: none;
-  background-color: var(--glass-bg-hover);
-  border-color: color-mix(in srgb, var(--primary) 26%, var(--glass-edge));
-  box-shadow:
-    inset 0 1px 0 0 var(--glass-edge),
-    inset 0 -1px 0 0 var(--glass-hairline),
-    0 0 0 1px var(--glass-hairline),
-    var(--glass-shadow-hover);
+  border-color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 3%, var(--surface));
 }
 
-/* 悬停时顶部浮出一条主色高光线 */
-.widget-card::after {
-  content: '';
-  position: absolute;
-  inset: 0 18% auto;
-  height: 1px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--primary), transparent);
-  opacity: 0;
-  transition: opacity 0.35s ease;
-  pointer-events: none;
-}
-.widget-card:hover::after { opacity: 0.55; }
+/* 去掉悬停时顶部浮出的主色高光线 —— 改版前是玻璃特效的一部分，现在不要了。 */
 
-/* 组件标题：图标坐进柔色块，右侧接一条渐隐细线。
-   默认是「淡底 + 主色图标」的安静状态，悬停才亮成实色渐变——一列五六个组件时不会满屏紫块。 */
+/* 组件标题：图标坐进柔色块 —— 但不旋转、不缩放，保持安静。 */
 .widget-title {
   font-size: 0.98rem;
   font-weight: 700;
@@ -399,22 +366,8 @@ code, pre, kbd { font-family: var(--font-mono); }
   border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
   color: var(--primary-strong);
   flex-shrink: 0;
-  transition: background 0.25s ease, color 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 [data-theme='dark'] .widget-title .icon { color: var(--primary-light); }
-.widget-card:hover .widget-title .icon {
-  background: var(--gradient-primary);
-  border-color: transparent;
-  color: var(--text-on-primary);
-  transform: scale(1.06) rotate(-4deg);
-}
-.widget-title::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  margin-left: 0.15rem;
-  background: linear-gradient(90deg, var(--border), transparent);
-}
 
 /* 内页紧凑右栏：去掉「本年/月/周还剩」三块进度，收紧间距，
    避免分类/标签这类短正文被右栏撑出大片空白。首页 full 变体不受影响。 */
@@ -1019,61 +972,30 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.025em; }
 }
 
 /* ============================================================
-   玻璃卡片统一样式（全站唯一的卡片语言）
+   通用卡片类（极简版）
    ------------------------------------------------------------
-   改版前首页上并存两种完全不同的卡片语言：侧栏是半透明毛玻璃
-   （白色外发光边 + 内高光 + backdrop-blur），主区的精选卡和文章行
-   却是实心白 + 灰发丝边。两者并排出现时，一个通透一个死板，
-   整页像两套设计拼在一起。
-
-   侧栏那套玻璃配方（--glass-* 一组变量）已经调好了，这里把它抽成
-   一个通用类 .glass-card，所有内容卡片都挂上它，全站只剩一种卡片
-   语言：一块浮在雾面背景上的玻璃。
-
-   用法：给元素加 class="glass-card"，组件自己的 scoped 样式里
-   不要再写 background / border / box-shadow，否则会把玻璃盖掉。
+   改版前 .glass-card 是「浮在雾面背景上的半透明玻璃」（backdrop-filter + 高光叠层 + 磨砂颗粒），
+   现在回到「白底 + 细发丝线 + 微阴影」——和文章卡、侧栏卡同语言。
+   仍有少量历史代码挂着这个类（如首页 featured-note），它现在的行为就是
+   「给元素加一道边框 + 白底 + 一道微阴影」，不再有玻璃特效。
    ============================================================ */
 .glass-card {
   position: relative;
-  /* ① 半透明玻璃面 */
-  background-color: var(--glass-bg);
-  /* ② 左上斜向高光 → 顶部竖向提亮 → 磨砂颗粒 */
-  background-image:
-    radial-gradient(130% 96% at 0% 0%, var(--glass-sheen), transparent 58%),
-    linear-gradient(180deg, var(--glass-top), transparent 46%),
-    var(--glass-noise);
-  background-repeat: no-repeat, no-repeat, repeat;
-  background-size: auto, auto, 160px 160px;
-  /* ③ 毛面
-     只写标准属性：lightningcss 会按 browserslist 自动补前缀；
-     若手写 -webkit- 与标准属性并存，压缩时反而会把标准那条吃掉。 */
-  backdrop-filter: var(--glass-blur);
-  /* ④ 上缘内高光 + 下缘内暗线 + 外圈发丝边 + 柔和投影 */
-  border: 1px solid var(--glass-edge);
-  box-shadow:
-    inset 0 1px 0 0 var(--glass-edge),
-    inset 0 -1px 0 0 var(--glass-hairline),
-    0 0 0 1px var(--glass-hairline),
-    var(--glass-shadow);
-  /* 卡片内层的 --surface / --surface-2 同步改半透明，
-     否则缩略图底板、标签片会在玻璃上贴出实心白补丁 */
-  --surface: oklch(100% 0 0 / 0.62);
-  --surface-2: oklch(100% 0 0 / 0.42);
+  background-color: var(--surface);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.04);
+  --surface: oklch(100% 0 0 / 1);
+  --surface-2: oklch(98% 0 0 / 1);
 }
 [data-theme='dark'] .glass-card {
-  --surface: oklch(28% 0.03 282 / 0.7);
-  --surface-2: oklch(32% 0.035 282 / 0.5);
+  --surface: oklch(22% 0.02 282 / 1);
+  --surface-2: oklch(26% 0.025 282 / 1);
+  background-color: var(--surface);
+  box-shadow: 0 1px 2px oklch(0% 0 0 / 0.3);
 }
-/* 悬停：不位移，只提亮一档 + 主色描边，和侧栏玻璃同一手感。
-   用 :where() 压低特异性，方便个别卡片按需覆盖。 */
+/* 悬停：只换边框色 + 轻微提亮背景。 */
 .glass-card:hover {
-  background-color: var(--glass-bg-hover);
-  border-color: color-mix(in srgb, var(--primary) 26%, var(--glass-edge));
-  box-shadow:
-    inset 0 1px 0 0 var(--glass-edge),
-    inset 0 -1px 0 0 var(--glass-hairline),
-    0 0 0 1px var(--glass-hairline),
-    var(--glass-shadow-hover);
+  border-color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 3%, var(--surface));
+  transform: none;
 }
-/* 内容卡片不做上浮位移：侧栏玻璃不动，主区卡片跳动会显得毛躁 */
-.glass-card:hover { transform: none; }

@@ -1,281 +1,196 @@
 ---
 import { formatDateTime, readingTime, type Post } from '../lib/posts';
-import { fallbackCover } from '../lib/covers';
 import { categories } from '../data/categories';
-import Icon from './Icon.astro';
 
 interface Props {
   post: Post;
   style?: string;
-  /** 在列表中的位置：用来轮换取兜底封面，保证同一页相邻文章不撞图 */
-  index?: number;
 }
 
-const { post, style, index } = Astro.props;
+const { post, style } = Astro.props;
 const { title, description, published, updated, tags, cover, category, pinned } = post.data;
 const minutes = readingTime(post.body);
 const showUpdated = updated && updated > published;
 
-// 分类（frontmatter 里的 category 是 slug，取不到就按第一个标签兜底）
-const catSlug = category ?? '';
-const cat = categories.find((c) => c.slug === catSlug) ?? categories.find((c) => c.name === tags?.[0]);
-
-// 标签展示：最多 4 个，多的显示「+N」
-const shownTags = tags.slice(0, 4);
+const cat = categories.find((c) => c.slug === (category ?? '')) ?? categories.find((c) => c.name === tags?.[0]);
+const shownTags = tags.slice(0, 3);
 const moreTagCount = tags.length - shownTags.length;
 
-// 卡片摘要：优先用 frontmatter 的 description；没写就从正文提取纯文本兜底，
-// 保证每张卡都有摘要可显示（卡片高度靠「固定两行槽位 + 省略号截断」保持统一）
+// 摘要：优先用 frontmatter 的 description；没写就从正文提取纯文本兜底
 const plainBody = post.body
-  .replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, '$1') // Obsidian 双链/嵌入 → 取链接文字
-  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ') // 图片语法整段去掉
-  .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // 普通链接 → 取文字
-  .replace(/```[\s\S]*?```/g, ' ') // 代码块去掉
-  .replace(/^\s{0,3}>\s?/gm, '') // 引用符
-  .replace(/^\s{0,3}#+\s+/gm, '') // 标题符
-  .replace(/[*_~`]/g, '') // 强调符号
+  .replace(/!?\[\[([^\]|]*)(?:\|([^\]]*))?\]\]/g, '$1')
+  .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+  .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+  .replace(/```[\s\S]*?```/g, ' ')
+  .replace(/^\s{0,3}>\s?/gm, '')
+  .replace(/^\s{0,3}#+\s+/gm, '')
+  .replace(/[*_~`]/g, '')
   .replace(/\s+/g, ' ')
   .trim();
 const excerpt = (description ?? '').trim() || plainBody.slice(0, 120);
-
-// 没写 cover 的文章：用同色系的水彩插画兜底，按列表位置轮换
-// （同一页相邻文章不会撞同一张图；拿不到位置信息时退化成 FNV-1a 哈希，
-//   保证同一篇文章永远是同一张）。混进不相干的素材风景图会打断整站色调。
-//
-// ⚠️ 之前这里直接复用了首屏大壁纸的图片池（banner-pastel-01..05），
-//    结果是**同一屏里壁纸和文章封面撞同一张图**（首屏壁纸轮播到 02/03 时，
-//    下面的卡片封面也正好是 02/03，粉色樱花枝上下各一份，非常廉价）。
-//    现在卡片改用 lib/covers.ts 那套独立插画（默认皮肤是小鹿 / 花溪 / 星河 /
-//    云海 / 竹林 / 灯塔 / 荷塘 / 雪月，大海皮肤是青蓝抽象海景），
-//    和壁纸**完全不重叠**，且按皮肤分组。
-let hash = 2166136261;
-for (const ch of post.id) {
-  hash ^= ch.charCodeAt(0);
-  hash = Math.imul(hash, 16777619);
-}
-const pick = typeof index === 'number' ? index : Math.abs(hash);
-const coverSrc = cover ?? fallbackCover(pick);
 ---
 
-<article class="post-card glass-card onload-animation" {style}>
-  <!-- 封面：置顶，16:9（文章自带 cover 优先，没有就用风景照兜底） -->
-  <a class="post-card-cover" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
-    <img src={coverSrc} alt="" loading="lazy" />
-    <span class="cover-shine" aria-hidden="true"></span>
-    {pinned && (
-      <span class="cover-flag"><Icon name="flag" size="0.68rem" />置顶</span>
-    )}
-  </a>
+<article class="post-card" {style}>
+  {cover && (
+    <a class="post-card-thumb" href={`/posts/${post.id}/`} tabindex="-1" aria-hidden="true">
+      <img src={cover} alt="" loading="lazy" />
+    </a>
+  )}
 
-  <!-- 正文：标题 → 图标小标签 → 摘要 → #标签 -->
   <div class="post-card-body">
-    <a class="post-card-title" href={`/posts/${post.id}/`}>{title}</a>
-
-    <div class="card-meta">
-      <span class="meta-chip">
-        <Icon name="calendar" size="0.72rem" /><time datetime={published.toISOString()}>{formatDateTime(published)}</time>
-      </span>
+    <div class="post-card-meta">
+      {pinned && <span class="post-card-flag">置顶</span>}
+      <time datetime={published.toISOString()}>{formatDateTime(published)}</time>
       {cat && (
-        <a class="meta-chip is-link" href={`/search/?cat=${cat.slug}`}>
-          <Icon name={cat.icon || 'folder'} size="0.72rem" />{cat.name}
-        </a>
+        <>
+          <span class="dot">·</span>
+          <a class="meta-cat" href={`/search/?cat=${cat.slug}`}>{cat.name}</a>
+        </>
       )}
       {showUpdated && (
-        <span class="meta-chip is-soft">
-          <Icon name="repeat" size="0.72rem" />更新于 <time datetime={updated.toISOString()}>{formatDateTime(updated)}</time>
-        </span>
+        <>
+          <span class="dot">·</span>
+          <span class="meta-soft">更新于 <time datetime={updated.toISOString()}>{formatDateTime(updated)}</time></span>
+        </>
       )}
-      <span class="meta-chip is-soft"><Icon name="clock" size="0.72rem" />约 {minutes} 分钟</span>
+      <span class="dot">·</span>
+      <span class="meta-soft">约 {minutes} 分钟</span>
     </div>
+
+    <a class="post-card-title" href={`/posts/${post.id}/`}>{title}</a>
 
     {excerpt && <p class="post-card-desc">{excerpt}</p>}
 
-    <div class="card-foot">
+    <div class="post-card-tags">
       {shownTags.map((t) => (
-        <a class="tag-chip" href={`/search/?q=${encodeURIComponent(t)}`}>#{t}</a>
+        <a class="tag" href={`/search/?q=${encodeURIComponent(t)}`}>#{t}</a>
       ))}
-      {moreTagCount > 0 && <span class="tag-chip is-more">+{moreTagCount}</span>}
-      <span class="card-cta">阅读全文<span class="cta-arrow">→</span></span>
+      {moreTagCount > 0 && <span class="tag tag-more">+{moreTagCount}</span>}
     </div>
   </div>
 </article>
 
 <style>
-  /* 外观（背景 / 边框 / 阴影 / 毛玻璃）由全局 .glass-card 统一提供 */
+  /* 极简文章卡：单层圆角白底，细发丝线边框，悬停只换边框色。
+     不用 .glass-card：毛玻璃在这里只会让「一列文章」变成一列闪亮的玻璃块，
+     既不耐看又会和其他玻璃组件（侧栏卡、浮动按钮）撞风格。
+     封面缩略图：只有 post.data.cover 存在时才显示，没写的文章就是纯文本卡。 */
   .post-card {
-    position: relative;
     display: flex;
-    flex-direction: column;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+    align-items: stretch;
+    gap: 0.95rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    transition: border-color 0.18s ease, background-color 0.18s ease;
   }
   .post-card:hover {
-    transform: translateY(-4px);
+    border-color: var(--primary);
+    background: color-mix(in srgb, var(--primary) 3%, var(--surface));
   }
 
-  /* ===== 封面：顶部通栏 16:9 ===== */
-  .post-card-cover {
-    position: relative;
-    display: block;
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    overflow: hidden;
+  /* ===== 封面缩略图（可选，1:1 方形）=====
+     没写 cover 的文章 → .post-card-thumb 不渲染，整个 body 区域会占满宽度。 */
+  .post-card-thumb {
     flex-shrink: 0;
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
     background: var(--surface-2);
-    text-decoration: none !important;
   }
-  .post-card-cover img {
+  .post-card-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+    display: block;
   }
-  .post-card:hover .post-card-cover img { transform: scale(1.06); }
 
-  /* 封面上的斜向光泽扫过 */
-  .cover-shine {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(105deg, transparent 35%, oklch(100% 0 0 / 0.28) 50%, transparent 65%);
-    transform: translateX(-120%);
-    transition: transform 0.7s ease;
-    pointer-events: none;
+  .post-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.32rem;
   }
-  .post-card:hover .cover-shine { transform: translateX(120%); }
 
-  /* 封面左上角置顶小徽章 */
-  .cover-flag {
-    position: absolute;
-    top: 0.6rem;
-    left: 0.6rem;
-    display: inline-flex;
+  /* ===== 元信息：单行小字（日期 · 分类 · 时长），不是彩色药丸 ===== */
+  .post-card-meta {
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 0.22rem;
-    padding: 0.18rem 0.55rem;
-    border-radius: 999px;
+    gap: 0.32rem;
+    font-size: 0.74rem;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+  }
+  .post-card-meta .dot { opacity: 0.5; }
+  .post-card-meta a.meta-cat {
+    color: var(--primary);
+    text-decoration: none;
+  }
+  .post-card-meta a.meta-cat:hover { text-decoration: underline; }
+  .post-card-meta .meta-soft { color: var(--text-faint); }
+  .post-card-flag {
+    display: inline-block;
+    padding: 0 0.42rem;
+    border-radius: 4px;
     font-size: 0.66rem;
     font-weight: 700;
     color: var(--text-on-primary);
     background: var(--gradient-primary);
-    box-shadow: 0 3px 12px oklch(0% 0 0 / 0.28);
   }
 
-  .post-card-body {
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
-    flex: 1;
-    padding: 0.8rem 0.85rem 0.85rem;
-  }
-
+  /* ===== 标题：单行省略，hover 走主色 ===== */
   .post-card-title {
-    font-size: 0.95rem;
+    margin: 0;
+    font-size: 1.02rem;
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.45;
     color: var(--text);
     text-decoration: none !important;
-    transition: color 0.18s ease;
-    /* 标题固定一行，超长用省略号：标题再长也不会把卡片撑高，
-       所有卡片的结构与高度完全一致（配合 grid-auto-rows:1fr 抹平残差） */
-    display: block;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
+    transition: color 0.18s ease;
   }
-  .post-card:hover .post-card-title { color: var(--primary) !important; }
+  .post-card:hover .post-card-title { color: var(--primary); }
 
-  /* ===== 元信息小标签（图标 + 文字，带浅色底） ===== */
-  .card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.32rem;
-  }
-  .meta-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.28rem;
-    padding: 0.18rem 0.45rem;
-    border-radius: 8px;
-    font-size: 0.68rem;
-    font-weight: 600;
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-    text-decoration: none !important;
-    color: var(--primary-strong);
-    background: var(--primary-soft);
-    border: 1px solid oklch(70% 0.14 282 / 0.22);
-    transition: all 0.18s ease;
-  }
-  :global([data-theme='dark'] .meta-chip) { color: var(--primary-light); }
-  .meta-chip :global(.icon) { opacity: 0.85; flex-shrink: 0; }
-  /* 次要信息（更新于 / 时长）：灰底，弱化 */
-  .meta-chip.is-soft {
-    color: var(--text-faint);
-    background: var(--surface-2);
-    border-color: var(--border-light);
-  }
-  .meta-chip.is-link:hover {
-    color: var(--text-on-primary);
-    background: var(--gradient-primary);
-    border-color: transparent;
-  }
-  .meta-chip.is-link:hover :global(.icon) { opacity: 1; }
-
-  /* 摘要：固定两行槽位——没写摘要/摘要很短的卡也占同样高度，保证所有卡片等高；
-     超出两行用省略号截断（line-clamp）。元素保留在 DOM，搜索组件靠它取摘要文本 */
+  /* ===== 摘要：两行省略 ===== */
   .post-card-desc {
     margin: 0;
-    color: var(--text-soft);
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     line-height: 1.6;
-    height: 3.2em; /* = 1.6 行高 × 2 行 */
+    color: var(--text-soft);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
 
-  /* ===== 底部：#标签 + 阅读 CTA（贴底对齐） ===== */
-  .card-foot {
+  /* ===== 标签：行内 #tag，悬停主色 ===== */
+  .post-card-tags {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.3rem;
-    margin-top: auto;
-    padding-top: 0.15rem;
+    gap: 0.55rem;
+    margin-top: 0.1rem;
   }
-  .card-cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.15rem;
-    margin-left: auto;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--primary);
-    white-space: nowrap;
-    transition: gap 0.22s ease;
-  }
-  .cta-arrow { transition: transform 0.22s ease; }
-  .post-card:hover .card-cta { gap: 0.4rem; }
-  .post-card:hover .card-cta .cta-arrow { transform: translateX(2px); }
-  .tag-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.14rem 0.48rem;
-    border-radius: 999px;
-    font-size: 0.66rem;
-    font-weight: 600;
+  .tag {
+    font-size: 0.74rem;
     color: var(--text-faint);
-    background: var(--surface-2);
-    border: 1px solid var(--border-light);
     text-decoration: none !important;
-    transition: all 0.18s ease;
+    transition: color 0.18s ease;
   }
-  .tag-chip:hover {
-    color: var(--text-on-primary);
-    background: var(--gradient-primary);
-    border-color: transparent;
+  .tag:hover { color: var(--primary); }
+  .tag.tag-more { color: var(--text-faint); opacity: 0.65; cursor: default; }
+
+  /* 窄屏：缩略图略小，元信息更紧凑 */
+  @media (max-width: 560px) {
+    .post-card { gap: 0.7rem; padding: 0.85rem 0.9rem; }
+    .post-card-thumb { width: 64px; height: 64px; }
+    .post-card-title { font-size: 0.96rem; }
   }
-  .tag-chip.is-more { cursor: default; }
 </style>
