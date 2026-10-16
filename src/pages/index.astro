@@ -379,13 +379,13 @@ const recentPosts = ordered;
      用 [hidden] 而不是 display:none，避免被 Astro/浏览器的默认样式覆盖。 */
   .post-grid[hidden], .post-rows[hidden] { display: none !important; }
 
-  /* 卡片网格：默认两列，宽屏三列 */
+  /* 卡片网格：窄屏两列，≥1280px 三列（和整页三栏布局同一断点），手机单列 */
   .post-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.7rem;
   }
-  @media (min-width: 1600px) {
+  @media (min-width: 1280px) {
     .post-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 640px) {
