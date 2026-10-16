@@ -30,17 +30,14 @@ const {
   // 2026-10-16 用户挑选：**保留 02 / 03 / 05**（去掉 01 淡彩云山、04 星空银河）。
   //   注：03 之前因"与 01 构图接近"被临时移出过，用户看过全尺寸后**明确要它**，故加回。
   //   01 / 04 文件仍留在 public/ 下但不再被引用 —— 想恢复直接把路径加回数组即可。
+  // ⚠️ 临时收回到 3 张「柔和水彩」风的（01=原02 紫山晨雾 / 02=原03 森林光柱 /
+  //    03=原05 湖面晚霞）。04-10 那 7 张是动画风（makoto shinkai 风格），
+  //    用户反馈"没有原来 2、5 那么真"，文件保留在磁盘上，
+  //    等生图配额恢复后用「soft watercolor + painterly」画法重画再放回池子。
   images = [
     '/images/wallpapers/banner-pastel-01.webp',
     '/images/wallpapers/banner-pastel-02.webp',
     '/images/wallpapers/banner-pastel-03.webp',
-    '/images/wallpapers/banner-pastel-04.webp',
-    '/images/wallpapers/banner-pastel-05.webp',
-    '/images/wallpapers/banner-pastel-06.webp',
-    '/images/wallpapers/banner-pastel-07.webp',
-    '/images/wallpapers/banner-pastel-08.webp',
-    '/images/wallpapers/banner-pastel-09.webp',
-    '/images/wallpapers/banner-pastel-10.webp',
   ],
   height = 'clamp(520px, 88vh, 920px)',
   mobileHeight = 'clamp(320px, 65vh, 520px)',
