@@ -27,12 +27,12 @@ const {
   // ⚠️ 约束：这个池子必须与文章封面池（lib/covers.ts，covers/）
   //    **完全不重叠** —— 一旦重叠，同屏里就会出现"壁纸 = 某张卡片封面"的廉价撞图。
   //    所以这里只放壁纸目录自己的图。
-  // ⚠️ -03 已从池子里**移除**（它和 -01 都是"粉色花枝夹住两边"的近乎同一构图，
-  //    轮播到它像"没换图"）。文件仍在 public/ 下但不再被引用 —— 别再把它加回来。
+  // 2026-10-16 用户挑选：**保留 02 / 03 / 05**（去掉 01 淡彩云山、04 星空银河）。
+  //   注：03 之前因"与 01 构图接近"被临时移出过，用户看过全尺寸后**明确要它**，故加回。
+  //   01 / 04 文件仍留在 public/ 下但不再被引用 —— 想恢复直接把路径加回数组即可。
   images = [
-    '/images/wallpapers/banner-pastel-01.webp',
     '/images/wallpapers/banner-pastel-02.webp',
-    '/images/wallpapers/banner-pastel-04.webp',
+    '/images/wallpapers/banner-pastel-03.webp',
     '/images/wallpapers/banner-pastel-05.webp',
   ],
   height = 'clamp(520px, 88vh, 920px)',
