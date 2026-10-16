@@ -360,12 +360,6 @@ const splitLine = (text) => {
     overflow: hidden;
     z-index: 0;
   }
-  /* ⚠️ `svh` 回退：老浏览器不认 100svh，会让整条声明作废（高度变 auto → 壁纸塌掉）。
-     这里在 var() 之外补一条兜底高度，只有真的能解析 svh 的环境才会用上面的 var。
-     注意 --wp-height / --wp-mobile-height 的值由页面传入，首页传的正是 100vh / 100svh。 */
-  @supports not (height: 100svh) {
-    .wallpaper-wrapper { height: 100vh; }
-  }
   @media (max-width: 767px) {
     .wallpaper-wrapper { height: var(--wp-mobile-height); }
   }
@@ -937,9 +931,13 @@ const splitLine = (text) => {
       var(--bg) 100%);
   }
 
-  /* ===== 移动端：banner 65vh、波浪 10vh ===== */
+  /* ===== 移动端：波浪 10vh，高度交给页面传入的值 ===== */
   @media (max-width: 1023px) {
-    .wallpaper-wrapper { height: 65vh !important; }
+    /* ⚠️ 这里原来写死 `height: 65vh !important`，内页现在传的是
+       clamp(150px, 24vh, 230px)（用户要求内页横幅矮一半），写死的 65vh 会把它顶掉，
+       内页在手机上又变成半屏。改成「让位给页面传的 --wp-mobile-height」，
+       只有页面没传（undefined）时才退回 65vh 兜底。 */
+    .wallpaper-wrapper { height: var(--wp-mobile-height, 65vh); }
 
     /* 手机上壁纸占屏幕的比例最高（65vh），所以中段柔晕再浅一档（峰值 0.15 → 0.10）：
        标题本身的分离度主要靠「贴着笔画的窄影」而不是压暗背景（见上面 .wp-title 的说明）。
@@ -993,10 +991,11 @@ const splitLine = (text) => {
     .wp-title { margin-bottom: 0.5rem; }
     .wp-quote-sub { font-size: 1rem; line-height: 1.3; }
   }
-  /* 按屏幕高度分档（仅移动端） */
-  @media (max-width: 1023px) and (max-height: 500px) { .wallpaper-wrapper { height: 85vh !important; } }
-  @media (max-width: 1023px) and (min-height: 501px) and (max-height: 600px) { .wallpaper-wrapper { height: 80vh !important; } }
-  @media (max-width: 1023px) and (min-height: 601px) and (max-height: 700px) { .wallpaper-wrapper { height: 75vh !important; } }
+  /* 按屏幕高度分档 —— 只对「没传 mobileHeight 的调用方」生效（兜底）。
+     ⚠️ 内页/首页都传了显式高度，档位规则不该再插一脚（否则内页又变半屏）。 */
+  @media (max-width: 1023px) and (max-height: 500px) { .wallpaper-wrapper:not([style*='--wp-mobile-height']) { height: 85vh !important; } }
+  @media (max-width: 1023px) and (min-height: 501px) and (max-height: 600px) { .wallpaper-wrapper:not([style*='--wp-mobile-height']) { height: 80vh !important; } }
+  @media (max-width: 1023px) and (min-height: 601px) and (max-height: 700px) { .wallpaper-wrapper:not([style*='--wp-mobile-height']) { height: 75vh !important; } }
 
   /* ===== 满屏模式（首页）=====
      ⚠️ 必须写在上面所有移动端覆盖规则**之后**：那些规则带 !important，
@@ -1006,9 +1005,26 @@ const splitLine = (text) => {
   @supports (height: 100svh) {
     .wallpaper-wrapper.wp-full { height: 100svh !important; }
   }
-  /* 满屏时「向下浏览」引导贴到底部一点，别挤在正中句子下面 ——
-     ⚠️ 仍然留在文档流里（flex 子项，靠 margin-top:auto 下推），
-     不能用 position:absolute（历史上就是它压到副标题上的）。 */
-  .wallpaper-wrapper.wp-full .wp-inner { height: 100%; justify-content: center; }
-  .wallpaper-wrapper.wp-full .wp-scroll { margin-top: auto; margin-bottom: clamp(1.5rem, 5vh, 3.25rem); }
+
+  /* 满屏时的文字编排：
+     ⚠️ 用户反馈「书法字没在视觉正中，要往下移一点」——
+     原因是 .wp-inner 里除了句子还挂着「向下浏览」引导，整列一起居中时
+     句子会被顶到略偏上的位置（未达到视觉重心）。这里改成：
+       · 整列不用 justify-content:center 直接居中，而是给句子块一个
+         「视觉重心」偏移（padding-top 略大于 padding-bottom），把句子压到
+         黄金分割偏下一点的位置；
+       · 「向下浏览」紧跟在句子之后（文档流，margin-top 固定值），
+         不再用 margin-top:auto 推到最底部 —— 那里正好是白波浪所在，
+         用户反馈「指示器压在波浪上、还看不清」。 */
+  .wallpaper-wrapper.wp-full .wp-inner {
+    height: 100%;
+    justify-content: flex-start;
+    /* 视觉重心：上留白略大于下留白，句子落在一屏的 52%~56% 处 */
+    padding-top: clamp(3rem, 12vh, 8rem);
+  }
+  /* 满屏时「向下浏览」跟随句子（文档流），并留出波浪高度的安全距离 */
+  .wallpaper-wrapper.wp-full .wp-scroll {
+    margin-top: clamp(1rem, 3.2vh, 2.2rem);
+    margin-bottom: 0;
+  }
 </style>
