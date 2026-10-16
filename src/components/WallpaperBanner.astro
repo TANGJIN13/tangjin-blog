@@ -42,6 +42,12 @@ const {
   single = false,
   /** 下潜效果：首页与内页都开 */
   dive = true,
+  /**
+   * 满屏模式（首页）：横幅高度 = 一屏。
+   * 手机端那几条「按屏幕高度分档 65/75/80/85vh」的覆盖规则是为**半屏横幅**调的
+   * （保证矮视口上壁纸别把内容顶下去），满屏模式下必须让位，否则又变回半屏。
+   */
+  full = false,
 } = Astro.props;
 
 // 有插槽内容时用它替代默认的「头像 + 座右铭」，文章页据此放自己的标题
@@ -60,7 +66,7 @@ const splitLine = (text) => {
 };
 ---
 
-<div class:list={['wallpaper-wrapper', { 'wp-desktop-only': !mobile }]} style={`--wp-height: ${height}; --wp-mobile-height: ${mobileHeight}`} data-interval="7000">
+<div class:list={['wallpaper-wrapper', { 'wp-desktop-only': !mobile, 'wp-full': full }]} style={`--wp-height: ${height}; --wp-mobile-height: ${mobileHeight}`} data-interval="7000">
   <!-- 轮播图片 -->
   <div class="wp-parallax-layer" id="wp-parallax-layer">
   <div class="wallpaper-images" id="wallpaper-images">
@@ -353,6 +359,12 @@ const splitLine = (text) => {
     height: var(--wp-height);
     overflow: hidden;
     z-index: 0;
+  }
+  /* ⚠️ `svh` 回退：老浏览器不认 100svh，会让整条声明作废（高度变 auto → 壁纸塌掉）。
+     这里在 var() 之外补一条兜底高度，只有真的能解析 svh 的环境才会用上面的 var。
+     注意 --wp-height / --wp-mobile-height 的值由页面传入，首页传的正是 100vh / 100svh。 */
+  @supports not (height: 100svh) {
+    .wallpaper-wrapper { height: 100vh; }
   }
   @media (max-width: 767px) {
     .wallpaper-wrapper { height: var(--wp-mobile-height); }
@@ -985,4 +997,18 @@ const splitLine = (text) => {
   @media (max-width: 1023px) and (max-height: 500px) { .wallpaper-wrapper { height: 85vh !important; } }
   @media (max-width: 1023px) and (min-height: 501px) and (max-height: 600px) { .wallpaper-wrapper { height: 80vh !important; } }
   @media (max-width: 1023px) and (min-height: 601px) and (max-height: 700px) { .wallpaper-wrapper { height: 75vh !important; } }
+
+  /* ===== 满屏模式（首页）=====
+     ⚠️ 必须写在上面所有移动端覆盖规则**之后**：那些规则带 !important，
+     同特异性下后出现者胜 —— 满屏要压过它们，自己也得带 !important 且排最后。
+     高度用 svh（地址栏展开时的稳定一屏），不支持则退 vh。 */
+  .wallpaper-wrapper.wp-full { height: 100vh !important; }
+  @supports (height: 100svh) {
+    .wallpaper-wrapper.wp-full { height: 100svh !important; }
+  }
+  /* 满屏时「向下浏览」引导贴到底部一点，别挤在正中句子下面 ——
+     ⚠️ 仍然留在文档流里（flex 子项，靠 margin-top:auto 下推），
+     不能用 position:absolute（历史上就是它压到副标题上的）。 */
+  .wallpaper-wrapper.wp-full .wp-inner { height: 100%; justify-content: center; }
+  .wallpaper-wrapper.wp-full .wp-scroll { margin-top: auto; margin-bottom: clamp(1.5rem, 5vh, 3.25rem); }
 </style>

@@ -27,12 +27,12 @@ const recentPosts = ordered;
        ⚠️ 这一层**不加** data-reveal：首屏壁纸的分镜（背景模糊→清晰、星光渐显、
           标题逐节揭幕）全部由 WallpaperBanner 自己在 intro-run 下驱动。
           在这里再包一层淡入会让壁纸整体先发灰一次，两层 opacity 相乘。 -->
-  <!-- 首页壁纸高度：60vh。
-       置顶大卡移除后，壁纸下面直接接文章列表；60vh 能在 900px 视口里
-       露出列表的前两三项，既保留首屏的开阔感，又不至于把内容顶得太远。
-       上一版试过 64vh / 82vh，分别只剩 13px 余量和直接超出 149px ——
-       壁纸不是越高越好看。 -->
-  <WallpaperBanner height="clamp(420px, 60vh, 620px)" mobileHeight="clamp(340px, 54vh, 500px)" />
+  <!-- 首页壁纸高度：满屏（一屏）。
+       用户要求「打开网站的时候壁纸要占满屏幕」—— 首屏就是一整幅水彩壁纸 +
+       书法句子，内容区（文章列表/侧栏）整块落在第一屏之下，滚动才出现。
+       `full` 让组件里的移动端「按屏高分档」覆盖规则失效（那些是为半屏横幅调的）。
+       高度由 .wp-full 统一给 100svh（回退 100vh），这里传的值只是兜底。 -->
+  <WallpaperBanner height="100vh" mobileHeight="100svh" full />
 
   <!-- 三栏内容 -->
   <div class="container">

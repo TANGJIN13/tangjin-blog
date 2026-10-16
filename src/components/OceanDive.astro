@@ -200,7 +200,10 @@
     bottom: 0;
     height: 34vh;
     opacity: calc(var(--dive) * 1.6 - var(--dive) * var(--dive) * 0.6);
-    transform: translate3d(0, calc(var(--dive) * -168vh), 0);
+    /* ⚠️ 掠过行程必须 ≥「一层高的距离 + 自身高度」才能从底升到顶、完整离开。
+       满屏横幅（100svh）时整层高就是 1 屏，所以用 200vh 保证它在 dive=1 之前
+       已经冲过顶部（旧值 168vh 是按半屏横幅 88vh 调的，满屏后会停在半空）。 */
+    transform: translate3d(0, calc(var(--dive) * -200vh), 0);
     background:
       radial-gradient(38% 42% at 22% 46%, oklch(98% 0.04 210 / 0.5), transparent 62%),
       radial-gradient(30% 36% at 58% 62%, oklch(97% 0.05 205 / 0.42), transparent 64%),
