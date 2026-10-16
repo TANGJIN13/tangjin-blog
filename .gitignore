@@ -27,3 +27,12 @@ pnpm-debug.log*
 .workbuddy/
 .tmp-shots/
 .shots/
+
+# 调试/素材比对的临时产物目录（截图、候选图、拼图）—— 不要入库
+docs-wp/
+docs-covers/
+docs-covers2/
+docs-covers3/
+docs-cand/
+docs-cand2/
+docs-we/
