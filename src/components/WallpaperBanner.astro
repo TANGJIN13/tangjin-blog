@@ -48,10 +48,18 @@ const {
    * （保证矮视口上壁纸别把内容顶下去），满屏模式下必须让位，否则又变回半屏。
    */
   full = false,
+  /**
+   * 纯壁纸模式（内页）：不渲染任何覆盖文字（书法句子 / 副标题 / 向下浏览）。
+   * 内页横幅现在是一条矮矮的氛围带，上面不放字（用户要求），
+   * 页面标题由内容区自己承担 —— 所以这里整块内容层都不出。
+   */
+  bare = false,
 } = Astro.props;
 
 // 有插槽内容时用它替代默认的「头像 + 座右铭」，文章页据此放自己的标题
 const hasSlot = Astro.slots.has('default');
+// 是否渲染「默认文字层」（书法句子 + 向下浏览）：只有首页这类非 bare、非 slot 的才要
+const showText = !bare && !hasSlot;
 const slides = single ? images.slice(0, 1) : images;
 
 // 逐行揭幕的「行」怎么切：
@@ -113,7 +121,7 @@ const splitLine = (text) => {
   <!-- 星光层：细腻的渐显 / 微弱闪烁 / 缓慢漂浮。
        纯 CSS 生成（radial-gradient 点 + 各自的闪烁相位），不占 JS、不读像素。
        只在首页（非 slot 模式）出现 —— 内页横幅不放，避免喧宾夺主。 -->
-  {!hasSlot && (
+  {showText && (
     <div class="wp-stars" aria-hidden="true">
       <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
       <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
@@ -125,7 +133,7 @@ const splitLine = (text) => {
     <div class="container wp-inner">
       {hasSlot ? (
         <slot />
-      ) : (
+      ) : showText ? (
         <>
           <!-- 轮换句子 —— 直接作为横幅文字，句尾带闪烁光标，每隔几秒淡入换一句。
                ⚠️ 揭幕结构：标题要「逐行从遮罩里升上来」，所以每行都需要
@@ -161,7 +169,7 @@ const splitLine = (text) => {
             <span class="wp-scroll-text">向下浏览</span>
           </a>
         </>
-      )}
+      ) : null}
     </div>
   </div>
 
@@ -1007,22 +1015,16 @@ const splitLine = (text) => {
   }
 
   /* 满屏时的文字编排：
-     ⚠️ 用户反馈「书法字没在视觉正中，要往下移一点」——
-     原因是 .wp-inner 里除了句子还挂着「向下浏览」引导，整列一起居中时
-     句子会被顶到略偏上的位置（未达到视觉重心）。这里改成：
-       · 整列不用 justify-content:center 直接居中，而是给句子块一个
-         「视觉重心」偏移（padding-top 略大于 padding-bottom），把句子压到
-         黄金分割偏下一点的位置；
-       · 「向下浏览」紧跟在句子之后（文档流，margin-top 固定值），
-         不再用 margin-top:auto 推到最底部 —— 那里正好是白波浪所在，
-         用户反馈「指示器压在波浪上、还看不清」。 */
+     ⚠️ 用户反馈「书法字没在视觉正中，要往下移一点」。
+     .wallpaper-content 是 flex 垂直居中，.wp-inner 是按内容高度的块 —— 所以
+     给 .wp-inner 做 padding 只会把它自己撑高再居中，位移只有一半，不好控。
+     这里改成直接给整块一个**向下的位移**（相对一屏高度），可控且直观：
+     往下 8vh 后，句子中心落在一屏约 52% 处（视觉重心偏下一点，不再是顶部）。
+     ⚠️ 位移用 transform 而不是 margin-top —— 不参与布局计算，不会牵动波浪/内容区。 */
   .wallpaper-wrapper.wp-full .wp-inner {
-    height: 100%;
-    justify-content: flex-start;
-    /* 视觉重心：上留白略大于下留白，句子落在一屏的 52%~56% 处 */
-    padding-top: clamp(3rem, 12vh, 8rem);
+    transform: translateY(6vh);
   }
-  /* 满屏时「向下浏览」跟随句子（文档流），并留出波浪高度的安全距离 */
+  /* 满屏时「向下浏览」跟随句子（文档流），并留出与波浪的安全距离 */
   .wallpaper-wrapper.wp-full .wp-scroll {
     margin-top: clamp(1rem, 3.2vh, 2.2rem);
     margin-bottom: 0;

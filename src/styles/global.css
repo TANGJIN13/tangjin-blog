@@ -479,39 +479,20 @@ code, pre, kbd { font-family: var(--font-mono); }
   transition: width 0.1s linear;
 }
 
-/* ============ 全站氛围背景（柔和光斑，不抢内容） ============ */
+/* ============ 内容区大背景：纯色 ============
+   ⚠️ 用户要求「背景不用渐变色，用纯色就行」——
+   原来这里是一层 fixed 的径向渐变星云（四角紫/品红/青/蓝紫光斑，
+   滚动时永远贴在视口背后），看起来像渐变色背景。现在整层去掉，
+   内容区就是 body 的纯色底 var(--bg)，干净统一。
+   想恢复星云氛围：把下面这段的 background 那几行取消注释即可。 */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background:
-    /* 顶部：紫色星云，从横幅往下延伸 */
-    radial-gradient(60rem 40rem at 15% -10%,  oklch(68% 0.16 290 / 0.07), transparent 62%),
-    /* 右上：品红星云 */
-    radial-gradient(50rem 36rem at 95% 0%,    oklch(70% 0.17 320 / 0.06), transparent 60%),
-    /* 中部：青色星雾 */
-    radial-gradient(55rem 40rem at 50% 40%,   oklch(76% 0.12 200 / 0.04), transparent 65%),
-    /* 底部：蓝紫色深空 */
-    radial-gradient(65rem 45rem at 50% 105%,  oklch(62% 0.14 260 / 0.07), transparent 60%);
-}
-/* 手机端：星云半径缩小但浓度加强，让背景延伸在小屏上也明显 */
-@media (max-width: 767px) {
-  body::before {
-    background:
-      radial-gradient(32rem 22rem at 15% -8%,  oklch(66% 0.18 290 / 0.10), transparent 60%),
-      radial-gradient(28rem 20rem at 90% 2%,   oklch(68% 0.19 320 / 0.08), transparent 58%),
-      radial-gradient(30rem 22rem at 50% 45%,  oklch(74% 0.14 200 / 0.05), transparent 62%),
-      radial-gradient(34rem 24rem at 50% 108%, oklch(60% 0.16 260 / 0.09), transparent 58%);
-  }
-}
-[data-theme='dark'] body::before {
-  background:
-    radial-gradient(60rem 40rem at 15% -10%,  oklch(52% 0.18 290 / 0.28), transparent 62%),
-    radial-gradient(50rem 36rem at 95% 0%,    oklch(54% 0.19 320 / 0.24), transparent 60%),
-    radial-gradient(55rem 40rem at 50% 40%,   oklch(58% 0.14 200 / 0.16), transparent 65%),
-    radial-gradient(65rem 45rem at 50% 105%,  oklch(48% 0.16 260 / 0.26), transparent 60%);
+  /* 纯色：与 body 同色（显式写出来，避免 body 换成别色时这里留空） */
+  background: var(--bg);
 }
 
 /* ============ 侧栏背后的柔光（毛玻璃的“底料”） ============
@@ -528,16 +509,17 @@ body::after {
   pointer-events: none;
 }
 @media (min-width: 900px) {
-  /* 中屏只有左栏 */
+  /* 中屏只有左栏 —— 浓度已按「纯色背景」要求大幅调低（0.16 → 0.07），
+     只给毛玻璃一层极淡的底色，不再在背景上看到明显色块。 */
   body::after {
     background:
-      radial-gradient(28rem 40rem at 7% 36%, oklch(70% 0.17 296 / 0.17), transparent 72%),
-      radial-gradient(28rem 40rem at 7% 78%, oklch(74% 0.14 200 / 0.1), transparent 74%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(70% 0.17 296 / 0.07), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(74% 0.14 200 / 0.045), transparent 74%);
   }
   [data-theme='dark'] body::after {
     background:
-      radial-gradient(28rem 40rem at 7% 36%, oklch(56% 0.2 296 / 0.26), transparent 72%),
-      radial-gradient(28rem 40rem at 7% 78%, oklch(52% 0.16 210 / 0.16), transparent 74%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(56% 0.2 296 / 0.14), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(52% 0.16 210 / 0.09), transparent 74%);
   }
 }
 @media (min-width: 1280px) {
@@ -545,17 +527,17 @@ body::after {
      太浓就会在背景上看到一坨明显的色块，反而脏。 */
   body::after {
     background:
-      radial-gradient(28rem 40rem at 7% 36%, oklch(70% 0.17 296 / 0.17), transparent 72%),
-      radial-gradient(28rem 40rem at 7% 78%, oklch(74% 0.14 200 / 0.1), transparent 74%),
-      radial-gradient(28rem 40rem at 93% 30%, oklch(72% 0.18 330 / 0.15), transparent 72%),
-      radial-gradient(30rem 42rem at 93% 74%, oklch(72% 0.15 268 / 0.12), transparent 74%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(70% 0.17 296 / 0.07), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(74% 0.14 200 / 0.045), transparent 74%),
+      radial-gradient(28rem 40rem at 93% 30%, oklch(72% 0.18 330 / 0.06), transparent 72%),
+      radial-gradient(30rem 42rem at 93% 74%, oklch(72% 0.15 268 / 0.05), transparent 74%);
   }
   [data-theme='dark'] body::after {
     background:
-      radial-gradient(28rem 40rem at 7% 36%, oklch(56% 0.2 296 / 0.26), transparent 72%),
-      radial-gradient(28rem 40rem at 7% 78%, oklch(52% 0.16 210 / 0.16), transparent 74%),
-      radial-gradient(28rem 40rem at 93% 30%, oklch(56% 0.2 330 / 0.24), transparent 72%),
-      radial-gradient(30rem 42rem at 93% 74%, oklch(54% 0.18 268 / 0.2), transparent 74%);
+      radial-gradient(28rem 40rem at 7% 36%, oklch(56% 0.2 296 / 0.14), transparent 72%),
+      radial-gradient(28rem 40rem at 7% 78%, oklch(52% 0.16 210 / 0.09), transparent 74%),
+      radial-gradient(28rem 40rem at 93% 30%, oklch(56% 0.2 330 / 0.12), transparent 72%),
+      radial-gradient(30rem 42rem at 93% 74%, oklch(54% 0.18 268 / 0.1), transparent 74%);
   }
 }
 
