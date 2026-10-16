@@ -1025,23 +1025,21 @@ const splitLine = (text) => {
      ⚠️ 用户反馈「书法字没在视觉正中，要往下移一点」。
      .wallpaper-content 是 flex 垂直居中，.wp-inner 是按内容高度的块 —— 所以
      给 .wp-inner 做 padding 只会把它自己撑高再居中，位移只有一半，不好控。
-     这里改成直接给整块一个**向下的位移**（相对一屏高度），可控且直观：
-     往下 8vh 后，句子中心落在一屏约 52% 处（视觉重心偏下一点，不再是顶部）。
+     这里直接给整块一个**向下的位移**（相对一屏高度）：9vh 时句子中心落在一屏约 52%，
+     已是视觉正中；再大就会把下面的「向下浏览」挤到贴着底部波浪（1280×720 实测余量只剩 48px）。
      ⚠️ 位移用 transform 而不是 margin-top —— 不参与布局计算，不会牵动波浪/内容区。 */
   .wallpaper-wrapper.wp-full .wp-inner {
-    transform: translateY(12vh);
+    transform: translateY(9vh);
   }
-  /* 满屏时「向下浏览」：整块下移 12vh 后指示器会被顶到接近底部波浪，
-     所以这里给它一点**反向补偿**（往上拉回），保证与波浪之间始终有余量。
-     ⚠️ 只动指示器自己的 margin，不影响句子位置。 */
+  /* 满屏时「向下浏览」：
+     ⚠️ 这里曾用 `translate: 0 -6vh` 做「反向补偿」（把指示器往上拉，离底部波浪远一点）。
+     踩坑：座右铭块**不止标题**，下面还有一行副标题 `.wp-quote-sub`（约 54px 高），
+     只量 `.wp-title` 底边会以为余量充足，实际上拉 43px 后指示器**顶进了副标题**
+     （实测 1280×720 重叠 7px，用户看到"鼠标和座右铭重叠了"）。
+     实测不上拉时指示器底边 523、波浪顶边 613，余量 90px 本来就够 —— 所以**取消上拉**，
+     间距完全交给文档流里的 margin-top，这样它永远只受"句子块真实底边"影响，不会撞字。 */
   .wallpaper-wrapper.wp-full .wp-scroll {
-    /* ⚠️ 这里**不能**用 `transform: translateY(...)` 做补偿：.wp-scroll 自己有
-       `animation: wp-reveal ... both`（第 750 行），动画里的 transform 是动画值，
-       **优先级高于普通声明**，会把这里的 translateY 直接覆盖掉（实测 scrollTop 纹丝不动）。
-       改用独立的 `translate` 属性 —— 它和 `transform` 是两个不同的属性，互不覆盖。
-       与 .wp-inner 的 +12vh 部分抵消：让指示器比句子少下移约 6vh。 */
-    margin-top: clamp(1rem, 2.6vh, 1.9rem);
+    margin-top: clamp(1.1rem, 3vh, 2rem);
     margin-bottom: 0;
-    translate: 0 -6vh;
   }
 </style>
