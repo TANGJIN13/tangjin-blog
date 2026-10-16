@@ -26,13 +26,12 @@ const {
   // 首屏壁纸轮播池。
   // ⚠️ 约束：这个池子必须与文章封面池（lib/covers.ts，covers/）
   //    **完全不重叠** —— 一旦重叠，同屏里就会出现"壁纸 = 某张卡片封面"的廉价撞图。
-  //    所以这里只放壁纸目录自己的图。曾经有 5 张，但 -02 和 -03 都是
-  //    "粉色樱花枝夹住两边"的近乎同一构图，轮播到第二张像"没换图"，
-  //    所以去掉 -03，留 4 张各不相同的画面。
+  //    所以这里只放壁纸目录自己的图。
+  // ⚠️ -03 已从池子里**移除**（它和 -01 都是"粉色花枝夹住两边"的近乎同一构图，
+  //    轮播到它像"没换图"）。文件仍在 public/ 下但不再被引用 —— 别再把它加回来。
   images = [
     '/images/wallpapers/banner-pastel-01.webp',
     '/images/wallpapers/banner-pastel-02.webp',
-    '/images/wallpapers/banner-pastel-03.webp',
     '/images/wallpapers/banner-pastel-04.webp',
     '/images/wallpapers/banner-pastel-05.webp',
   ],
@@ -226,8 +225,13 @@ const splitLine = (text) => {
   let slideTimer = null;
   let quoteTimer = null;
 
-  // 当前壁纸 / 座右铭序号都存在 sessionStorage 里：换页、刷新都不会清零，
-  // 所以导航到别的页面时壁纸会「接着上一张」继续轮播，而不是每次都从第一张重新开始。
+  // 当前壁纸序号存在 sessionStorage：换页时用它保证**首屏绘制前就把那张显示出来**
+  // （inline 脚本读它，避免导航瞬间闪回第一张）。
+  //
+  // ⚠️ 用户反馈「怎么软导航过去还是那一张、一直不换」—— 根因是这里把存储值**直接当作
+  //    本轮起点**：轮播走一格存 1，换页读回 1，永远停在原地打转，视觉上就是"卡住了"。
+  //    改成：**每次初始化都先推进一张**（读回的值只用于"先画出上次那张"这一步），
+  //    这样每次硬加载 / 软导航都会是一个新画面，同时首屏依然不会闪回第一张。
   const WP_IDX_KEY = 'tj-wp-idx';
   const WP_QUOTE_KEY = 'tj-wp-quote';
   function getWpIdx() {
@@ -255,12 +259,14 @@ const splitLine = (text) => {
     let interval = 7000;
     if (wrap) interval = parseInt(wrap.dataset.interval || '7000', 10);
     if (wrap && slides.length > 1) {
-      let slideIdx = getWpIdx() % slides.length;
-      // 若当前这张已经被 inline 脚本激活过，就不再重复激活（避免首屏又淡入一次）
-      if (!slides[slideIdx].classList.contains('active')) {
-        slides.forEach((s) => s.classList.remove('active'));
-        slides[slideIdx].classList.add('active');
-      }
+      // 起点 = 存储值 **再前进一张**（见 getWpIdx 上方的说明：不这样做就会"永远同一张"）。
+      let slideIdx = (getWpIdx() + 1) % slides.length;
+      // 首屏 inline 脚本已经把「上次那张」点亮了；如果它正好等于本次起点，
+      // 就再前进一张，保证每次加载/换页都是**新画面**。
+      const activeNow = slides.findIndex((s) => s.classList.contains('active'));
+      if (activeNow === slideIdx) slideIdx = (slideIdx + 1) % slides.length;
+      slides.forEach((s) => s.classList.remove('active'));
+      slides[slideIdx].classList.add('active');
       slideTimer = setInterval(() => {
         slides[slideIdx].classList.remove('active');
         slideIdx = (slideIdx + 1) % slides.length;
@@ -276,7 +282,8 @@ const splitLine = (text) => {
       const quotes = Array.from(quoteWrap.querySelectorAll('.wp-quote'));
       if (quotes.length > 1) {
         const quoteInterval = parseInt(quoteWrap.dataset.interval || '6000', 10);
-        let qi = getWpQuote() % quotes.length;
+        // 同壁纸：起点推进一句，否则每次加载都是同一句（用户会觉得"没换"）
+        let qi = (getWpQuote() + 1) % quotes.length;
         quotes.forEach((q) => q.classList.remove('active', 'leaving'));
         quotes[qi].classList.add('active');
         quoteTimer = setInterval(() => {
