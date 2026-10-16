@@ -1033,25 +1033,24 @@ const splitLine = (text) => {
   }
 
   /* 满屏时的文字编排：
-     ⚠️ 用户反馈「书法字没在视觉正中，要往下移一点」→ 又反馈「再往上调一下」。
-     .wallpaper-content 是 flex 垂直居中，.wp-inner 是按内容高度的块 —— 所以
-     给 .wp-inner 做 padding 只会把它自己撑高再居中，位移只有一半，不好控。
-     这里直接给整块一个**向下的位移**（相对一屏高度）。取值演进：
-       12vh（句子中心 52~53%，但把「向下浏览」挤到贴波浪）
-        9vh（中心 48.5~53.2%，两头余量都够）
-        6vh（本轮：用户要求再往上）
-     ⚠️ 位移用 transform 而不是 margin-top —— 不参与布局计算，不会牵动波浪/内容区。 */
+     ⚠️ 书法字没在视觉正中（用户早期反馈先要往下一点，后又多次要求往上）。
+     .wallpaper-content 是 flex 垂直居中，.wp-inner 是按内容高度的块 —— 给 .wp-inner
+     做 padding 只会把它自己撑高再居中、位移只有一半，不好控；所以直接给整块一个
+     **向下的位移**（相对一屏高度）。取值演进：
+       12vh → 9vh → 6vh → 2vh（本轮：用户要求「座右铭 + 向下浏览」整体再上移一些）
+     ⚠️ 位移用 transform 而不是 margin-top —— 不参与布局计算，不会牵动波浪/内容区。
+     座右铭与「向下浏览」同在一个 .wp-inner 里（流式相邻），改这一处位移二者一起动，
+     二者间距由下方 .wp-scroll 的 margin-top + translate 维持，不受此处影响。 */
   .wallpaper-wrapper.wp-full .wp-inner {
-    transform: translateY(6vh);
+    transform: translateY(2vh);
   }
-  /* 满屏时「向下浏览」：
-     ⚠️ 用户要求「座右铭往上调，但向下浏览不用跟着动」—— 指示器在文档流里紧跟句子，
-     句子一上移它就跟着上移。所以这里给它一个**等量反向位移**抵消掉：
-     .wp-inner 从 9vh 收到 6vh（上移 3vh），指示器就补 `translate: 0 3vh`（下移 3vh），
-     回到 9vh 时的绝对位置。以后改 .wp-inner 的位移量，这里同步取相反数即可。
+  /* 满屏时「向下浏览」与座右铭的间距：
+     .wp-scroll 在文档流里紧跟句子，二者间距 = 自然 gap（0.75rem）+ 这里的 margin-top + translate。
      ⚠️ 补偿**不能用 `transform`** —— .wp-scroll 自己有 `animation: wp-reveal`（第 750 行），
      动画的 transform 优先级更高会把它整个覆盖掉（实测数值纹丝不动）。
-     必须用独立的 `translate` 属性 —— 它和 `transform` 是两个属性，互不覆盖。 */
+     必须用独立的 `translate` 属性 —— 它和 `transform` 是两个属性，互不覆盖。
+     这一处只负责维持「座右铭 → 向下浏览」的固定间距；.wp-inner 整体上移时它会跟着上移，
+     于是二者作为整体一起上移。 */
   .wallpaper-wrapper.wp-full .wp-scroll {
     margin-top: clamp(1.1rem, 3vh, 2rem);
     margin-bottom: 0;
