@@ -1022,11 +1022,19 @@ const splitLine = (text) => {
      往下 8vh 后，句子中心落在一屏约 52% 处（视觉重心偏下一点，不再是顶部）。
      ⚠️ 位移用 transform 而不是 margin-top —— 不参与布局计算，不会牵动波浪/内容区。 */
   .wallpaper-wrapper.wp-full .wp-inner {
-    transform: translateY(6vh);
+    transform: translateY(12vh);
   }
-  /* 满屏时「向下浏览」跟随句子（文档流），并留出与波浪的安全距离 */
+  /* 满屏时「向下浏览」：整块下移 12vh 后指示器会被顶到接近底部波浪，
+     所以这里给它一点**反向补偿**（往上拉回），保证与波浪之间始终有余量。
+     ⚠️ 只动指示器自己的 margin，不影响句子位置。 */
   .wallpaper-wrapper.wp-full .wp-scroll {
-    margin-top: clamp(1rem, 3.2vh, 2.2rem);
+    /* ⚠️ 这里**不能**用 `transform: translateY(...)` 做补偿：.wp-scroll 自己有
+       `animation: wp-reveal ... both`（第 750 行），动画里的 transform 是动画值，
+       **优先级高于普通声明**，会把这里的 translateY 直接覆盖掉（实测 scrollTop 纹丝不动）。
+       改用独立的 `translate` 属性 —— 它和 `transform` 是两个不同的属性，互不覆盖。
+       与 .wp-inner 的 +12vh 部分抵消：让指示器比句子少下移约 6vh。 */
+    margin-top: clamp(1rem, 2.6vh, 1.9rem);
     margin-bottom: 0;
+    translate: 0 -6vh;
   }
 </style>
