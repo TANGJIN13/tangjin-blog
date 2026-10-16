@@ -17,6 +17,15 @@ const POOL = [
   '/images/covers/cover-01.jpg',
   '/images/covers/cover-02.jpg',
   '/images/covers/cover-03.jpg',
+  '/images/covers/cover-04.jpg',
+  '/images/covers/cover-05.jpg',
+  '/images/covers/cover-06.jpg',
+  '/images/covers/cover-07.jpg',
+  '/images/covers/cover-08.jpg',
+  '/images/covers/cover-09.jpg',
+  '/images/covers/cover-10.jpg',
+  '/images/covers/cover-11.jpg',
+  '/images/covers/cover-12.jpg',
 ];
 
 export const COVER_POOLS: Record<string, string[]> = {
