@@ -342,7 +342,7 @@ Django 用 cache session 后端
   → Django 读 session 时自动 pickle.loads
   → 触发 RCE
 
-### 4.2 伪造 session（以及 key 长度的坑）
+### 伪造 session（以及 key 长度的坑）
 
 
 
