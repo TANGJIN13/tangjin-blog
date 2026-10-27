@@ -43,7 +43,12 @@ import Icon from './Icon.astro';
     font-weight: 500;
   }
   :global([data-theme='dark'] .toc-item.active) { color: var(--primary-light); }
-  :global(.toc-level-1) { font-weight: 600; color: var(--text); }
+  /* 层级视觉：h1/h2 = 章节（加粗、正常字号），h3 = 小节（缩进 + 略小 + 更浅）。
+     ⚠️ 原来只有 .toc-level-1 和 .toc-level-3，**没有 .toc-level-2** ——
+     而正文的小标题几乎都是 h2（h1 只有页面标题），结果"章节"和"小节"看起来一样平，
+     只能靠缩进区分，目录读起来是一长条没有分组。 */
+  :global(.toc-level-1),
+  :global(.toc-level-2) { font-weight: 600; color: var(--text); }
   :global(.toc-level-3) { padding-left: 1.2rem; font-size: 0.78rem; }
   /* 点击目录跳转时，标题不要被固定导航挡住 */
   :global(.custom-md h1), :global(.custom-md h2), :global(.custom-md h3) { scroll-margin-top: calc(var(--navbar-height) + 1.5rem); }
