@@ -25,7 +25,7 @@ curl --http1.1 -sSi https://example.com
 返回响应头和响应体
 
 
-Server: gunicorn` → Python WSGI 应用，大概率 Django/Flask。
+`Server: gunicorn` → Python WSGI 应用，大概率 Django/Flask。
 
 不过这个也不怎么重要
 
@@ -48,10 +48,12 @@ done
 
 
 
-``json
+```json
 {"service": "DataPulse Analytics Platform", "version": "2.4.1",
  "status": "operational", "uptime": 96701360,
  "components": {"web": "healthy", "task_queue": "healthy", "cache": "healthy"}}
+```
+
 就会返回这些东西
 
 
@@ -76,9 +78,9 @@ done
 | GET      | `/tasks/<task_id>/webhook-logs/`  | webhook 投递日志            |
 
 
-/dashboard/` 前端脚本里两个关键调用：
+`/dashboard/` 前端脚本里两个关键调用：
 
-`js
+```js
 // 创建任务
 fetch('/tasks/create/', {
   method: 'POST',
@@ -96,7 +98,8 @@ fetch(`/tasks/${taskId}/retry-webhook/`, {
   method: 'POST',
   headers: {'Content-Type': 'application/json'},
   body: JSON.stringify({ url: url })
-}); 
+});
+```
 
 
 
@@ -112,13 +115,14 @@ Content-Type: application/json
 
 在bp抓包上可以看到
 
-`json
+```json
 {"message": "Registration successful",
  "api_token": "dcbd0eff57301df56a6303d7758714c70d52990bfef19e01fa8d0f86d0e1716c"}
+```
+
 Set-Cookie: dp_session=0operlq2hjh79d0mi8liyq7xtt7jfn9z; HttpOnly; SameSite=Lax
 
-
-dp_session` 的 cookie 名与后端的 Django session cache 键前缀 `:1:django.contrib.sessions.cache` 对应。
+`dp_session` 的 cookie 名与后端的 Django session cache 键前缀 `:1:django.contrib.sessions.cache` 对应。
 
 
 
@@ -196,9 +200,10 @@ gopher://127.1:6379/_PING%0d%0a
 ```
 返回
 
-``json
+```json
 {"message":"Webhook notification sent",
  "log":{"status_code":200,"response_body":"+PONG\r\n","error":""}}
+```
 
 这个就说明了这个redis正常回复我了
 

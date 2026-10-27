@@ -12,6 +12,8 @@ import { fileURLToPath } from 'node:url';
  *
  * 2. > [!WARNING] / > [!TIP] 等 Obsidian 标注块 → 标准 blockquote（**WARNING:** 文字）
  *
+ * 3. **段落内的单个换行 → `<br>`**（最重要的一条，见下方 text 访问器）
+ *
  * 注意：[[笔记名]] 双链不是图片，这里不做转换（博客里会显示为普通文字）。
  */
 
@@ -114,5 +116,38 @@ export const obsidianCompatPlugin = {
     if (converted !== text) return { raw: converted };
 
     return;
+  },
+
+  /**
+   * 文本级处理：段落内的**单个换行** → `<br>`（硬换行）。
+   *
+   * 为什么需要它：CommonMark 规定段落内的软换行渲染成**空格**，而 Obsidian 的
+   * 阅读视图（"严格换行"关闭，也就是默认值）把它渲染成**换行**。用户是"一行一句"
+   * 的写法（HTTP 头、curl 命令、路径列表各占一行），于是：
+   *   Obsidian 里看到的是一行一条，博客上被合并成一大段、位置全乱。
+   * 这条规则就是让博客和 Obsidian 的阅读视图一致 —— 等价于 remark-breaks 的语义。
+   *
+   * 实现要点：
+   *   · 只处理 `text` 节点。代码块 / 行内代码的值在 `code` / `inlineCode` 节点上，
+   *     不经过 text 访问器，所以**不会被误插 `<br>`**（这是最容易踩的地方）。
+   *   · 表格单元格里不允许换行（HTML 表格里 `<br>` 会破坏对齐），直接跳过。
+   *   · 拆完丢掉空片段，避免产生空 text 节点（`**粗体**\n后文` 这种，
+   *     换行会落在下一个 text 节点的开头）。
+   */
+  text(node, ctx) {
+    const value = node.value;
+    if (typeof value !== 'string' || value.indexOf('\n') === -1) return;
+
+    const parent = ctx.parent(node);
+    if (parent && parent.type === 'tableCell') return;
+
+    const parts = [];
+    value.split('\n').forEach((seg, i) => {
+      if (i > 0) parts.push({ type: 'break' });
+      if (seg) parts.push({ type: 'text', value: seg });
+    });
+    if (parts.length <= 1) return;
+
+    ctx.replaceNode(node, parts);
   },
 };
